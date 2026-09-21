@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Killer Résumé Agent | Jeff Su's 5 Research-Backed Rules</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="badge-tag">RESEARCH-BACKED AI ENGINE</div>
+        <h1>Killer Résumé Agent</h1>
+        <p class="subtitle">
+          Built on Jeff Su's study of <strong>4,000+ hiring managers</strong> & <strong>nearly 2 million applications</strong>.
+        </p>
+      </div>
+      <div class="header-right">
+        <div class="metrics-ticker">
+          <div class="metric-pill"><span>87%</span> ATS Prefer Simple Text</div>
+          <div class="metric-pill highlight"><span>+84%</span> Tailored Interview Boost</div>
+          <div class="metric-pill danger"><span>-21%</span> Keyword Stuffing Penalty</div>
+          <div class="metric-pill highlight"><span>+75%</span> Quantified Impact Multiplier</div>
+          <div class="metric-pill"><span>+15%</span> Proven AI Skills Lift</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="workspace-grid">
+      <!-- Left Column: Inputs & Interactive Tools -->
+      <section class="panel input-panel">
+        <div class="panel-header">
+          <h2>1. Candidate & Target Context</h2>
+          <div class="actions-group">
+            <button id="btn-load-sample" class="btn btn-secondary btn-sm">Load Ex-Apple PM Sample</button>
+            <button id="btn-clear" class="btn btn-ghost btn-sm">Clear</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label for="resume-input">Your Current Résumé (Markdown / Text):</label>
+            <span class="hint">Rule 1 & 3: Paste raw notes or current draft</span>
+          </div>
+          <textarea id="resume-input" placeholder="Paste your resume or rough notes here..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label for="jd-input">Target Job Description (JD):</label>
+            <span class="hint">Rule 2: Analyzes employer problems & sweet-spot keywords</span>
+          </div>
+          <textarea id="jd-input" placeholder="Paste target Job Description here..."></textarea>
+        </div>
+
+        <div class="button-bar">
+          <button id="btn-audit" class="btn btn-primary">
+            <span class="btn-icon">⚡</span> Run 5-Rule Audit
+          </button>
+          <button id="btn-transform" class="btn btn-accent">
+            <span class="btn-icon">🚀</span> Generate Killer Résumé
+          </button>
+        </div>
+
+        <!-- Interactive Google XYZ Bullet Transformer -->
+        <div class="interactive-xyz-card">
+          <div class="card-title">
+            <span class="badge-mini">RULE 4 WORKSHOP</span>
+            <h3>Interactive Google XYZ Transformer</h3>
+          </div>
+          <p class="desc">
+            Transform vague responsibilities into Google's proven format: <em>Accomplished [X], as measured by [Y], by doing [Z]</em>.
+          </p>
+          <div class="input-inline">
+            <input type="text" id="quick-bullet-input" placeholder="e.g. Helped with sprint planning and user stories...">
+            <button id="btn-quick-xyz" class="btn btn-secondary btn-sm">Transform Bullet</button>
+          </div>
+          <div id="xyz-result-container" class="xyz-result-container hidden">
+            <div class="result-label">Recommended Google XYZ Formulation (+75% Interview Lift):</div>
+            <div id="xyz-result-text" class="result-box"></div>
+            <div class="metric-prompts" id="xyz-metric-prompts"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Audit Scorecard & Live Output -->
+      <section class="panel output-panel">
+        <div class="tabs-header">
+          <button class="tab-btn active" data-tab="scorecard">5-Rule Audit Scorecard</button>
+          <button class="tab-btn" data-tab="preview">Killer Résumé Output</button>
+        </div>
+
+        <!-- Tab 1: 5-Rule Scorecard -->
+        <div id="tab-scorecard" class="tab-content active">
+          <div class="scorecard-overview">
+            <div class="score-circle-wrapper">
+              <div class="score-circle" id="overall-score-circle">
+                <span id="overall-score-num">--</span>
+                <span class="score-denom">/ 100</span>
+              </div>
+              <div class="score-status-text" id="overall-status-text">Run Audit to Inspect</div>
+            </div>
+            <div class="score-summary-box">
+              <h4>Executive Practitioner Verdict</h4>
+              <p id="score-summary-body">
+                Paste your resume and target job description on the left, then click <strong>Run 5-Rule Audit</strong> to calculate your ATS readability, keyword mapping sweet spot, and quantified impact score.
+              </p>
+            </div>
+          </div>
+
+          <!-- The 5 Rules Breakdown Grid -->
+          <div class="rules-breakdown-list">
+            <!-- Rule 1 Card -->
+            <div class="rule-card" id="card-rule-1">
+              <div class="rule-card-header">
+                <span class="rule-id">RULE 1</span>
+                <h4>Make Sure AI Can Read Your Résumé (ATS Parseability)</h4>
+                <span class="rule-score-badge" id="badge-rule-1">--</span>
+              </div>
+              <p class="rule-research-note">
+                <strong>Research:</strong> 87% of hiring managers say AI reads simple, text-based résumés more accurately. Avoid Canva visual traps, skill bars, and text in images.
+              </p>
+              <div class="rule-feedback" id="feedback-rule-1">Awaiting audit...</div>
+            </div>
+
+            <!-- Rule 2 Card -->
+            <div class="rule-card" id="card-rule-2">
+              <div class="rule-card-header">
+                <span class="rule-id">RULE 2</span>
+                <h4>Make Your Fit Obvious (Keyword Mapping vs. Stuffing)</h4>
+                <span class="rule-score-badge" id="badge-rule-2">--</span>
+              </div>
+              <p class="rule-research-note">
+                <strong>Research:</strong> 2M applications: Tailored resumes achieve 5.71% interview rate vs 3.09% untailored (+84% boost). BUT over-stuffing keywords drops interviews by 21%. Sweet spot: 45-75%.
+              </p>
+              <div class="rule-feedback" id="feedback-rule-2">Awaiting audit...</div>
+            </div>
+
+            <!-- Rule 3 Card -->
+            <div class="rule-card" id="card-rule-3">
+              <div class="rule-card-header">
+                <span class="rule-id">RULE 3</span>
+                <h4>Know Where AI Should Stop (The Human Review Gate)</h4>
+                <span class="rule-score-badge" id="badge-rule-3">--</span>
+              </div>
+              <p class="rule-research-note">
+                <strong>Research:</strong> MIT experiment (500k applicants): Grammar/wording polish increased hiring by +8%. But 28% reject lazy AI filler. You must be able to defend every claim in an interview.
+              </p>
+              <div class="rule-feedback" id="feedback-rule-3">Awaiting audit...</div>
+            </div>
+
+            <!-- Rule 4 Card -->
+            <div class="rule-card" id="card-rule-4">
+              <div class="rule-card-header">
+                <span class="rule-id">RULE 4</span>
+                <h4>Prove Your Impact With Numbers (Google's XYZ Formula)</h4>
+                <span class="rule-score-badge" id="badge-rule-4">--</span>
+              </div>
+              <p class="rule-research-note">
+                <strong>Research:</strong> Quantified achievements saw <strong>75% higher interview rates</strong>. Frame as: <em>Accomplished [X], as measured by [Y], by doing [Z]</em>.
+              </p>
+              <div class="rule-feedback" id="feedback-rule-4">Awaiting audit...</div>
+            </div>
+
+            <!-- Rule 5 Card -->
+            <div class="rule-card" id="card-rule-5">
+              <div class="rule-card-header">
+                <span class="rule-id">RULE 5</span>
+                <h4>Prove Your AI Skills (Show Proof, Don't Just List Tools)</h4>
+                <span class="rule-score-badge" id="badge-rule-5">--</span>
+              </div>
+              <p class="rule-research-note">
+                <strong>Research:</strong> Oxford study: Role-relevant AI experience provides up to +15% interview lift. 60% of managers want demonstrated proof, not just "ChatGPT" in the skills list.
+              </p>
+              <div class="rule-feedback" id="feedback-rule-5">Awaiting audit...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Killer Resume Output -->
+        <div id="tab-preview" class="tab-content">
+          <div class="preview-actions">
+            <div class="preview-stats" id="preview-score-delta">Optimized Draft Ready</div>
+            <div class="preview-buttons">
+              <button id="btn-copy-markdown" class="btn btn-secondary btn-sm">Copy Markdown</button>
+              <button id="btn-print-pdf" class="btn btn-accent btn-sm">Print / Save Selectable PDF</button>
+            </div>
+          </div>
+          <div class="output-preview-container">
+            <pre id="output-markdown" class="markdown-display"></pre>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
