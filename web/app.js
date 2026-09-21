@@ -1,10 +1,34 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Elements
   const resumeInput = document.getElementById("resume-input");
   const jdInput = document.getElementById("jd-input");
   const btnLoadSample = document.getElementById("btn-load-sample");
+  const btnLoadSamplePdf = document.getElementById("btn-load-sample-pdf");
   const btnClear = document.getElementById("btn-clear");
   const btnAudit = document.getElementById("btn-audit");
   const btnTransform = document.getElementById("btn-transform");
+
+  // PDF Elements
+  const pdfDropzone = document.getElementById("pdf-dropzone");
+  const pdfFileInput = document.getElementById("pdf-file-input");
+  const dropzonePrompt = document.getElementById("dropzone-prompt");
+  const loadedPdfPill = document.getElementById("loaded-pdf-pill");
+  const pdfDisplayName = document.getElementById("pdf-display-name");
+  const pdfDisplayStats = document.getElementById("pdf-display-stats");
+  const btnRemovePdf = document.getElementById("btn-remove-pdf");
+
+  // PDF Diagnostic Elements
+  const pdfDiagCard = document.getElementById("pdf-diagnostic-card");
+  const pdfAtsBadge = document.getElementById("pdf-ats-badge");
+  const pdfDiagSelectable = document.getElementById("pdf-diag-selectable");
+  const pdfDiagSize = document.getElementById("pdf-diag-size");
+  const pdfDiagPages = document.getElementById("pdf-diag-pages");
+  const pdfDiagImages = document.getElementById("pdf-diag-images");
+  const pdfWarningBanner = document.getElementById("pdf-warning-banner");
+  const resumeTextGroup = document.getElementById("resume-text-group");
+
+  // Mode Tabs
+  const modeTabs = document.querySelectorAll(".mode-tab");
 
   // Quick XYZ
   const quickInput = document.getElementById("quick-bullet-input");
@@ -27,7 +51,26 @@ document.addEventListener("DOMContentLoaded", () => {
   // Output Preview
   const outputMarkdown = document.getElementById("output-markdown");
   const btnCopyMarkdown = document.getElementById("btn-copy-markdown");
+  const btnDownloadMd = document.getElementById("btn-download-md");
   const btnPrintPdf = document.getElementById("btn-print-pdf");
+
+  let currentPdfBase64 = null;
+  let currentPdfFilename = null;
+
+  // Toast System
+  function showToast(message, type = "success") {
+    const container = document.getElementById("toast-container");
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    const icon = type === "success" ? "✓" : (type === "warning" ? "⚠" : "✕");
+    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(-10px)";
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
 
   // Tab switching
   tabBtns.forEach(btn => {
@@ -45,7 +88,177 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Load sample data
+  // Mode Switcher (PDF vs Text)
+  modeTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      modeTabs.forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      const mode = tab.dataset.mode;
+      if (mode === "pdf") {
+        pdfDropzone.style.display = "block";
+      } else {
+        pdfDropzone.style.display = "none";
+        resumeTextGroup.scrollIntoView({ behavior: "smooth" });
+      }
+    });
+  });
+
+  // PDF Drag and Drop Events
+  pdfDropzone.addEventListener("click", (e) => {
+    if (e.target !== btnRemovePdf && !btnRemovePdf.contains(e.target)) {
+      pdfFileInput.click();
+    }
+  });
+
+  pdfDropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    pdfDropzone.classList.add("drag-over");
+  });
+
+  pdfDropzone.addEventListener("dragleave", () => {
+    pdfDropzone.classList.remove("drag-over");
+  });
+
+  pdfDropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    pdfDropzone.classList.remove("drag-over");
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  });
+
+  pdfFileInput.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileUpload(e.target.files[0]);
+    }
+  });
+
+  function handleFileUpload(file) {
+    if (!file) return;
+
+    if (file.name.toLowerCase().endsWith(".txt") || file.name.toLowerCase().endsWith(".md")) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        resumeInput.value = e.target.result;
+        showToast(`Loaded text file: ${file.name}`, "success");
+      };
+      reader.readAsText(file);
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      showToast("Please upload a .pdf, .md, or .txt file.", "warning");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const b64 = e.target.result;
+      currentPdfBase64 = b64;
+      currentPdfFilename = file.name;
+      await processPdfBase64(b64, file.name);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function processPdfBase64(b64, filename) {
+    try {
+      showToast("Inspecting PDF ATS compatibility...", "success");
+      const resp = await fetch("/api/upload-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdf_base64: b64, filename })
+      });
+      const diag = await resp.json();
+
+      if (diag.error) {
+        showToast(diag.error, "error");
+        return;
+      }
+
+      // Update Pill
+      dropzonePrompt.classList.add("hidden");
+      loadedPdfPill.classList.remove("hidden");
+      pdfDisplayName.textContent = filename;
+      pdfDisplayStats.textContent = `${diag.file_size_mb} MB • ${diag.page_count} Page(s)`;
+
+      // Render Diagnostic Card
+      renderPdfDiagnostics(diag);
+
+      // Auto-populate resume textarea
+      resumeInput.value = diag.text || "";
+      document.getElementById("resume-input-hint").textContent = `Extracted ${diag.char_count:,} characters from ${filename}`;
+
+      showToast(`PDF parsed: ${diag.char_count:,} selectable characters.`, "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to parse PDF.", "error");
+    }
+  }
+
+  function renderPdfDiagnostics(diag) {
+    pdfDiagCard.classList.remove("hidden");
+    pdfDiagSelectable.textContent = diag.is_selectable ? `Pass (${diag.char_count:,} chars)` : "FAIL (0 chars)";
+    pdfDiagSelectable.style.color = diag.is_selectable ? "var(--accent-green)" : "var(--accent-rose)";
+
+    pdfDiagSize.textContent = `${diag.file_size_mb} MB`;
+    pdfDiagSize.style.color = diag.file_size_mb <= 2.5 ? "var(--accent-green)" : "var(--accent-amber)";
+
+    pdfDiagPages.textContent = `${diag.page_count} Page${diag.page_count > 1 ? 's' : ''}`;
+    pdfDiagPages.style.color = diag.page_count <= 2 ? "var(--accent-blue)" : "var(--accent-amber)";
+
+    pdfDiagImages.textContent = `${diag.image_count} Asset(s)`;
+
+    if (diag.ats_status === "PASS") {
+      pdfAtsBadge.textContent = "ATS READABLE";
+      pdfAtsBadge.className = "diag-status";
+      pdfWarningBanner.classList.add("hidden");
+    } else {
+      pdfAtsBadge.textContent = "ATS BLOCKED";
+      pdfAtsBadge.className = "diag-status fail";
+      pdfWarningBanner.classList.remove("hidden");
+      pdfWarningBanner.innerHTML = `<strong>Rule 1 Alert:</strong> Text trapped in images or unselectable! AI hiring systems will fail to parse this PDF.`;
+    }
+  }
+
+  // Remove PDF
+  btnRemovePdf.addEventListener("click", (e) => {
+    e.stopPropagation();
+    currentPdfBase64 = null;
+    currentPdfFilename = null;
+    pdfFileInput.value = "";
+    dropzonePrompt.classList.remove("hidden");
+    loadedPdfPill.classList.add("hidden");
+    pdfDiagCard.classList.add("hidden");
+    document.getElementById("resume-input-hint").textContent = "Direct text edit mode";
+    showToast("PDF removed.", "warning");
+  });
+
+  // Load Sample PDF
+  btnLoadSamplePdf.addEventListener("click", async () => {
+    try {
+      btnLoadSamplePdf.textContent = "Loading PDF...";
+      const resp = await fetch("/api/sample");
+      const data = await resp.json();
+
+      if (data.sample_pdf_b64) {
+        currentPdfBase64 = data.sample_pdf_b64;
+        currentPdfFilename = data.sample_pdf_name || "sample_resume.pdf";
+        jdInput.value = data.sample_jd || "";
+        await processPdfBase64(data.sample_pdf_b64, currentPdfFilename);
+        showToast("Loaded Ex-Apple PM Sample PDF & Target JD!", "success");
+      } else {
+        showToast("Sample PDF not found.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error loading sample PDF.", "error");
+    } finally {
+      btnLoadSamplePdf.textContent = "Load Sample PDF";
+    }
+  });
+
+  // Load Text Sample
   btnLoadSample.addEventListener("click", async () => {
     try {
       btnLoadSample.textContent = "Loading...";
@@ -53,12 +266,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await resp.json();
       resumeInput.value = data.sample_resume || "";
       jdInput.value = data.sample_jd || "";
-      btnLoadSample.textContent = "Loaded Ex-Apple Sample!";
-      setTimeout(() => { btnLoadSample.textContent = "Load Ex-Apple PM Sample"; }, 2000);
+      showToast("Loaded Text Sample!", "success");
     } catch (err) {
       console.error("Failed to load sample:", err);
-      alert("Error loading sample data.");
-      btnLoadSample.textContent = "Load Ex-Apple PM Sample";
+      showToast("Error loading sample.", "error");
+    } finally {
+      btnLoadSample.textContent = "Load Text Sample";
     }
   });
 
@@ -66,18 +279,25 @@ document.addEventListener("DOMContentLoaded", () => {
   btnClear.addEventListener("click", () => {
     resumeInput.value = "";
     jdInput.value = "";
+    currentPdfBase64 = null;
+    currentPdfFilename = null;
+    pdfFileInput.value = "";
+    dropzonePrompt.classList.remove("hidden");
+    loadedPdfPill.classList.add("hidden");
+    pdfDiagCard.classList.add("hidden");
     scoreNum.textContent = "--";
-    scoreStatus.textContent = "Run Audit to Inspect";
+    scoreStatus.textContent = "Ready for Audit";
     scoreCircle.style.borderColor = "var(--border-color)";
-    scoreSummaryBody.textContent = "Paste your resume and target job description on the left, then click Run 5-Rule Audit.";
+    scoreSummaryBody.textContent = "Upload your resume PDF or paste text on the left, add a target Job Description, and click Run 5-Rule Audit.";
+    showToast("Cleared workspace.", "warning");
   });
 
   // Run Audit
   btnAudit.addEventListener("click", async () => {
     const resume = resumeInput.value.trim();
     const jd = jdInput.value.trim();
-    if (!resume) {
-      alert("Please paste your resume or rough notes first!");
+    if (!resume && !currentPdfBase64) {
+      showToast("Please upload a PDF or paste your resume first!", "warning");
       return;
     }
 
@@ -85,19 +305,26 @@ document.addEventListener("DOMContentLoaded", () => {
       btnAudit.textContent = "Auditing (5 Rules)...";
       btnAudit.disabled = true;
 
+      const payload = {
+        resume: resume,
+        jd: jd,
+        pdf_base64: currentPdfBase64,
+        filename: currentPdfFilename
+      };
+
       const resp = await fetch("/api/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume, jd })
+        body: JSON.stringify(payload)
       });
       const data = await resp.json();
       renderAuditResults(data);
 
-      // Switch to scorecard tab
       tabBtns[0].click();
+      showToast(`Audit Complete! Score: ${data.composite_score}/100`, "success");
     } catch (err) {
       console.error("Audit error:", err);
-      alert("Failed to run audit.");
+      showToast("Failed to run audit.", "error");
     } finally {
       btnAudit.innerHTML = '<span class="btn-icon">⚡</span> Run 5-Rule Audit';
       btnAudit.disabled = false;
@@ -108,8 +335,8 @@ document.addEventListener("DOMContentLoaded", () => {
   btnTransform.addEventListener("click", async () => {
     const resume = resumeInput.value.trim();
     const jd = jdInput.value.trim();
-    if (!resume) {
-      alert("Please paste your resume or rough notes first!");
+    if (!resume && !currentPdfBase64) {
+      showToast("Please upload a PDF or paste your resume first!", "warning");
       return;
     }
 
@@ -117,10 +344,17 @@ document.addEventListener("DOMContentLoaded", () => {
       btnTransform.textContent = "Optimizing Resume...";
       btnTransform.disabled = true;
 
+      const payload = {
+        resume: resume,
+        jd: jd,
+        pdf_base64: currentPdfBase64,
+        filename: currentPdfFilename
+      };
+
       const resp = await fetch("/api/transform", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume, jd })
+        body: JSON.stringify(payload)
       });
       const data = await resp.json();
 
@@ -128,12 +362,12 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("preview-score-delta").textContent = 
         `Initial Score: ${data.initial_score}/100 ➔ Optimized Score: ${data.optimized_score}/100`;
 
-      // Switch to preview tab
       tabBtns[1].click();
       renderAuditResults(data.post_audit_details || data.audit_details);
+      showToast(`Killer Résumé Generated! Score: ${data.optimized_score}/100`, "success");
     } catch (err) {
       console.error("Transform error:", err);
-      alert("Failed to generate killer resume.");
+      showToast("Failed to generate killer resume.", "error");
     } finally {
       btnTransform.innerHTML = '<span class="btn-icon">🚀</span> Generate Killer Résumé';
       btnTransform.disabled = false;
@@ -143,7 +377,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Quick Bullet Transformer
   btnQuickXyz.addEventListener("click", async () => {
     const bullet = quickInput.value.trim();
-    if (!bullet) return;
+    if (!bullet) {
+      showToast("Enter a rough bullet point first!", "warning");
+      return;
+    }
 
     try {
       btnQuickXyz.textContent = "Transforming...";
@@ -167,6 +404,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
       }
       xyzMetricPrompts.innerHTML = promptsHtml;
+      showToast("Transformed into Google XYZ formula (+75% interview lift)!", "success");
     } catch (err) {
       console.error(err);
     } finally {
@@ -179,16 +417,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const text = outputMarkdown.textContent;
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
-      btnCopyMarkdown.textContent = "Copied to Clipboard!";
-      setTimeout(() => { btnCopyMarkdown.textContent = "Copy Markdown"; }, 2000);
+      showToast("Copied ATS Markdown to Clipboard!", "success");
     });
   });
 
-  // Print PDF
+  // Download Markdown File
+  btnDownloadMd.addEventListener("click", () => {
+    const text = outputMarkdown.textContent;
+    if (!text) {
+      showToast("Generate a killer resume first!", "warning");
+      return;
+    }
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "killer_resume.md";
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("Downloaded killer_resume.md", "success");
+  });
+
+  // Print Selectable PDF
   btnPrintPdf.addEventListener("click", () => {
     const text = outputMarkdown.textContent;
     if (!text) {
-      alert("Generate a killer resume first!");
+      showToast("Generate a killer resume first!", "warning");
       return;
     }
     const printWindow = window.open("", "_blank");
@@ -260,6 +514,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const r1 = data.rule_1_readability || {};
     renderBadge("badge-rule-1", r1.score, r1.passed);
     let r1Html = `<div><strong>Readability Status:</strong> ${r1.passed ? 'Passed ATS Parseability Check' : 'Failed Parseability Check'} (${r1.score}/100)</div>`;
+    
+    // Check if PDF metadata was attached
+    if (data.pdf_metadata) {
+      const pm = data.pdf_metadata;
+      r1Html += `<div style="margin-top:4px; padding:6px; background:rgba(56,189,248,0.1); border-radius:4px; font-size:11px; color:#38bdf8;">
+        <strong>PDF Diagnostic:</strong> ${pm.file_size_mb} MB | ${pm.page_count} page(s) | ${pm.char_count:,} selectable characters
+      </div>`;
+    }
+
     if (r1.strengths && r1.strengths.length) {
       r1Html += `<ul>${r1.strengths.map(s => `<li style="color: #34d399">✓ ${s}</li>`).join('')}</ul>`;
     }

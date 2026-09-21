@@ -3,18 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Killer Résumé Agent | Jeff Su's 5 Research-Backed Rules</title>
+  <title>Killer Résumé Agent | Jeff Su's 5 Research-Backed Rules (PDF + Text)</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
   <div class="app-container">
     <!-- Header -->
     <header class="header">
       <div class="header-left">
-        <div class="badge-tag">RESEARCH-BACKED AI ENGINE</div>
+        <div class="badge-tag">RESEARCH-BACKED AI ENGINE • ATS AUDIT</div>
         <h1>Killer Résumé Agent</h1>
         <p class="subtitle">
           Built on Jeff Su's study of <strong>4,000+ hiring managers</strong> & <strong>nearly 2 million applications</strong>.
@@ -38,23 +41,83 @@
         <div class="panel-header">
           <h2>1. Candidate & Target Context</h2>
           <div class="actions-group">
-            <button id="btn-load-sample" class="btn btn-secondary btn-sm">Load Ex-Apple PM Sample</button>
+            <button id="btn-load-sample-pdf" class="btn btn-secondary btn-sm" title="Test with a real Ex-Apple TPM PDF">Load Sample PDF</button>
+            <button id="btn-load-sample" class="btn btn-secondary btn-sm">Load Text Sample</button>
             <button id="btn-clear" class="btn btn-ghost btn-sm">Clear</button>
           </div>
         </div>
 
-        <div class="form-group">
-          <div class="label-row">
-            <label for="resume-input">Your Current Résumé (Markdown / Text):</label>
-            <span class="hint">Rule 1 & 3: Paste raw notes or current draft</span>
-          </div>
-          <textarea id="resume-input" placeholder="Paste your resume or rough notes here..."></textarea>
+        <!-- Input Mode Switcher -->
+        <div class="input-mode-tabs">
+          <button class="mode-tab active" data-mode="pdf">
+            <span class="mode-icon">📄</span> Upload PDF
+          </button>
+          <button class="mode-tab" data-mode="text">
+            <span class="mode-icon">✏️</span> Edit / Paste Text
+          </button>
         </div>
 
+        <!-- PDF Dropzone -->
+        <div id="pdf-dropzone" class="pdf-dropzone">
+          <input type="file" id="pdf-file-input" accept=".pdf,.txt,.md" class="hidden-file-input">
+          <div class="dropzone-content" id="dropzone-prompt">
+            <div class="dropzone-icon">📥</div>
+            <div class="dropzone-title">Drag & Drop Your Résumé PDF Here</div>
+            <div class="dropzone-subtitle">or <span class="browse-link">browse files</span> (.pdf, .md, .txt)</div>
+            <div class="dropzone-meta">Jeff Su Rule 1: We inspect selectable text layer & verify file &lt; 2.5 MB</div>
+          </div>
+          <!-- Loaded PDF Pill -->
+          <div id="loaded-pdf-pill" class="loaded-pdf-pill hidden">
+            <div class="file-icon">📄</div>
+            <div class="file-info">
+              <span class="file-name" id="pdf-display-name">resume.pdf</span>
+              <span class="file-stats" id="pdf-display-stats">0.2 MB • 1 Page</span>
+            </div>
+            <button type="button" id="btn-remove-pdf" class="btn-remove-file" title="Remove PDF">✕</button>
+          </div>
+        </div>
+
+        <!-- Live PDF Diagnostic Card (Appears when PDF is uploaded) -->
+        <div id="pdf-diagnostic-card" class="pdf-diagnostic-card hidden">
+          <div class="diag-header">
+            <span class="diag-title">ATS PDF PRE-FLIGHT AUDIT</span>
+            <span class="diag-status" id="pdf-ats-badge">VERIFIED</span>
+          </div>
+          <div class="diag-grid">
+            <div class="diag-item">
+              <span class="diag-label">Selectable Text</span>
+              <span class="diag-val" id="pdf-diag-selectable">Checking...</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">File Size</span>
+              <span class="diag-val" id="pdf-diag-size">Checking...</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">Page Count</span>
+              <span class="diag-val" id="pdf-diag-pages">Checking...</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">Embedded Images</span>
+              <span class="diag-val" id="pdf-diag-images">0</span>
+            </div>
+          </div>
+          <div id="pdf-warning-banner" class="pdf-warning-banner hidden"></div>
+        </div>
+
+        <!-- Text Area (Always accessible or synced with PDF) -->
+        <div class="form-group" id="resume-text-group">
+          <div class="label-row">
+            <label for="resume-input">Extracted Résumé Text / Notes:</label>
+            <span class="hint" id="resume-input-hint">Synced with uploaded PDF</span>
+          </div>
+          <textarea id="resume-input" placeholder="Extracted text from PDF or raw markdown notes..."></textarea>
+        </div>
+
+        <!-- Job Description Area -->
         <div class="form-group">
           <div class="label-row">
             <label for="jd-input">Target Job Description (JD):</label>
-            <span class="hint">Rule 2: Analyzes employer problems & sweet-spot keywords</span>
+            <span class="hint">Rule 2: Maps employer problems & sweet-spot keywords</span>
           </div>
           <textarea id="jd-input" placeholder="Paste target Job Description here..."></textarea>
         </div>
@@ -78,7 +141,7 @@
             Transform vague responsibilities into Google's proven format: <em>Accomplished [X], as measured by [Y], by doing [Z]</em>.
           </p>
           <div class="input-inline">
-            <input type="text" id="quick-bullet-input" placeholder="e.g. Helped with sprint planning and user stories...">
+            <input type="text" id="quick-bullet-input" placeholder="e.g. Responsible for sprint planning and writing user stories...">
             <button id="btn-quick-xyz" class="btn btn-secondary btn-sm">Transform Bullet</button>
           </div>
           <div id="xyz-result-container" class="xyz-result-container hidden">
@@ -104,12 +167,12 @@
                 <span id="overall-score-num">--</span>
                 <span class="score-denom">/ 100</span>
               </div>
-              <div class="score-status-text" id="overall-status-text">Run Audit to Inspect</div>
+              <div class="score-status-text" id="overall-status-text">Ready for Audit</div>
             </div>
             <div class="score-summary-box">
               <h4>Executive Practitioner Verdict</h4>
               <p id="score-summary-body">
-                Paste your resume and target job description on the left, then click <strong>Run 5-Rule Audit</strong> to calculate your ATS readability, keyword mapping sweet spot, and quantified impact score.
+                Upload your resume PDF or paste text on the left, add a target Job Description, and click <strong>Run 5-Rule Audit</strong> to calculate your ATS readability, keyword mapping sweet spot, and quantified impact score.
               </p>
             </div>
           </div>
@@ -124,7 +187,7 @@
                 <span class="rule-score-badge" id="badge-rule-1">--</span>
               </div>
               <p class="rule-research-note">
-                <strong>Research:</strong> 87% of hiring managers say AI reads simple, text-based résumés more accurately. Avoid Canva visual traps, skill bars, and text in images.
+                <strong>Research:</strong> 87% of hiring managers say AI reads simple, text-based résumés more accurately. Avoid Canva visual traps, skill bars, and text in images. File must be under 2.5 MB.
               </p>
               <div class="rule-feedback" id="feedback-rule-1">Awaiting audit...</div>
             </div>
@@ -189,6 +252,7 @@
             <div class="preview-stats" id="preview-score-delta">Optimized Draft Ready</div>
             <div class="preview-buttons">
               <button id="btn-copy-markdown" class="btn btn-secondary btn-sm">Copy Markdown</button>
+              <button id="btn-download-md" class="btn btn-secondary btn-sm">Download .MD</button>
               <button id="btn-print-pdf" class="btn btn-accent btn-sm">Print / Save Selectable PDF</button>
             </div>
           </div>

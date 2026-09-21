@@ -2,26 +2,28 @@
 """
 Killer Resume Agent - CLI
 Usage:
+  python3 cli.py audit --resume examples/sample_resume.pdf --jd examples/sample_jd.md
   python3 cli.py audit --resume examples/sample_resume.md --jd examples/sample_jd.md
-  python3 cli.py transform --resume examples/sample_resume.md --jd examples/sample_jd.md --out killer_resume.md
+  python3 cli.py transform --resume examples/sample_resume.pdf --jd examples/sample_jd.md --out killer_resume.md
 """
 import argparse
 import sys
 import os
 from agent import KillerResumeAgent
+from pdf_parser import extract_pdf_data
 
 def main():
     parser = argparse.ArgumentParser(description="Killer Resume Agent - Built on Jeff Su's 5 Research-Backed Rules")
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
     # Audit command
-    audit_parser = subparsers.add_parser("audit", help="Run 5-rule audit on a resume against a target job description")
-    audit_parser.add_argument("--resume", required=True, help="Path to resume file (Markdown or TXT)")
+    audit_parser = subparsers.add_parser("audit", help="Run 5-rule audit on a resume (PDF or Markdown) against a target job description")
+    audit_parser.add_argument("--resume", required=True, help="Path to resume file (.pdf, .md, or .txt)")
     audit_parser.add_argument("--jd", default="", help="Path to Job Description file")
 
     # Transform command
     transform_parser = subparsers.add_parser("transform", help="Transform raw resume into killer ATS-ready resume")
-    transform_parser.add_argument("--resume", required=True, help="Path to resume file")
+    transform_parser.add_argument("--resume", required=True, help="Path to resume file (.pdf, .md, or .txt)")
     transform_parser.add_argument("--jd", default="", help="Path to Job Description file")
     transform_parser.add_argument("--out", default="killer_resume.md", help="Output file path")
 
@@ -35,8 +37,22 @@ def main():
         print(f"Error: Resume file '{args.resume}' not found.")
         sys.exit(1)
 
-    with open(args.resume, "r", encoding="utf-8") as f:
-        resume_text = f.read()
+    pdf_diag = None
+    if args.resume.lower().endswith(".pdf"):
+        print(f"📄 Inspecting PDF ATS compatibility for: {args.resume}...")
+        try:
+            pdf_diag = extract_pdf_data(args.resume)
+            resume_text = pdf_diag["text"]
+            print(f"   [✓] Selectable text extracted: {pdf_diag['char_count']:,} chars across {pdf_diag['page_count']} page(s).")
+            print(f"   [✓] File size: {pdf_diag['file_size_mb']} MB (Threshold: 2.5 MB).")
+            if pdf_diag["image_trapped_warning"]:
+                print(f"   [!] CRITICAL WARNING: Text trapped in images or unselectable!")
+        except Exception as e:
+            print(f"Error extracting PDF: {e}")
+            sys.exit(1)
+    else:
+        with open(args.resume, "r", encoding="utf-8") as f:
+            resume_text = f.read()
 
     jd_text = ""
     if args.jd and os.path.exists(args.jd):
@@ -56,6 +72,10 @@ def main():
         print(f"📋 EXECUTIVE SUMMARY: {res['executive_summary']}\n")
 
         print("--- RULE 1: AI READABILITY (ATS) ---")
+        if pdf_diag:
+            print(f"PDF Inspection: Size: {pdf_diag['file_size_mb']}MB | Pages: {pdf_diag['page_count']} | Selectable: {pdf_diag['is_selectable']}")
+            for flg in pdf_diag["flags"]:
+                print(f"  [{'✓' if flg['severity'] == 'PASS' else '!'}] {flg['message']}")
         print(f"Score: {res['rule_1_readability']['score']}/100 | Passed: {res['rule_1_readability']['passed']}")
         for s in res['rule_1_readability']['strengths']:
             print(f"  [✓] {s}")
