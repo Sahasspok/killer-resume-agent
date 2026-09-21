@@ -7,20 +7,36 @@ Key Findings (Jeff Su):
 """
 import re
 
-STANDARD_HEADINGS = [
-    "summary", "professional summary", "experience", "work experience",
-    "professional experience", "projects", "key projects", "skills",
-    "technical skills", "education", "certifications"
-]
+CANONICAL_SECTIONS = {
+    "Summary": [
+        "summary", "professional summary", "executive summary", "profile", "about me", "career objective"
+    ],
+    "Experience": [
+        "experience", "work experience", "professional experience", "work history", "employment history", "employment"
+    ],
+    "Skills": [
+        "skills", "technical skills", "core skills", "core competencies", "competencies", "skills & tools",
+        "skills and tools", "core competencies & technical skills", "technologies"
+    ],
+    "Education": [
+        "education", "academic background", "academic history", "education & certifications", "education and certifications"
+    ],
+    "Projects": [
+        "projects", "key projects", "technical projects", "portfolio", "initiatives", "key projects & initiatives"
+    ],
+    "Certifications": [
+        "certifications", "licenses", "credentials", "certifications & licenses"
+    ]
+}
 
 def audit_readability(resume_text: str) -> dict:
     issues = []
     strengths = []
     score = 100
 
-    # 1. Check for multi-column or table artifacts (pipe tables, column divs)
-    table_pipes = len(re.findall(r"\|.*\|.*\|", resume_text))
-    if table_pipes > 3:
+    # 1. Check for multi-column or table artifacts (markdown tables with delimiter rows e.g. |---|---|)
+    has_markdown_table = bool(re.search(r"^\s*\|?\s*[-:]{2,}\s*\|\s*[-:| ]+\s*\|?\s*$", resume_text, re.MULTILINE))
+    if has_markdown_table:
         score -= 20
         issues.append({
             "code": "MULTI_COLUMN_TABLE_DETECTED",
@@ -31,8 +47,7 @@ def audit_readability(resume_text: str) -> dict:
         strengths.append("Single-column flow: Clean top-to-bottom parser structure.")
 
     # 2. Check for skill bars or graphical rating patterns specifically in skills context (e.g. Python: 90%, Skill: 5/5, ★★★★, [====  ])
-    # Extract skills section if present
-    skills_match = re.search(r"(?:skills|technical skills)[\s\S]*?(?:education|projects|experience|$)", resume_text, re.IGNORECASE)
+    skills_match = re.search(r"(?:skills|technical skills|competencies)[\s\S]*?(?:education|projects|experience|$)", resume_text, re.IGNORECASE)
     skills_text = skills_match.group(0) if skills_match else ""
     rating_patterns = re.findall(r"(?:[A-Za-z\s]+:\s*\d{1,2}\s*[/|out\s+of]\s*10|[A-Za-z\s]+:\s*\d{1,3}%|★|⭐|\[={2,}\s*\])", skills_text)
     if rating_patterns:
@@ -45,18 +60,24 @@ def audit_readability(resume_text: str) -> dict:
     else:
         strengths.append("No arbitrary skill bars or rating icons.")
 
-    # 3. Check for standard headings
+    # 3. Check for standard headings using canonical section mapping
     headings_found = []
-    lines = [l.strip().lower().replace("#", "").strip() for l in resume_text.splitlines() if l.strip()]
-    for heading in STANDARD_HEADINGS:
-        if any(line == heading or line.startswith(heading + ":") for line in lines):
-            headings_found.append(heading)
+    lines = [re.sub(r"^#{1,6}\s*", "", l).strip().lower().strip("*_: ") for l in resume_text.splitlines() if l.strip()]
+    
+    for section_name, aliases in CANONICAL_SECTIONS.items():
+        found = False
+        for alias in aliases:
+            if any(line == alias or line.startswith(alias + ":") or line.endswith(alias) for line in lines):
+                found = True
+                break
+        if found:
+            headings_found.append(section_name)
 
     if len(headings_found) < 3:
         score -= 20
         issues.append({
             "code": "NON_STANDARD_HEADINGS",
-            "message": f"Found only {len(headings_found)} conventional headings. ATS needs standard sections to classify data.",
+            "message": f"Found only {len(headings_found)} conventional headings ({headings_found}). ATS needs standard sections to classify data.",
             "fix": "Use conventional headers: Summary, Experience, Projects, Skills, Education."
         })
     else:

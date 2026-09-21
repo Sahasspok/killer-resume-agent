@@ -263,11 +263,17 @@ def validate_rule_compliance(resume_text: str, jd_text: str = "") -> Dict[str, A
         }
     ]
 
-    all_passed = all(c["status"] == "PASS" for c in checks if c["name"].startswith("Rule 1"))
+    rule_issues = []
+    if not r1["passed"]:
+        for iss in r1.get("issues", []):
+            rule_issues.append(f"Rule 1 Readability ({iss['code']}): {iss['message']}")
+
+    all_passed = (len(rule_issues) == 0) and all(c["status"] == "PASS" for c in checks if c["name"].startswith("Rule 1"))
     return {
         "pillar": "Jeff Su 5-Rule Empirical Compliance",
         "passed": all_passed,
         "checks": checks,
+        "issues": rule_issues,
         "quantified_ratio": quant_ratio,
         "cliche_count": len(cliche_bullets)
     }
@@ -332,18 +338,19 @@ def validate_pdf_render(pdf_bytes: bytes, source_markdown: str = "") -> Dict[str
                 "details": f"Verified {char_count:,} characters of selectable text across {page_count} page(s)."
             })
 
-        # 3. Page Count QA (1-2 pages optimal)
+        # 3. Page Count QA (Strict 1-2 pages ATS standard)
         if page_count > 2:
+            issues.append(f"PDF exceeds ATS 2-page limit: {page_count} pages rendered. (Hiring managers spend 6-10s; must be 1-2 pages).")
             checks.append({
                 "name": "Page Count Optimization",
-                "status": "WARNING",
-                "details": f"Document is {page_count} pages. Recommend condensing to 1-2 pages."
+                "status": "FAIL",
+                "details": f"Document is {page_count} pages (Exceeds ATS limit). Adaptive page budgeting must condense to 1-2 pages."
             })
         else:
             checks.append({
                 "name": "Page Count Optimization",
                 "status": "PASS",
-                "details": f"Optimal length: {page_count} page(s)."
+                "details": f"Optimal length: {page_count} page(s) (verified for 6-second recruiter scan)."
             })
 
         # 4. Parity check with source markdown if supplied
@@ -419,6 +426,8 @@ def run_full_qa_pipeline(
         critical_failures.extend(fact_qa["hallucinations"])
     if not format_qa["passed"]:
         critical_failures.extend(format_qa["issues"])
+    if not rule_qa["passed"]:
+        critical_failures.extend(rule_qa.get("issues", []))
     if pdf_qa and not pdf_qa["passed"]:
         critical_failures.extend(pdf_qa["issues"])
 
@@ -430,6 +439,8 @@ def run_full_qa_pipeline(
         score -= 40
     if not format_qa["passed"]:
         score -= 25
+    if not rule_qa["passed"]:
+        score -= 20
     if pdf_qa and not pdf_qa["passed"]:
         score -= 20
     if rule_qa["cliche_count"] > 0:

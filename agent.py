@@ -68,7 +68,7 @@ class KillerResumeAgent:
         quantified_count = 0
         cliche_count = 0
 
-        for b in raw_bullets[:15]:
+        for b in raw_bullets:
             gate = enforce_human_gate(b)
             xyz = transform_to_xyz(b)
             if gate["has_cliche"]:
@@ -85,7 +85,9 @@ class KillerResumeAgent:
         quant_ratio = round((quantified_count / total_bullets) * 100, 1)
 
         r3_score = max(40, 100 - (cliche_count * 15))
-        r4_score = min(100, int(quant_ratio * 1.1))
+        # Jeff Su Rule 4: Quantify high-impact wins (3-6 quantified wins per resume is sweet spot)
+        target_wins = min(8, max(3, int(total_bullets * 0.25)))
+        r4_score = min(100, int((quantified_count / max(1, target_wins)) * 100)) if quantified_count > 0 else 50
 
         # Overall composite score weighted by empirical impact
         composite_score = int(

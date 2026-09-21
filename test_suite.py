@@ -222,11 +222,20 @@ class TestKillerResumeAgent(unittest.TestCase):
         self.assertEqual(qa["qa_score"], 100)
         self.assertEqual(len(qa["critical_failures"]), 0)
 
-        # 6. Verify vector PDF geometry
+        # 6. Rule 1 Readability QA Integration Verification (Zero heading/readability issues)
+        post_r1 = res["post_audit_details"]["rule_1_readability"]
+        self.assertEqual(post_r1["score"], 100)
+        self.assertEqual(post_r1["issues"], [], f"Rule 1 issues found on generated resume: {post_r1['issues']}")
+        self.assertIn("Summary", post_r1["headings_found"])
+        self.assertIn("Experience", post_r1["headings_found"])
+        self.assertIn("Skills", post_r1["headings_found"])
+        self.assertIn("Education", post_r1["headings_found"])
+
+        # 7. Verify vector PDF geometry (Strictly 2 pages, never 3 pages)
         pdf_bytes = base64.b64decode(res["pdf_base64"])
         self.assertLess(len(pdf_bytes), 2.5 * 1024 * 1024)
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-        self.assertLessEqual(len(doc), 2, "Consolidated 5-page LinkedIn export should render cleanly in 2 pages")
+        self.assertEqual(len(doc), 2, f"Consolidated 5-page LinkedIn export must strictly render in 2 pages, got {len(doc)} pages")
         doc.close()
 
 if __name__ == "__main__":

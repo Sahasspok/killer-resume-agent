@@ -204,28 +204,55 @@ def generate_pdf_from_markdown(markdown_text: str, output_path: str = None, styl
     """
     Renders clean, broadcast-quality ATS PDF in the Executive Standard Template.
     Supports multi-page automatic flow with deterministic typography via fitz.Story.
+    Guarantees strict 1-2 page budget by adaptively calibrating font size and margins.
     Returns PDF binary bytes.
     """
-    html_content = standard_template_to_html(markdown_text, style_meta=style_meta)
-    
-    # Render using fitz.Story for multi-page overflow and crisp vector layout
-    try:
-        out = io.BytesIO()
-        writer = fitz.DocumentWriter(out)
-        story = fitz.Story(html_content)
+    if not style_meta:
+        style_meta = {}
 
-        def rectfn(rect_num, filled):
-            return fitz.Rect(0, 0, 595, 842), fitz.Rect(36, 32, 595 - 36, 842 - 32), None
+    # Target optimal ATS font sizes: clamp initial font size between 8.8 and 9.8pt
+    requested_font = style_meta.get("font_size_pt", 9.5)
+    base_font = min(9.8, max(8.8, float(requested_font)))
 
-        story.write(writer, rectfn)
-        writer.close()
-        pdf_bytes = out.getvalue()
-    except Exception:
+    # Iterative page budget loop: target <= 2 pages
+    font_candidates = [base_font, 9.2, 8.8, 8.4]
+    pdf_bytes = None
+
+    for font_size in font_candidates:
+        current_meta = dict(style_meta)
+        current_meta["font_size_pt"] = font_size
+        html_content = standard_template_to_html(markdown_text, style_meta=current_meta)
+
+        try:
+            out = io.BytesIO()
+            writer = fitz.DocumentWriter(out)
+            story = fitz.Story(html_content)
+
+            def rectfn(rect_num, filled):
+                # A4: 595 x 842 pt. 30pt top/bottom, 36pt left/right
+                return fitz.Rect(0, 0, 595, 842), fitz.Rect(36, 30, 595 - 36, 842 - 30), None
+
+            story.write(writer, rectfn)
+            writer.close()
+            candidate_bytes = out.getvalue()
+
+            # Check page count
+            doc = fitz.open(stream=candidate_bytes, filetype="pdf")
+            page_count = len(doc)
+            doc.close()
+
+            pdf_bytes = candidate_bytes
+            if page_count <= 2:
+                break
+        except Exception:
+            break
+
+    if not pdf_bytes:
         # Fallback to insert_htmlbox
         doc = fitz.open()
         page = doc.new_page(width=595, height=842)
-        rect = fitz.Rect(36, 32, 595 - 36, 842 - 32)
-        page.insert_htmlbox(rect, html_content)
+        rect = fitz.Rect(36, 30, 595 - 36, 842 - 30)
+        page.insert_htmlbox(rect, standard_template_to_html(markdown_text, style_meta=style_meta))
         pdf_bytes = doc.tobytes()
         doc.close()
 
