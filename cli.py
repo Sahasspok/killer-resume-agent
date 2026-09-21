@@ -3,14 +3,17 @@
 Killer Resume Agent - CLI
 Usage:
   python3 cli.py audit --resume examples/sample_resume.pdf --jd examples/sample_jd.md
-  python3 cli.py audit --resume examples/sample_resume.md --jd examples/sample_jd.md
-  python3 cli.py transform --resume examples/sample_resume.pdf --jd examples/sample_jd.md --out killer_resume.md
+  python3 cli.py qa --resume examples/sample_resume.md --jd examples/sample_jd.md
+  python3 cli.py transform --resume examples/sample_resume.pdf --jd examples/sample_jd.md --out killer_resume.md --pdf output.pdf
 """
 import argparse
 import sys
 import os
+import base64
 from agent import KillerResumeAgent
 from pdf_parser import extract_pdf_data
+from qa_validator import run_full_qa_pipeline
+from pdf_generator import generate_pdf_from_markdown
 
 def main():
     parser = argparse.ArgumentParser(description="Killer Resume Agent - Built on Jeff Su's 5 Research-Backed Rules")
@@ -21,11 +24,18 @@ def main():
     audit_parser.add_argument("--resume", required=True, help="Path to resume file (.pdf, .md, or .txt)")
     audit_parser.add_argument("--jd", default="", help="Path to Job Description file")
 
+    # QA command
+    qa_parser = subparsers.add_parser("qa", help="Run 7-Pillar Production QA Matrix on a resume")
+    qa_parser.add_argument("--resume", required=True, help="Path to resume file (.pdf, .md, or .txt)")
+    qa_parser.add_argument("--jd", default="", help="Path to Job Description file")
+    qa_parser.add_argument("--pdf", default="", help="Optional compiled PDF to inspect")
+
     # Transform command
-    transform_parser = subparsers.add_parser("transform", help="Transform raw resume into killer ATS-ready resume")
+    transform_parser = subparsers.add_parser("transform", help="Transform raw resume into killer ATS-ready resume with QA verification")
     transform_parser.add_argument("--resume", required=True, help="Path to resume file (.pdf, .md, or .txt)")
     transform_parser.add_argument("--jd", default="", help="Path to Job Description file")
-    transform_parser.add_argument("--out", default="killer_resume.md", help="Output file path")
+    transform_parser.add_argument("--out", default="killer_resume.md", help="Output markdown file path")
+    transform_parser.add_argument("--pdf", default="killer_resume.pdf", help="Output PDF file path")
 
     args = parser.parse_args()
 
@@ -108,15 +118,48 @@ def main():
 
         print("\n" + "="*70 + "\n")
 
+    elif args.command == "qa":
+        print("\n" + "="*70)
+        print("  7-PILLAR PRODUCTION QA MATRIX AUDIT")
+        print("="*70 + "\n")
+        pdf_bytes = None
+        if args.pdf and os.path.exists(args.pdf):
+            with open(args.pdf, "rb") as f:
+                pdf_bytes = f.read()
+
+        qa_res = run_full_qa_pipeline(resume_text, resume_text, jd_text=jd_text, pdf_bytes=pdf_bytes)
+        print(f"STATUS: {qa_res['overall_status']} (QA Score: {qa_res['qa_score']}/100)")
+        print(f"SUMMARY: {qa_res['summary']}\n")
+        for pillar_name, pillar in qa_res["pillars"].items():
+            if pillar:
+                print(f"[{'PASS' if pillar['passed'] else 'FAIL'}] {pillar['pillar'].upper()}")
+                for chk in pillar["checks"]:
+                    print(f"   [{chk['status']}] {chk['name']}: {chk['details']}")
+        print("\n" + "="*70 + "\n")
+
     elif args.command == "transform":
-        print("Transforming resume with 5-Rule Optimization Engine...")
+        print("🚀 Transforming resume into Executive ATS Standard Template with 7-Pillar QA...")
         result = agent.transform_resume(resume_text, jd_text)
+        
         with open(args.out, "w", encoding="utf-8") as f:
             f.write(result["optimized_markdown"])
-        print(f"\nOptimization Complete!")
-        print(f"Initial Score:   {result['initial_score']}/100")
-        print(f"Optimized Score: {result['optimized_score']}/100")
-        print(f"Saved ATS-certified killer resume to: {args.out}\n")
+
+        if args.pdf:
+            pdf_bytes = base64.b64decode(result["pdf_base64"])
+            with open(args.pdf, "wb") as f:
+                f.write(pdf_bytes)
+
+        qa = result["qa_report"]
+        print(f"\n✓ Optimization & Production QA Complete!")
+        print(f"  Initial Score:   {result['initial_score']}/100")
+        print(f"  Optimized Score: {result['optimized_score']}/100")
+        print(f"  QA Status:       {qa['overall_status']} ({qa['qa_score']}/100)")
+        print(f"  QA Summary:      {qa['summary']}")
+        print(f"\n📁 Outputs Saved:")
+        print(f"  - Markdown: {args.out}")
+        if args.pdf:
+            print(f"  - Vector PDF: {args.pdf} ({result['pdf_size_kb']} KB)")
+        print()
 
 if __name__ == "__main__":
     main()

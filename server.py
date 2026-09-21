@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Killer Resume Agent - Web Server & API
-Runs on Python 3 Standard Library + PyMuPDF/pypdf for PDF processing.
+Encodes Jeff Su's 5 Research-Backed Rules with 7-Pillar Production QA Validation.
+Runs on Python 3 Standard Library + PyMuPDF/pypdf.
 """
 import http.server
 import socketserver
@@ -16,6 +17,7 @@ from rules.rule4_google_xyz import transform_to_xyz, DIMENSIONS
 from pdf_parser import extract_pdf_data
 from pdf_generator import generate_pdf_from_markdown
 from format_preserver import extract_pdf_style_fingerprint
+from qa_validator import run_full_qa_pipeline, validate_pdf_render
 
 PORT = 5050
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -122,6 +124,28 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                 result["style_meta"] = style_meta
             self.send_json_response(result)
 
+        elif parsed.path == "/api/qa-report":
+            source_text = data.get("source_resume", "")
+            markdown_content = data.get("markdown", "")
+            jd_text = data.get("jd", "")
+            pdf_b64 = data.get("pdf_base64", "")
+            pdf_bytes = None
+            if pdf_b64:
+                try:
+                    if "," in pdf_b64:
+                        pdf_b64 = pdf_b64.split(",", 1)[1]
+                    pdf_bytes = base64.b64decode(pdf_b64)
+                except Exception:
+                    pass
+
+            qa_res = run_full_qa_pipeline(
+                source_text=source_text,
+                output_markdown=markdown_content,
+                jd_text=jd_text,
+                pdf_bytes=pdf_bytes
+            )
+            self.send_json_response(qa_res)
+
         elif parsed.path == "/api/generate-pdf":
             markdown_content = data.get("markdown", "")
             style_meta = data.get("style_meta", None)
@@ -131,18 +155,21 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             try:
                 pdf_bytes = generate_pdf_from_markdown(markdown_content, style_meta=style_meta)
                 pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+                pdf_qa = validate_pdf_render(pdf_bytes, source_markdown=markdown_content)
                 self.send_json_response({
                     "pdf_base64": pdf_b64,
                     "filename": "killer_resume_updated.pdf",
                     "size_kb": round(len(pdf_bytes) / 1024, 1),
-                    "style_meta": style_meta
+                    "style_meta": style_meta,
+                    "pdf_qa": pdf_qa
                 })
             except Exception as e:
                 self.send_json_response({"error": f"Failed to generate PDF: {str(e)}"}, status=500)
 
         elif parsed.path == "/api/xyz":
             bullet = data.get("bullet", "")
-            result = transform_to_xyz(bullet)
+            metric = data.get("metric", None)
+            result = transform_to_xyz(bullet, metric_value=metric)
             self.send_json_response(result)
 
         elif parsed.path == "/api/clarify":
@@ -203,7 +230,7 @@ def run_server(port=PORT):
     socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer(("", port), KillerResumeHandler) as httpd:
         print(f"================================================================")
-        print(f"🚀 KILLER RESUME AGENT (PDF + TEXT) IS LIVE AT:")
+        print(f"🚀 KILLER RESUME AGENT (QA CERTIFIED) IS LIVE AT:")
         print(f"   http://localhost:{port}")
         print(f"================================================================")
         try:

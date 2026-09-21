@@ -5,6 +5,7 @@ Key Findings (Jeff Su):
 - Framework: Google's XYZ Formula:
   "Accomplished [X], as measured by [Y], by doing [Z]."
 - 6 Impact Dimensions: Time Saved, Speed/Velocity, Scale/Volume, Quality/Accuracy, Cost Efficiency, Adoption/Revenue.
+- ZERO Hallucinations: Never invent fake metrics or numbers for the candidate.
 """
 import re
 
@@ -19,28 +20,34 @@ METRIC_PATTERNS = [
 
 DIMENSIONS = {
     "TIME_SAVED": {
-        "prompt": "How much time did your solution save per day/week?",
-        "example": "cutting weekly reporting overhead from 4 hours to 30 minutes"
+        "label": "Time Saved",
+        "prompt": "How much time did your solution save per day or week?",
+        "example": "cutting weekly reporting overhead from 2 hours to 30 minutes"
     },
     "SPEED_VELOCITY": {
-        "prompt": "How did cycle time or delivery speed change?",
-        "example": "accelerating sprint release cadence from 14 days to 4 days"
+        "label": "Speed / Velocity",
+        "prompt": "How did cycle time or delivery speed accelerate?",
+        "example": "accelerating release turnaround from 14 days to 4 days"
     },
     "SCALE_VOLUME": {
-        "prompt": "What volume, traffic, or user count was handled?",
-        "example": "scaling pipeline throughput to handle 1.8M daily transactions"
+        "label": "Scale / Volume",
+        "prompt": "What volume, data traffic, or user count was handled?",
+        "example": "scaling pipeline to process 1.8M daily transactions"
     },
     "QUALITY_ACCURACY": {
+        "label": "Quality / Accuracy",
         "prompt": "Did defect rates, errors, or customer tickets drop?",
-        "example": "reducing critical bug escapes by 45% prior to production release"
+        "example": "reducing critical bug escapes by 42% prior to production release"
     },
     "COST_EFFICIENCY": {
+        "label": "Cost / Efficiency",
         "prompt": "What financial or resource savings were generated?",
         "example": "saving $32,000 annually in redundant cloud compute spend"
     },
-    "ADOPTION_CONVERSION": {
-        "prompt": "How did user adoption, retention, or completion improve?",
-        "example": "driving a 22% increase in new-user onboarding completion"
+    "ADOPTION_GROWTH": {
+        "label": "Adoption / Growth",
+        "prompt": "How did user adoption, retention, or customer satisfaction increase?",
+        "example": "driving a 31% increase in onboarding completion"
     }
 }
 
@@ -57,31 +64,44 @@ def analyze_metrics(bullet: str) -> dict:
         "interview_rate_multiplier": "1.75x (+75% per Jeff Su study)" if has_numbers else "1.0x (unquantified baseline)"
     }
 
-def transform_to_xyz(raw_bullet: str, action: str = None, metric: str = None, method: str = None) -> dict:
+def transform_to_xyz(raw_bullet: str, metric_value: str = None, dimension: str = None) -> dict:
     """
     Transforms a raw responsibility bullet into Google's XYZ formula:
     Accomplished [X], as measured by [Y], by doing [Z].
+    Preserves user facts; integrates user-supplied metric if provided.
     """
     cleaned = raw_bullet.strip().lstrip("-*•> ").strip()
     analysis = analyze_metrics(cleaned)
 
-    # Heuristic detection of parts if not explicitly provided
-    xyz_bullet = cleaned
-    if not analysis["has_metrics"]:
-        # Suggest template
-        suggested_draft = f"Streamlined {cleaned.lower() if not cleaned.startswith('I ') else cleaned[2:].lower()}, saving 5+ hours weekly, by implementing standardized automation workflows."
-        status = "NEEDS_QUANTIFICATION"
-    else:
-        # Check if already roughly in XYZ
+    if metric_value:
+        # User explicitly supplied a metric (e.g. "by 35%" or "saving 4 hours weekly")
+        mv = metric_value.strip()
+        if not mv.startswith(("by ", "saving ", "reducing ", "achieving ")):
+            mv = f"by {mv}"
+        suggested_draft = f"{cleaned.rstrip('.,; ')}, {mv}."
+        status = "QUANTIFIED_BY_USER"
+        has_metrics = True
+        found_metrics = [metric_value]
+    elif analysis["has_metrics"]:
         suggested_draft = cleaned
-        status = "QUANTIFIED"
+        status = "ALREADY_QUANTIFIED"
+        has_metrics = True
+        found_metrics = analysis["found_metrics"]
+    else:
+        # Provide clean XYZ structure with prompt placeholder for candidate's real numbers
+        cleaned_core = re.sub(r'^(?:responsible for managing|responsible for|helped with|worked on|handled)\s+', '', cleaned, flags=re.I)
+        cleaned_core = cleaned_core[0].upper() + cleaned_core[1:] if cleaned_core else cleaned
+        suggested_draft = f"{cleaned_core.rstrip('.,; ')} [measured by X% / hours saved] by implementing targeted process optimizations."
+        status = "NEEDS_USER_METRIC"
+        has_metrics = False
+        found_metrics = []
 
     return {
         "rule": "Rule 4: Prove Your Impact With Numbers (Google XYZ)",
         "original": cleaned,
         "status": status,
-        "has_metrics": analysis["has_metrics"],
-        "found_metrics": analysis["found_metrics"],
+        "has_metrics": has_metrics,
+        "found_metrics": found_metrics,
         "suggested_xyz": suggested_draft,
         "formula": "Accomplished [X], as measured by [Y], by doing [Z]",
         "dimensions": DIMENSIONS,

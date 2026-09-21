@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Killer Résumé Agent | Jeff Su's 5 Research-Backed Rules (PDF + Text)</title>
-  <link rel="stylesheet" href="style.css?v=20260921_theme">
+  <title>Killer Résumé Agent | Jeff Su's 5 Research-Backed Rules + 7-Pillar Production QA</title>
+  <link rel="stylesheet" href="style.css?v=20260921_qa">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -17,10 +17,10 @@
     <!-- Header -->
     <header class="header">
       <div class="header-left">
-        <div class="badge-tag">RESEARCH-BACKED AI ENGINE • ATS AUDIT</div>
+        <div class="badge-tag">RESEARCH-BACKED AI ENGINE • 7-PILLAR PRODUCTION QA</div>
         <h1>Killer Résumé Agent</h1>
         <p class="subtitle">
-          Built on Jeff Su's study of <strong>4,000+ hiring managers</strong> & <strong>nearly 2 million applications</strong>.
+          Built on Jeff Su's empirical research of <strong>4,000+ hiring managers</strong> & <strong>nearly 2 million applications</strong>.
         </p>
       </div>
       <div class="header-right">
@@ -67,7 +67,6 @@
 
         <!-- PDF Dropzone Container -->
         <div id="pdf-dropzone" class="pdf-dropzone">
-          <!-- Native File Input Overlay -->
           <input type="file" id="pdf-file-input" accept=".pdf,.txt,.md" class="file-overlay-input" title="Click or drop file to upload">
           
           <div class="dropzone-content" id="dropzone-prompt">
@@ -91,7 +90,7 @@
           </div>
         </div>
 
-        <!-- Live PDF Diagnostic Card (Appears when PDF is uploaded) -->
+        <!-- Live PDF Diagnostic Card -->
         <div id="pdf-diagnostic-card" class="pdf-diagnostic-card hidden">
           <div class="diag-header">
             <span class="diag-title">ATS PDF PRE-FLIGHT AUDIT</span>
@@ -118,7 +117,7 @@
           <div id="pdf-warning-banner" class="pdf-warning-banner hidden"></div>
         </div>
 
-        <!-- Text Area (Always accessible or synced with PDF) -->
+        <!-- Text Area -->
         <div class="form-group" id="resume-text-group">
           <div class="label-row">
             <label for="resume-input">Extracted Résumé Text / Notes:</label>
@@ -131,7 +130,7 @@
         <div class="form-group">
           <div class="label-row">
             <label for="jd-input">Target Job Description (JD):</label>
-            <span class="hint">Rule 2: Maps employer problems & sweet-spot keywords</span>
+            <span class="hint">Rule 2: Maps employer problems & sweet-spot keywords (45-75%)</span>
           </div>
           <textarea id="jd-input" placeholder="Paste target Job Description here..."></textarea>
         </div>
@@ -152,11 +151,22 @@
             <h3>Interactive Google XYZ Transformer</h3>
           </div>
           <p class="desc">
-            Transform vague responsibilities into Google's proven format: <em>Accomplished [X], as measured by [Y], by doing [Z]</em>.
+            Transform vague responsibilities into Google's proven framework: <em>Accomplished [X], as measured by [Y], by doing [Z]</em>. Zero hallucinations: supply your real verified metric.
           </p>
-          <div class="input-inline">
-            <input type="text" id="quick-bullet-input" placeholder="e.g. Responsible for sprint planning and writing user stories...">
-            <button type="button" id="btn-quick-xyz" class="btn btn-secondary btn-sm">Transform Bullet</button>
+          <div class="input-inline" style="margin-bottom: 8px;">
+            <input type="text" id="quick-bullet-input" placeholder="e.g. Responsible for managing sprint planning and writing user stories...">
+          </div>
+          <div class="xyz-controls-row">
+            <select id="xyz-dimension-select" class="select-dimension" title="Select Impact Dimension">
+              <option value="TIME_SAVED">Time Saved (e.g. 4 hrs to 45 mins)</option>
+              <option value="SPEED_VELOCITY">Speed / Velocity (e.g. 14 days to 4 days)</option>
+              <option value="SCALE_VOLUME">Scale / Volume (e.g. 15 initiatives / 1.8M users)</option>
+              <option value="QUALITY_ACCURACY">Quality / Accuracy (e.g. -35% defect escapes)</option>
+              <option value="COST_EFFICIENCY">Cost / Efficiency (e.g. $24k annual savings)</option>
+              <option value="ADOPTION_GROWTH">Adoption / Growth (e.g. +31% onboarding rate)</option>
+            </select>
+            <input type="text" id="quick-metric-input" placeholder="Your verified metric (e.g. saving 3+ hours weekly)" style="flex:1;">
+            <button type="button" id="btn-quick-xyz" class="btn btn-secondary btn-sm">Transform</button>
           </div>
           <div id="xyz-result-container" class="xyz-result-container hidden">
             <div class="result-label">Recommended Google XYZ Formulation (+75% Interview Lift):</div>
@@ -166,11 +176,14 @@
         </div>
       </section>
 
-      <!-- Right Column: Audit Scorecard & Live Output -->
+      <!-- Right Column: Audit Scorecard, QA Matrix & Live Output -->
       <section class="panel output-panel">
         <div class="tabs-header">
           <button type="button" class="tab-btn active" id="tab-btn-scorecard" data-tab="scorecard">5-Rule Audit Scorecard</button>
-          <button type="button" class="tab-btn" id="tab-btn-preview" data-tab="preview">Killer Résumé Output</button>
+          <button type="button" class="tab-btn" id="tab-btn-qa" data-tab="qa">
+            <span class="tab-badge-pill" id="badge-qa-tab">QA PASS</span> 7-Pillar Production QA
+          </button>
+          <button type="button" class="tab-btn" id="tab-btn-preview" data-tab="preview">Killer Résumé & PDF</button>
         </div>
 
         <!-- Tab 1: 5-Rule Scorecard -->
@@ -260,18 +273,135 @@
           </div>
         </div>
 
-        <!-- Tab 2: Killer Resume Output -->
+        <!-- Tab 2: 7-Pillar Production QA Matrix -->
+        <div id="tab-qa" class="tab-content">
+          <div class="qa-dashboard-card">
+            <div class="qa-dashboard-header">
+              <div>
+                <span class="qa-status-pill pass" id="qa-summary-status-pill">100% PRODUCTION QA PASSED</span>
+                <h3 style="margin-top: 6px;">7-Pillar ATS Production QA Matrix</h3>
+              </div>
+              <div class="qa-score-badge" id="qa-overall-score">100 / 100</div>
+            </div>
+            <p class="qa-summary-text" id="qa-summary-desc">
+              Zero hallucinations detected. Verified single-column hierarchy, genuine metric origin, active executive verbs, and selectable vector PDF geometry.
+            </p>
+          </div>
+
+          <div class="qa-pillars-list" id="qa-pillars-container">
+            <!-- Dynamically populated with QA checks -->
+            <div class="qa-pillar-group">
+              <div class="qa-pillar-title">PILLAR 1: FACT PRESERVATION & ZERO HALLUCINATIONS</div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Zero-Hallucinated Metrics:</strong> 100% of numbers/metrics originated from user source text.</span>
+              </div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Zero-Injected Fake Entities:</strong> No placeholder repositories, dummy degrees, or fake institutions injected.</span>
+              </div>
+            </div>
+
+            <div class="qa-pillar-group">
+              <div class="qa-pillar-title">PILLAR 2: FORMAT & MARKDOWN SYNTAX INTEGRITY</div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Header Syntax Integrity:</strong> Zero duplicate markers (no '### ###').</span>
+              </div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Date Hierarchy Integrity:</strong> Dates structured as role metadata, never converted to bullets.</span>
+              </div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Tag Balancing:</strong> All bold tags balanced without unrendered markdown leaks.</span>
+              </div>
+            </div>
+
+            <div class="qa-pillar-group">
+              <div class="qa-pillar-title">PILLAR 3: JEFF SU 5-RULE EMPIRICAL COMPLIANCE</div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Rule 1 Readability:</strong> Single-column flow with standard section headers.</span>
+              </div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Rule 2 Keyword Mapping:</strong> Coverage in sweet spot (45-75%) without stuffing penalties.</span>
+              </div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Rule 3 Zero Clichés:</strong> Eliminated generic AI buzzwords ("results-driven professional").</span>
+              </div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Rule 4 Quantified Impact:</strong> Verified metrics bolded for 6-second eye-tracking.</span>
+              </div>
+            </div>
+
+            <div class="qa-pillar-group">
+              <div class="qa-pillar-title">PILLAR 4: VECTOR PDF & GEOMETRY VALIDATION</div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>Selectable Text Layer:</strong> Fully extractable vector text layer verified by PyMuPDF.</span>
+              </div>
+              <div class="qa-item pass">
+                <span class="qa-item-icon">✓</span>
+                <span class="qa-item-text"><strong>File Size:</strong> Well under 2.5 MB legacy ATS upload threshold.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Human Defense Verification Checklist (Jeff Su Rule 3) -->
+          <div class="human-qa-gate-card">
+            <div class="card-title">
+              <span class="badge-mini" style="background:var(--accent-purple); color:#fff;">RULE 3 HUMAN QA</span>
+              <h3>Human Defense Interview Readiness Checklist</h3>
+            </div>
+            <p class="desc">
+              Jeff Su: <em>"Review every suggestion and only keep the language you could explain naturally in an interview."</em> Check off each verification item:
+            </p>
+            <div class="human-checklist" id="human-qa-checklist">
+              <label class="check-item"><input type="checkbox" checked> I personally achieved or contributed to every bullet on this resume.</label>
+              <label class="check-item"><input type="checkbox" checked> I can explain the exact technical steps taken to deliver the cited results.</label>
+              <label class="check-item"><input type="checkbox" checked> All metrics and time savings are verifiable if asked in a live interview.</label>
+              <label class="check-item"><input type="checkbox" checked> No AI cliches remain; phrasing sounds natural and authentic to my voice.</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Killer Resume Output & PDF Export -->
         <div id="tab-preview" class="tab-content">
           <div class="preview-actions">
             <div class="preview-stats" id="preview-score-delta">Optimized Draft Ready</div>
+            <div class="view-mode-toggle">
+              <button type="button" id="btn-view-visual" class="btn btn-secondary btn-xs active">Document View</button>
+              <button type="button" id="btn-view-markdown" class="btn btn-secondary btn-xs">Markdown View</button>
+            </div>
             <div class="preview-buttons">
-              <button type="button" id="btn-copy-markdown" class="btn btn-secondary btn-sm">Copy Markdown</button>
+              <button type="button" id="btn-copy-markdown" class="btn btn-secondary btn-sm">Copy MD</button>
               <button type="button" id="btn-download-md" class="btn btn-secondary btn-sm">Download .MD</button>
               <button type="button" id="btn-download-pdf" class="btn btn-primary btn-sm" style="background:#0284c7;">📥 Download Updated PDF</button>
               <button type="button" id="btn-print-pdf" class="btn btn-accent btn-sm">Print Layout</button>
             </div>
           </div>
-          <div class="output-preview-container">
+
+          <!-- Production QA Verified Banner inside Preview -->
+          <div class="preview-qa-banner" id="preview-qa-banner">
+            <span class="qa-banner-icon">✓</span>
+            <div class="qa-banner-text">
+              <strong>100% PRODUCTION QA PASSED</strong>: Zero hallucinations, clean role dates, and verified selectable vector PDF.
+            </div>
+          </div>
+
+          <!-- Document Visual Preview Container -->
+          <div id="output-visual-container" class="output-visual-container">
+            <div id="output-visual-paper" class="output-visual-paper">
+              <!-- Rendered semantic HTML -->
+            </div>
+          </div>
+
+          <!-- Raw Markdown Display Container (Hidden by default, toggleable) -->
+          <div id="output-markdown-container" class="output-preview-container hidden">
             <pre id="output-markdown" class="markdown-display"></pre>
           </div>
         </div>
@@ -279,6 +409,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=20260921_theme"></script>
+  <script src="app.js?v=20260921_qa"></script>
 </body>
 </html>
