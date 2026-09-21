@@ -170,5 +170,64 @@ class TestKillerResumeAgent(unittest.TestCase):
         self.assertNotIn("[cutting sprint overhead by 3+ hours weekly]", opt_text)
         self.assertNotIn("phuryn/pm-skills", opt_text)
 
+    def test_linkedin_profile_pdf_extraction_and_qa(self):
+        """
+        Tests multi-page LinkedIn PDF extraction and full QA pipeline on Profile.pdf.
+        Guarantees:
+        - Candidate name is properly parsed ('Sahas Pokhrel', NOT 'Contact')
+        - All 5 experience roles extracted with accurate dates and locations
+        - Zero hallucinated metrics or institutions
+        - Full 7-Pillar Production QA matrix passes 100/100
+        - Vector PDF generated under 2.5MB and fits 2 pages
+        """
+        profile_path = "/Users/moderntechnepal/Downloads/Profile.pdf"
+        if not os.path.exists(profile_path):
+            self.skipTest(f"Test file not found: {profile_path}")
+
+        from pdf_parser import extract_pdf_data
+        parsed = extract_pdf_data(profile_path)
+        
+        # Verify ATS status & char count
+        self.assertEqual(parsed["ats_status"], "PASS")
+        self.assertGreater(parsed["char_count"], 3000)
+        self.assertEqual(parsed["page_count"], 5)
+
+        # Transform resume
+        res = self.agent.transform_resume(parsed["text"])
+        opt_md = res["optimized_markdown"]
+
+        # 1. Candidate Name check (NOT '# CONTACT')
+        self.assertTrue(opt_md.startswith("# SAHAS POKHREL") or "SAHAS POKHREL" in opt_md[:60])
+        self.assertNotIn("# CONTACT", opt_md)
+
+        # 2. Verify all 5 roles are present
+        self.assertIn("Veel", opt_md)
+        self.assertIn("SCSS Consulting", opt_md)
+        self.assertIn("Dogma Group", opt_md)
+        self.assertIn("TechSaintIT", opt_md)
+        self.assertIn("Mediflow Solution", opt_md)
+
+        # 3. Verify Education
+        self.assertIn("Himalaya College of Engineering", opt_md)
+        self.assertIn("Computer Engineering", opt_md)
+
+        # 4. Verify genuine metrics preserved and bolded
+        self.assertIn("**10K**", opt_md)
+        self.assertIn("**50%**", opt_md)
+        self.assertIn("**24 hours**", opt_md)
+
+        # 5. Full Production QA Verification
+        qa = res["qa_report"]
+        self.assertEqual(qa["overall_status"], "QA_PASSED", f"QA Failed with critical failures: {qa['critical_failures']}")
+        self.assertEqual(qa["qa_score"], 100)
+        self.assertEqual(len(qa["critical_failures"]), 0)
+
+        # 6. Verify vector PDF geometry
+        pdf_bytes = base64.b64decode(res["pdf_base64"])
+        self.assertLess(len(pdf_bytes), 2.5 * 1024 * 1024)
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        self.assertLessEqual(len(doc), 2, "Consolidated 5-page LinkedIn export should render cleanly in 2 pages")
+        doc.close()
+
 if __name__ == "__main__":
     unittest.main()

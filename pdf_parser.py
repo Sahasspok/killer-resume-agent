@@ -45,18 +45,146 @@ def extract_pdf_data(source: Union[str, bytes], filename: str = "uploaded_resume
     page_count = 0
     image_count = 0
 
+def extract_smart_pdf_text_fitz(doc) -> str:
+    """
+    Intelligently extracts text from PyMuPDF document.
+    Handles:
+    - Multi-column and sidebar layouts (e.g. LinkedIn PDF exports with left sidebar)
+    - Reconstructs candidate header (Name, Contact, Headline) at top
+    - Stitches fragmented soft-wrapped lines and blocks
+    - Normalizes non-breaking spaces (\\xa0, \\u202f) and bullet characters
+    """
+    import re
+    if len(doc) == 0:
+        return ""
+
+    p1 = doc[0]
+    p1_blocks = p1.get_text("blocks")
+    width = p1.rect.width
+
+    # Check for left sidebar on Page 1 (typical of LinkedIn or 2-column templates)
+    left_blocks = [b for b in p1_blocks if b[0] < width * 0.35 and b[4].strip() and not re.match(r'^Page\s+\d+', b[4].strip(), re.I)]
+    right_blocks = [b for b in p1_blocks if b[0] >= width * 0.35 and b[4].strip() and not re.match(r'^Page\s+\d+', b[4].strip(), re.I)]
+
+    has_sidebar = False
+    if len(left_blocks) >= 2 and len(right_blocks) >= 2:
+        left_text = " ".join([b[4] for b in left_blocks]).lower()
+        if any(k in left_text for k in ['contact', 'top skills', 'skills', 'certifications', 'languages', '@', 'linkedin']):
+            has_sidebar = True
+
+    if has_sidebar:
+        contact_info = []
+        sidebar_skills = []
+        sidebar_certs = []
+        curr_sb = None
+
+        for b in left_blocks:
+            t = b[4].strip().replace('\xa0', ' ').replace('\u202f', ' ')
+            lower = t.lower()
+            if lower == 'contact':
+                curr_sb = 'contact'
+                continue
+            elif 'top skills' in lower or 'skills' in lower:
+                curr_sb = 'skills'
+                continue
+            elif 'certifications' in lower:
+                curr_sb = 'certs'
+                continue
+
+            lines = [l.strip() for l in t.splitlines() if l.strip()]
+            if curr_sb == 'contact':
+                for l in lines:
+                    if contact_info and (contact_info[-1].endswith('-') or contact_info[-1].endswith('/')):
+                        contact_info[-1] = (contact_info[-1][:-1] if contact_info[-1].endswith('-') else contact_info[-1]) + l
+                    else:
+                        contact_info.append(l)
+            elif curr_sb == 'skills':
+                sidebar_skills.extend(lines)
+            elif curr_sb == 'certs':
+                sidebar_certs.append(" ".join(lines))
+
+        # Main blocks across all pages
+        main_blocks = []
+        for i, page in enumerate(doc):
+            for b in page.get_text("blocks"):
+                if i == 0 and b[0] < width * 0.35:
+                    continue
+                t = b[4].strip().replace('\xa0', ' ').replace('\u202f', ' ')
+                if not t or re.match(r'^Page\s+\d+\s+of\s+\d+$', t, re.I):
+                    continue
+                main_blocks.append(t)
+
+        name = main_blocks[0].splitlines()[0].strip() if main_blocks else "CANDIDATE"
+        headline_loc = main_blocks[1].strip() if len(main_blocks) > 1 else ""
+
+        clean_contacts = [re.sub(r'\s*\((?:Mobile|LinkedIn|Other)\)', '', c).strip() for c in contact_info if c.strip()]
+        contact_bar = " | ".join(clean_contacts)
+
+        text_lines = [
+            f"# {name.upper()}",
+            contact_bar,
+            headline_loc,
+            ""
+        ]
+
+        # Body blocks
+        body_blocks = main_blocks[2:] if len(main_blocks) > 2 else main_blocks[1:]
+        for b in body_blocks:
+            text_lines.append(b)
+            text_lines.append("")
+
+        if sidebar_certs:
+            text_lines.append("Certifications")
+            for c in sidebar_certs:
+                text_lines.append(f"- {c}")
+            text_lines.append("")
+
+        if sidebar_skills:
+            text_lines.append("Skills")
+            for s in sidebar_skills:
+                text_lines.append(f"- {s}")
+            text_lines.append("")
+
+        return "\n".join(text_lines)
+
+    # Standard fallback with whitespace normalization
+    text_parts = []
+    for page in doc:
+        t = page.get_text("text")
+        if t:
+            clean_t = t.replace('\xa0', ' ').replace('\u202f', ' ')
+            text_parts.append(clean_t.strip())
+    return "\n\n".join(text_parts)
+
+def extract_pdf_data(source: Union[str, bytes], filename: str = "uploaded_resume.pdf") -> Dict[str, Any]:
+    """
+    Extracts text and inspects ATS parseability attributes of a PDF.
+    Supports file path (str) or raw binary bytes (bytes).
+    """
+    if isinstance(source, str):
+        if not os.path.exists(source):
+            raise FileNotFoundError(f"PDF file not found at: {source}")
+        file_size_bytes = os.path.getsize(source)
+        with open(source, "rb") as f:
+            pdf_bytes = f.read()
+    elif isinstance(source, (bytes, bytearray)):
+        pdf_bytes = bytes(source)
+        file_size_bytes = len(pdf_bytes)
+    else:
+        raise ValueError("Source must be either a file path string or bytes.")
+
+    file_size_mb = round(file_size_bytes / (1024 * 1024), 2)
+    extracted_text = ""
+    page_count = 0
+    image_count = 0
+
     if HAS_FITZ:
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         page_count = len(doc)
-        text_parts = []
-        for i in range(page_count):
-            page = doc[i]
-            t = page.get_text("text")
-            if t:
-                text_parts.append(t.strip())
+        for page in doc:
             images = page.get_images(full=True)
             image_count += len(images)
-        extracted_text = "\n\n".join(text_parts).strip()
+        extracted_text = extract_smart_pdf_text_fitz(doc)
         doc.close()
     elif HAS_PYPDF:
         reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
@@ -64,6 +192,7 @@ def extract_pdf_data(source: Union[str, bytes], filename: str = "uploaded_resume
         text_parts = []
         for page in reader.pages:
             t = page.extract_text() or ""
+            t = t.replace('\xa0', ' ').replace('\u202f', ' ')
             if t:
                 text_parts.append(t.strip())
             if hasattr(page, "images"):

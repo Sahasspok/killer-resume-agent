@@ -58,13 +58,19 @@ AI_CLICHE_CLEANUPS = [
 ]
 
 # Date detection regex
+MONTH_NAMES = r'(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)'
 DATE_REGEX = re.compile(
-    r'(?:(?:\*+)?[A-Za-z]{3,9}\s+\d{4}\s*[-–—]\s*(?:Present|[A-Za-z]{3,9}\s+\d{4})(?:\*+)?|\b\d{4}\s*[-–—]\s*(?:Present|\d{4})\b|\([A-Za-z]{3,9}\s+\d{4}\s*[-–—]\s*(?:Present|[A-Za-z]{3,9}\s+\d{4})\)|\(\d{4}\s*[-–—]\s*(?:Present|\d{4})\)|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\b)',
+    rf'(?:(?:\*+)?{MONTH_NAMES}\s+\d{{4}}\s*[-–—]\s*(?:Present|Current|Now|{MONTH_NAMES}\s+\d{{4}})(?:\*+)?|\b\d{{4}}\s*[-–—]\s*(?:Present|Current|Now|\d{{4}})\b|\({MONTH_NAMES}\s+\d{{4}}\s*[-–—]\s*(?:Present|Current|Now|{MONTH_NAMES}\s+\d{{4}})\)|\(\d{{4}}\s*[-–—]\s*(?:Present|\d{{4}})\)|\b{MONTH_NAMES}\s+\d{{4}}\b)',
     re.I
 )
 
 METRIC_PATTERNS = re.compile(
-    r'(\b\d+(?:\.\d+)?%|\$\d+[\d,]*(?:\.\d+)?(?:\s*[kmb])?|\b\d+(?:\+)?\s*(?:x|times|hours?|days?|weeks?|months?|minutes?|secs?|seconds?|hrs?|mins?)\b|\b\d+[\d,]*(?:\+)?\s*(?:users?|customers?|clients?|leads?|tickets?|endpoints?|servers?|engineers?|teams?|initiatives?|microservices?|releases?)\b|\b\d+(?:\.\d+)?\s*(?:k|m|b)\b|\b\d+x\b)',
+    r'(\b\d+(?:\.\d+)?%|\$\d+[\d,]*(?:\.\d+)?(?:\s*[kmb])?|\b\d+(?:\+)?\s*(?:x|times|hours?|days?|weeks?|months?|minutes?|secs?|seconds?|hrs?|mins?)\b|\b\d+[\d,]*(?:\+)?\s*(?:users?|customers?|clients?|leads?|tickets?|endpoints?|servers?|engineers?|teams?|initiatives?|microservices?|releases?|story\s+points?|points?|sprints?)\b|\b\d+(?:\.\d+)?\s*(?:k|m|b)\b|\b\d+x\b)',
+    re.I
+)
+
+ROLE_KEYWORDS = re.compile(
+    r'\b(?:manager|director|engineer|developer|lead|architect|consultant|analyst|specialist|coordinator|officer|associate|intern|vp|vice president|head)\b',
     re.I
 )
 
@@ -76,6 +82,7 @@ def clean_unwanted_fillers(raw_text: str) -> Tuple[str, List[str]]:
     if not raw_text:
         return "", []
 
+    raw_text = raw_text.replace('\xa0', ' ').replace('\u202f', ' ')
     lines = raw_text.replace('\x0c', '\n').splitlines()
     cleaned_lines = []
     removed_fillers = []
@@ -156,21 +163,26 @@ def extract_candidate_header(lines: List[str]) -> Tuple[str, str, List[str]]:
             emails.extend(em)
             clean_l = email_re.sub('', stripped)
 
-            ph = phone_re.findall(clean_l)
-            phones.extend(ph)
-            clean_l = phone_re.sub('', clean_l)
-
             ur = url_re.findall(clean_l)
             urls.extend(ur)
             clean_l = url_re.sub('', clean_l)
 
+            ph = phone_re.findall(clean_l)
+            phones.extend(ph)
+            clean_l = phone_re.sub('', clean_l)
+
+            # Location line detection
             parts = [p.strip() for p in re.split(r'[|•·]', clean_l) if p.strip()]
             for p in parts:
-                if len(p.split()) <= 4 and any(c.isupper() for c in p) and len(p) > 2:
-                    if any(k in p.lower() for k in ['nepal', 'usa', 'remote', 'ca', 'ny', 'london', 'kathmandu', 'francisco', 'york', 'city', 'india', 'texas', 'toronto', 'berlin', 'tokyo']):
+                if len(p.split()) <= 5 and len(p) > 2:
+                    if any(k in p.lower() for k in ['nepal', 'usa', 'remote', 'ca', 'ny', 'london', 'kathmandu', 'francisco', 'york', 'city', 'india', 'texas', 'toronto', 'berlin', 'tokyo', 'united states', 'australia']):
                         locations.append(p)
-            
-            if em or ph or ur:
+
+            # Headline line detection (e.g. Project Manager @ Veel | Foundation of PM)
+            if any(k in stripped.lower() for k in ['manager', 'engineer', 'developer', 'lead', 'director', 'architect']) and ('@' in stripped or '|' in stripped):
+                continue
+
+            if em or ph or ur or (parts and any(p in locations for p in parts)):
                 continue
 
         remaining_lines.append(line)
@@ -194,12 +206,12 @@ def extract_candidate_header(lines: List[str]) -> Tuple[str, str, List[str]]:
     return name.title(), contact_line, remaining_lines
 
 SECTION_REGEX = {
-    'summary': re.compile(r'^\s*(?:##\s*)?(?:professional\s+summary|executive\s+summary|summary|profile|about\s+me|career\s+objective)\b', re.I),
-    'experience': re.compile(r'^\s*(?:##\s*)?(?:work\s+experience|professional\s+experience|experience|employment\s+history|work\s+history)\b', re.I),
-    'projects': re.compile(r'^\s*(?:##\s*)?(?:key\s+projects|technical\s+projects|projects|portfolio|initiatives|technical\s+initiatives)\b', re.I),
-    'skills': re.compile(r'^\s*(?:##\s*)?(?:core\s+skills|technical\s+skills|skills\s*(?:&|and)\s*tools|skills|competencies|core\s+competencies|technologies)\b', re.I),
-    'education': re.compile(r'^\s*(?:##\s*)?(?:education|academic\s+background|academic\s+history|education\s*(?:&|and)\s*certifications)\b', re.I),
-    'certifications': re.compile(r'^\s*(?:##\s*)?(?:certifications|licenses|credentials)\b', re.I)
+    'summary': re.compile(r'^\s*(?:##\s*)?(?:professional\s+summary|executive\s+summary|summary|profile|about\s+me|career\s+objective)\s*:?\s*$', re.I),
+    'experience': re.compile(r'^\s*(?:##\s*)?(?:work\s+experience|professional\s+experience|experience|employment\s+history|work\s+history)\s*:?\s*$', re.I),
+    'projects': re.compile(r'^\s*(?:##\s*)?(?:key\s+projects|technical\s+projects|projects|portfolio|technical\s+initiatives)\s*:?\s*$', re.I),
+    'skills': re.compile(r'^\s*(?:##\s*)?(?:core\s+skills|technical\s+skills|skills\s*(?:&|and)\s*tools|skills|competencies|core\s+competencies|technologies)\s*:?\s*$', re.I),
+    'education': re.compile(r'^\s*(?:##\s*)?(?:education|academic\s+background|academic\s+history|education\s*(?:&|and)\s*certifications)\s*:?\s*$', re.I),
+    'certifications': re.compile(r'^\s*(?:##\s*)?(?:certifications|licenses|credentials)\s*:?\s*$', re.I)
 }
 
 def parse_sections(lines: List[str]) -> Dict[str, List[str]]:
@@ -215,10 +227,12 @@ def parse_sections(lines: List[str]) -> Dict[str, List[str]]:
             continue
 
         matched_sec = None
-        for sec_name, pat in SECTION_REGEX.items():
-            if pat.match(stripped):
-                matched_sec = sec_name
-                break
+        # Never treat a line ending with period, comma, or semicolon as a section header
+        if not stripped.endswith(('.', ',', ';')) or stripped.endswith(':'):
+            for sec_name, pat in SECTION_REGEX.items():
+                if pat.match(stripped):
+                    matched_sec = sec_name
+                    break
 
         if matched_sec:
             current_sec = matched_sec
@@ -234,7 +248,7 @@ def format_bullet_xyz(raw_bullet: str) -> Tuple[str, bool]:
     Cleans weak verbs, eliminates AI clichés, bolds real metrics for 6-second scan.
     CRITICAL: Does NOT invent, hallucinate, or append fake metrics!
     """
-    content = raw_bullet.strip().lstrip("-*•> ").strip()
+    content = raw_bullet.strip().lstrip("-*•>○·▪▫ ").strip()
     if re.match(r'^\d+\.\s+', content):
         content = re.sub(r'^\d+\.\s+', '', content).strip()
 
@@ -279,72 +293,150 @@ def format_bullet_xyz(raw_bullet: str) -> Tuple[str, bool]:
 
 def is_date_line(line: str) -> bool:
     """Accurately checks if a line represents a date range or metadata."""
-    stripped = line.strip().strip("*_").strip()
+    stripped = line.strip().strip("*_").strip().replace('\xa0', ' ')
     if not stripped:
         return False
-    if (line.strip().startswith("*") and line.strip().endswith("*") and len(stripped) < 50):
+    if line.strip().startswith("*") and line.strip().endswith("*") and len(stripped) < 60:
         return True
-    if DATE_REGEX.search(stripped) and len(stripped.split()) <= 6:
-        return True
+    if DATE_REGEX.search(stripped):
+        words = stripped.split()
+        if len(words) <= 12 and not stripped.endswith(('.', '!', '?')) and not any(w in stripped.lower() for w in ['drove', 'scaled', 'reduced', 'led', 'managed', 'engineered', 'championed', 'facilitated', 'conducted', 'reported', 'collaborated', 'practiced']):
+            return True
     return False
 
 def format_experience_section(exp_lines: List[str]) -> Tuple[List[str], int]:
     """
     Parses experience roles, titles, dates, and bullets into clean ATS structure.
+    Handles single-line headers, multi-line job headers, and stitches soft-wrapped bullets.
     GUARANTEE: Dates are NEVER formatted as bullets. Zero duplicate headers.
     """
     output = ["## WORK EXPERIENCE", ""]
+    clean_lines = [l.strip().replace('\xa0', ' ') for l in exp_lines if l.strip()]
     transformed_bullets = 0
+    i = 0
+    curr_bullet = ""
 
-    for line in exp_lines:
-        trimmed = line.strip()
-        if not trimmed:
+    while i < len(clean_lines):
+        line = clean_lines[i]
+
+        # 1. Check if line or next lines form a multi-line job header
+        # e.g., Company, Title, Date, [Location]
+        is_candidate_l0 = (not line.startswith(('#', '-', '* ', '•', '○', '·', '>'))) and len(line.split()) <= 7 and not line.endswith('.')
+        is_candidate_l1 = (i + 1 < len(clean_lines)) and (not clean_lines[i+1].startswith(('#', '-', '* ', '•', '○', '·', '>'))) and len(clean_lines[i+1].split()) <= 7 and not clean_lines[i+1].endswith('.')
+
+        if is_candidate_l0 and is_candidate_l1 and i + 2 < len(clean_lines) and is_date_line(clean_lines[i+2]):
+            if curr_bullet:
+                fb, ch = format_bullet_xyz(curr_bullet)
+                output.append(f"- {fb}")
+                if ch: transformed_bullets += 1
+                curr_bullet = ""
+
+            l0 = clean_lines[i]
+            l1 = clean_lines[i+1]
+            l2 = clean_lines[i+2]
+            l3 = clean_lines[i+3] if (i + 3 < len(clean_lines) and not is_date_line(clean_lines[i+3]) and not clean_lines[i+3].startswith(('-', '*', '•', '○', '·')) and len(clean_lines[i+3].split()) <= 6 and not clean_lines[i+3].endswith('.')) else ""
+
+            if ROLE_KEYWORDS.search(l1):
+                title, company = l1, l0
+            else:
+                title, company = l0, l1
+
+            date = l2
+            loc = l3
+            date_clean = re.sub(r'\s*\([^)]+\)', '', date).strip()
+            date_loc = f"*{date_clean}*" if not loc else f"*{date_clean} | {loc}*"
+
+            output.append(f"### {title} | {company}")
+            output.append(date_loc)
+            output.append("")
+            i += 4 if loc else 3
             continue
 
-        # Check date line first
-        if is_date_line(trimmed):
-            clean_date = trimmed.strip("*_ ").strip()
+        # 2. Check standalone date line
+        if is_date_line(line):
+            if curr_bullet:
+                fb, ch = format_bullet_xyz(curr_bullet)
+                output.append(f"- {fb}")
+                if ch: transformed_bullets += 1
+                curr_bullet = ""
+            clean_date = re.sub(r'\s*\([^)]+\)', '', line.strip('*_ ')).strip()
             output.append(f"*{clean_date}*")
             output.append("")
+            i += 1
             continue
 
-        # Check if this is an explicit bullet point
-        is_bullet = trimmed.startswith(("- ", "* ", "• ", "> ")) or (re.match(r'^\d+\.\s+', trimmed) and not is_date_line(trimmed))
+        # 3. Check single-line role header (### Title, Title | Company, etc.)
+        is_bullet = line.startswith(('-', '* ', '• ', '> ', '○ ', '· ')) or (re.match(r'^\d+\.\s+', line) and not is_date_line(line))
+        clean_text = line.lstrip('#*•-○·> ').strip()
 
-        # Check if this is a role header
-        clean_text = trimmed.lstrip("#*•- ").strip()
         is_role_header = (not is_bullet) and (
-            "|" in trimmed or " at " in trimmed or " – " in trimmed or " - " in trimmed or
-            trimmed.startswith("###") or
-            any(w in clean_text.lower() for w in ['manager', 'engineer', 'developer', 'lead', 'director', 'specialist', 'analyst', 'intern', 'architect', 'consultant', 'officer', 'coordinator', 'head of'])
+            line.startswith('###') or
+            ('|' in line and len(line.split()) <= 10) or
+            (' at ' in line and len(line.split()) <= 10) or
+            (' — ' in line and len(line.split()) <= 10) or
+            (' – ' in line and len(line.split()) <= 10) or
+            (ROLE_KEYWORDS.search(clean_text) and len(clean_text.split()) <= 6 and not clean_text.endswith('.'))
         )
 
         if is_role_header:
-            # Clean off any existing markdown header tokens to prevent '### ###'
-            clean_title = re.sub(r'^#{1,6}\s*', '', trimmed).strip()
-            
-            # Extract date if attached in parentheses e.g. (Jan 2023 - Present)
+            if curr_bullet:
+                fb, ch = format_bullet_xyz(curr_bullet)
+                output.append(f"- {fb}")
+                if ch: transformed_bullets += 1
+                curr_bullet = ""
+            clean_title = re.sub(r'^#{1,6}\s*', '', line).strip()
+            # Extract date if attached in parentheses
             date_match = re.search(r'\(([^)]+)\)', clean_title)
             dates = date_match.group(1) if date_match else ""
-            if dates:
+            if dates and is_date_line(dates):
                 clean_title = re.sub(r'\([^)]+\)', '', clean_title).strip()
-
+            else:
+                dates = ""
             output.append(f"### {clean_title}")
             if dates:
                 output.append(f"*{dates}*")
             output.append("")
-        elif is_bullet:
-            formatted_bullet, changed = format_bullet_xyz(trimmed)
-            if changed:
-                transformed_bullets += 1
-            output.append(f"- {formatted_bullet}")
-        else:
-            formatted_bullet, changed = format_bullet_xyz(trimmed)
-            if changed:
-                transformed_bullets += 1
-            output.append(f"- {formatted_bullet}")
+            i += 1
+            continue
 
-    output.append("")
+        # 4. Bullet / sentence text
+        t = line.strip()
+        if t.lower() in ['key wins:', 'key wins']:
+            i += 1
+            continue
+
+        starts_b = bool(re.match(r'^[○•·▪▫\-\*]\s*', t))
+        clean_t = re.sub(r'^[○•·▪▫\-\*]\s*', '', t).strip()
+
+        if starts_b:
+            if curr_bullet:
+                fb, ch = format_bullet_xyz(curr_bullet)
+                output.append(f"- {fb}")
+                if ch: transformed_bullets += 1
+            curr_bullet = clean_t
+        else:
+            if not curr_bullet:
+                curr_bullet = clean_t
+            else:
+                # Decide whether to stitch or separate
+                if curr_bullet.endswith(('.', '!', '?', ':')) and clean_t and clean_t[0].isupper() and not clean_t.startswith(('And ', 'To ', 'For ', 'Through ', 'From ', 'With ')):
+                    fb, ch = format_bullet_xyz(curr_bullet)
+                    output.append(f"- {fb}")
+                    if ch: transformed_bullets += 1
+                    curr_bullet = clean_t
+                else:
+                    if curr_bullet.endswith('-'):
+                        curr_bullet = curr_bullet + clean_t
+                    else:
+                        curr_bullet = curr_bullet + ' ' + clean_t
+        i += 1
+
+    if curr_bullet:
+        fb, ch = format_bullet_xyz(curr_bullet)
+        output.append(f"- {fb}")
+        if ch: transformed_bullets += 1
+        output.append("")
+
     return output, transformed_bullets
 
 def format_projects_section(proj_lines: List[str]) -> Tuple[List[str], bool]:
@@ -452,26 +544,71 @@ def format_skills_section(skill_lines: List[str]) -> List[str]:
 def format_education_section(edu_lines: List[str]) -> List[str]:
     """
     Preserves 100% of user's real education. Does NOT invent fake universities!
+    Handles Degree | Institution pairing, date extraction, and certifications.
     """
     if not edu_lines:
         return []
 
     output = ["## EDUCATION & CERTIFICATIONS", ""]
-    for line in edu_lines:
-        trimmed = line.strip().lstrip("-*•# ")
-        if not trimmed:
+    clean_lines = []
+    for l in edu_lines:
+        s = l.strip()
+        if not s:
             continue
-        # Clean any trailing or unclosed asterisks
-        trimmed = re.sub(r'\*+', '', trimmed).strip()
-        if "|" in trimmed:
-            parts = [p.strip() for p in trimmed.split("|") if p.strip()]
+        if s.startswith(("- ", "* ", "• ")):
+            clean_lines.append(s)
+        else:
+            clean_lines.append(re.sub(r'\*+', '', s.lstrip("# ")).strip())
+
+    i = 0
+    while i < len(clean_lines):
+        line = clean_lines[i]
+
+        # Bullet (e.g. certification item)
+        if line.startswith(("- ", "* ", "• ")):
+            clean_b = re.sub(r'^[-*•]\s*', '', line).strip()
+            output.append(f"- {clean_b}")
+            i += 1
+            continue
+
+        # Check if line contains '|'
+        if "|" in line:
+            parts = [p.strip() for p in line.split("|") if p.strip()]
             output.append(f"### {parts[0]} | {parts[1]}")
             if len(parts) > 2:
                 output.append(f"*{parts[2]}*")
             output.append("")
-        else:
-            output.append(f"### {trimmed}")
-            output.append("")
+            i += 1
+            continue
+
+        # Check if line + next line form Degree/Institution pair
+        if i + 1 < len(clean_lines):
+            l0 = line
+            l1 = clean_lines[i+1]
+            is_l0_deg = any(k in l0.lower() for k in ['bachelor', 'master', 'phd', 'b.e.', 'b.s.', 'b.a.', 'm.s.', 'degree', 'diploma'])
+            is_l1_deg = any(k in l1.lower() for k in ['bachelor', 'master', 'phd', 'b.e.', 'b.s.', 'b.a.', 'm.s.', 'degree', 'diploma'])
+            is_inst = any(k in (l0 + " " + l1).lower() for k in ['university', 'college', 'school', 'institute', 'academy'])
+
+            if (is_l0_deg or is_l1_deg) and is_inst:
+                deg = l0 if is_l0_deg else l1
+                inst = l1 if is_l0_deg else l0
+                
+                m_dt = re.search(r'·\s*\(?(\d{4}\s*[-–—]\s*\d{4})\)?|\((\d{4}\s*[-–—]\s*\d{4})\)', deg)
+                dates = ""
+                if m_dt:
+                    dates = m_dt.group(1) or m_dt.group(2)
+                    deg = re.sub(r'·\s*\(?\d{4}\s*[-–—]\s*\d{4}\)?|\(\d{4}\s*[-–—]\s*\d{4}\)', '', deg).strip()
+
+                output.append(f"### {deg} | {inst}")
+                if dates:
+                    output.append(f"*{dates}*")
+                output.append("")
+                i += 2
+                continue
+
+        output.append(f"### {line}")
+        output.append("")
+        i += 1
 
     return output
 
@@ -525,7 +662,14 @@ def format_to_standard_template(raw_text: str, jd_text: str = "") -> Tuple[str, 
         output_lines.extend(skills_output)
 
     # 6. Education & Certifications (User's authentic credentials)
-    edu_output = format_education_section(sections['education'])
+    combined_edu = list(sections['education'])
+    if sections.get('certifications'):
+        for c in sections['certifications']:
+            c_clean = c.strip().lstrip("-*•# ").strip()
+            if c_clean and not any(k in c_clean.lower() for k in ['certifications', 'licenses']):
+                combined_edu.append(f"- **Certification:** {c_clean}")
+
+    edu_output = format_education_section(combined_edu)
     if edu_output:
         output_lines.extend(edu_output)
 
