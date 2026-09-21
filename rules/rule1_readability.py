@@ -83,7 +83,47 @@ def audit_readability(resume_text: str) -> dict:
     else:
         strengths.append(f"Standard semantic sections detected: {', '.join(headings_found[:4])}.")
 
-    # 4. Length and parseability
+    # 4. Check for Dedicated Standalone Skills Section (Profession-Agnostic Rule 1 requirement)
+    if "Skills" not in headings_found:
+        score -= 15
+        issues.append({
+            "code": "NO_STANDALONE_SKILLS_SECTION",
+            "message": "No dedicated Skills/Competencies section found. AI screeners extract skills from a discrete block; burying skills inside experience bullets reduces machine-readable keyword density.",
+            "fix": "Add a standalone '## CORE COMPETENCIES & TECHNICAL SKILLS' section near the top of the resume."
+        })
+    else:
+        strengths.append("Dedicated standalone Skills section present for discrete ATS keyword extraction.")
+
+    # 5. Check Summary density (Must be <= 3 lines, <= 60 words; not a dense wall of prose)
+    summary_match = re.search(r"(?:^|\n)##\s+(?:professional\s+summary|executive\s+summary|summary|profile|about\s+me)[^\n]*\n([\s\S]*?)(?=\n##\s+|$)", resume_text, re.IGNORECASE)
+    if not summary_match:
+        summary_match = re.search(r"(?:^|\n)(?:summary|profile)[^\n]*\n([\s\S]*?)(?=\n[A-Z][A-Za-z\s]{3,20}\n|\n##|$)", resume_text, re.IGNORECASE)
+    
+    if summary_match:
+        summary_body = summary_match.group(1).strip()
+        summary_words = len(summary_body.split())
+        summary_lines = [l for l in summary_body.splitlines() if l.strip()]
+        if summary_words > 65 or len(summary_lines) > 3:
+            score -= 15
+            issues.append({
+                "code": "DENSE_SUMMARY_PARAGRAPH",
+                "message": f"Summary paragraph is too dense ({summary_words} words, {len(summary_lines)} lines). AI screeners and human recruiters chunk text semantically; a dense wall of prose is hard to parse in a 6-second scan.",
+                "fix": "Condense summary into 2-3 concise lines (under 50 words) positioning your target role and core value proposition."
+            })
+        elif summary_words > 0:
+            strengths.append(f"Concise summary: {summary_words} words (optimal <= 3 lines for semantic chunking).")
+
+    # 6. Check for Inconsistent bullet encoding / broken replacement symbols
+    broken_artifacts = re.findall(r"[\ufffd\u25a0\u25aa]|\[\?\]|[\x00-\x08\x0b\x0e-\x1f]", resume_text)
+    if broken_artifacts:
+        score -= 10
+        issues.append({
+            "code": "INCONSISTENT_ENCODING_ARTIFACTS",
+            "message": f"Detected {len(broken_artifacts)} corrupted or unencoded character artifacts ({set(broken_artifacts)}). Risks garbled ATS extraction.",
+            "fix": "Use clean UTF-8 hyphens or standard bullet characters."
+        })
+
+    # 7. Length and parseability
     word_count = len(resume_text.split())
     if word_count < 150:
         score -= 25
@@ -110,5 +150,5 @@ def audit_readability(resume_text: str) -> dict:
         "headings_found": headings_found,
         "strengths": strengths,
         "issues": issues,
-        "recommendation": "Maintain single-column Markdown/PDF with selectable text under 2.5MB. Never use graphical Canva templates with text trapped in images."
+        "recommendation": "Maintain single-column Markdown/PDF with selectable text under 2.5MB, standalone Skills block, and concise <=3 line summary."
     }

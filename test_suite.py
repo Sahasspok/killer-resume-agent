@@ -20,14 +20,17 @@ from template_formatter import (
     clean_unwanted_fillers,
     format_bullet_xyz,
     is_date_line,
-    standard_template_to_html
+    standard_template_to_html,
+    clean_latex_artifacts
 )
-from pdf_generator import generate_pdf_from_markdown
+from pdf_generator import generate_pdf_from_markdown, check_pdf_page_boundaries
 from qa_validator import (
     run_full_qa_pipeline,
     validate_fact_preservation,
     validate_formatting_and_syntax,
-    validate_pdf_render
+    validate_pdf_render,
+    validate_role_headers_metadata,
+    validate_formatting_gate
 )
 from format_preserver import transform_preserving_format
 
@@ -40,7 +43,7 @@ Senior Software Engineer with 6+ years of experience designing distributed syste
 ## WORK EXPERIENCE
 
 ### Staff Infrastructure Engineer | Datasync Networks
-*Jan 2022 – Present*
+*Jan 2022 – Present | San Francisco, CA*
 - Managed cross-team deployment of Kubernetes microservices across 3 cloud regions.
 - Responsible for leading database migration from Postgres 12 to 15 without downtime.
 - Accelerated deployment pipeline throughput by 45% using GitHub Actions and Docker caching.
@@ -48,7 +51,7 @@ Senior Software Engineer with 6+ years of experience designing distributed syste
 - Reduced cold-start container latency from 8 seconds to 1.2 seconds across 40 nodes.
 
 ### Software Engineer | ScaleCloud Technologies
-*May 2019 – Dec 2021*
+*May 2019 – Dec 2021 | San Francisco, CA*
 - Worked on telemetry metrics ingestion engine handling 250,000 requests per second.
 - Spearheaded cross-functional alignment between platform engineering and security teams.
 - Automated vulnerability scanning in CI/CD pipeline, reducing security defect escapes by 38%.
@@ -192,8 +195,9 @@ class TestKillerResumeAgent(unittest.TestCase):
         self.assertGreater(parsed["char_count"], 3000)
         self.assertEqual(parsed["page_count"], 5)
 
-        # Transform resume
-        res = self.agent.transform_resume(parsed["text"])
+        # Transform resume with candidate-verified metrics (Rule 4 Candidate-Verified Gate)
+        from template_formatter import SAHAS_VERIFIED_METRICS
+        res = self.agent.transform_resume(parsed["text"], user_metrics=SAHAS_VERIFIED_METRICS)
         opt_md = res["optimized_markdown"]
 
         # 1. Candidate Name check (NOT '# CONTACT')
@@ -245,5 +249,316 @@ class TestKillerResumeAgent(unittest.TestCase):
         self.assertEqual(len(doc), 2, f"Consolidated 5-page LinkedIn export must strictly render in 2 pages, got {len(doc)} pages")
         doc.close()
 
+    def test_rule_1_dense_summary_and_missing_skills(self):
+        """Rule 1: Flag dense summary (>65 words/>3 lines) and missing standalone skills block."""
+        from rules.rule1_readability import audit_readability
+        resume_dense = """# Jane Doe
+## SUMMARY
+As a Clinical Nurse Specialist at Mercy General, I lead ward triage operations, coordinate emergency care pathways across four intensive care units, manage cross-functional nursing schedules, supervise student nurses during clinical rotations, and ensure regulatory healthcare compliance across all regional clinics while maintaining patient documentation and quality standards. I also coordinate directly with clinical directors to improve patient discharge turnaround and ensure protocol adherence across daily rotations.
+
+## EXPERIENCE
+### Nurse Specialist | Mercy General
+*2021 - Present*
+- Managed triage operations for 40+ emergency patients daily.
+"""
+        r1 = audit_readability(resume_dense)
+        issue_codes = [i["code"] for i in r1["issues"]]
+        self.assertIn("DENSE_SUMMARY_PARAGRAPH", issue_codes)
+        self.assertIn("NO_STANDALONE_SKILLS_SECTION", issue_codes)
+
+    def test_rule_2_target_role_and_fit_positioning(self):
+        """Rule 2: Flag missing target role headline and job description summary."""
+        from rules.rule2_keyword_mapping import check_target_role_and_fit
+        resume_no_headline = """# John Smith
+john@example.com | (555) 123-4567
+
+## SUMMARY
+As a High School Teacher at Lincoln High, I teach algebra and calculus to students.
+"""
+        fit = check_target_role_and_fit(resume_no_headline)
+        codes = [i["code"] for i in fit["issues"]]
+        self.assertIn("NO_TARGET_ROLE_STATED", codes)
+        self.assertIn("JOB_DESCRIPTION_SUMMARY_NOT_FIT_POSITIONING", codes)
+
+    def test_rule_3_date_overlaps_and_attribution(self):
+        """Rule 3: Detect unexplained date overlaps and team metric attribution gaps."""
+        from rules.rule3_human_gate import check_date_overlaps, enforce_human_gate
+        resume_overlap = """### Senior Staff Nurse | Hospital A
+*May 2020 - September 2021*
+- Led emergency triage team.
+
+### Clinical Research Coordinator | Pharma Lab B
+*October 2020 - January 2021*
+- Conducted clinical trials.
+"""
+        overlaps = check_date_overlaps(resume_overlap)
+        self.assertGreaterEqual(len(overlaps), 1)
+
+        # Team attribution check
+        bullet_gap = enforce_human_gate("Scaled sprint velocity by 50% across 3 teams.")
+        gap_types = [f["type"] for f in bullet_gap["flags"]]
+        self.assertIn("TEAM_METRIC_ATTRIBUTION_GAP", gap_types)
+
+        # Personal attribution passes
+        bullet_attr = enforce_human_gate("Coached 3 teams to accelerate sprint velocity by 50% through backlog grooming.")
+        gap_types2 = [f["type"] for f in bullet_attr["flags"]]
+        self.assertNotIn("TEAM_METRIC_ATTRIBUTION_GAP", gap_types2)
+
+    def test_rule_4_per_role_quantification(self):
+        """Rule 4: Flag duty-based bullets and enforce hard gate (<40%) across roles."""
+        from rules.rule4_google_xyz import audit_role_quantification
+        resume_duty = """## WORK EXPERIENCE
+### Lead Nurse | Clinic North
+*2022 - Present*
+- Managed triage for 50 patients daily, reducing wait times by 35%.
+
+### Staff Nurse | General Hospital
+*2019 - 2022*
+- Responsible for daily patient rounds and administering medication.
+- Helped with intake documentation and shift scheduling.
+"""
+        quant_audit = audit_role_quantification(resume_duty)
+        codes = [i["code"] for i in quant_audit["issues"]]
+        self.assertIn("RULE_4_ROLE_QUANTIFICATION_GATE_VIOLATION", codes)
+        self.assertFalse(quant_audit["passed_hard_gate"])
+        self.assertEqual(len(quant_audit["hard_gate_violations"]), 1)
+        self.assertEqual(quant_audit["hard_gate_violations"][0]["role"], "Staff Nurse | General Hospital")
+
+    def test_rule_4_vague_metric_rejection(self):
+        """Rule 4 Fix 2: Reject vague metrics without baselines (require before/after)."""
+        from rules.rule4_google_xyz import check_vague_metric
+        vague_bullet = "Streamlined client change request intake and impact analysis, reducing change review turnaround time."
+        vague_res = check_vague_metric(vague_bullet)
+        self.assertTrue(vague_res["is_vague"])
+        self.assertIn("turnaround", vague_res["prompt"].lower())
+
+        # Quantified version with before/after passes
+        good_bullet = "Streamlined client change request intake, reducing change review turnaround time from 5 days to 2 days."
+        good_res = check_vague_metric(good_bullet)
+        self.assertFalse(good_res["is_vague"])
+
+    def test_rule_4_collective_metric_reframing(self):
+        """Rule 4 Fix 3: Reframe collective metrics as personal contribution."""
+        from rules.rule4_google_xyz import check_collective_metric_framing
+        team_bullet = "Scaled sprint velocity by 50% from 40 to 60 points."
+        check_res = check_collective_metric_framing(team_bullet)
+        self.assertTrue(check_res["has_gap"])
+        self.assertIn("Enabled team to scale sprint velocity", check_res["suggested_reframe"])
+
+    def test_rule_2_title_identity_mismatch(self):
+        """Rule 2: Flag mismatch when target role is Product Manager but work history is Project Manager."""
+        from rules.rule2_keyword_mapping import check_target_role_and_fit
+        resume_mismatch = """# Sahas Pokhrel
+Target Role: Product Manager
+Kathmandu, Nepal | sahas@example.com
+
+## PROFESSIONAL SUMMARY
+Technical Product Manager with 5+ years of experience leading cross-functional teams.
+
+## WORK EXPERIENCE
+### Project Manager | Veel
+*2023 - Present*
+- Led sprint planning and delivery.
+
+### Associate Project Manager | Dogma Group
+*2021 - 2022*
+- Managed change requests.
+"""
+        fit = check_target_role_and_fit(resume_mismatch)
+        codes = [i["code"] for i in fit["issues"]]
+        self.assertIn("TITLE_IDENTITY_MISMATCH", codes)
+
+    def test_rule_3_contradictory_metric_ambiguity(self):
+        """Rule 3: Detect contradictory DAU metrics (laying foundation vs actual DAU)."""
+        from rules.rule3_human_gate import check_resume_ambiguities
+        resume_text = """### Project Manager | Veel
+- Drove development of key features, laying the foundation for a 10K DAU user base on key landing pages.
+- Leveraged GA4 to grow daily active users from 0 to 5K+, and tracking consistent engagement surges to 10K DAU.
+"""
+        ambiguities = check_resume_ambiguities(resume_text)
+        self.assertEqual(len(ambiguities), 1)
+        self.assertEqual(ambiguities[0]["code"], "CONTRADICTORY_AMBIGUOUS_METRIC")
+
+    def test_rule_5_prove_ai_skills_profession_agnostic(self):
+        """Rule 5: Flag product-only AI mentions and AI certs without demonstrable workflow outcomes."""
+        from rules.rule5_prove_ai import audit_and_prove_ai_skills
+        resume_product_ai = """# Alex Lee
+Product Designer
+## SUMMARY
+Working at an AI-powered healthcare startup designing patient interfaces.
+
+## CERTIFICATIONS
+- Introduction to Generative AI
+
+## EXPERIENCE
+### Senior Designer | AI Health
+*2023 - Present*
+- Designed user flows for patient onboarding.
+"""
+        r5 = audit_and_prove_ai_skills(resume_product_ai)
+        codes = [i["code"] for i in r5["issues"]]
+        self.assertIn("AI_PRODUCT_ONLY_NOT_WORKFLOW_SKILL", codes)
+        self.assertIn("AI_CERTIFICATION_WITHOUT_OUTCOME", codes)
+        self.assertIn("NO_AI_TOOLS_IN_WORKFLOW", codes)
+        self.assertIn("NO_AI_AUGMENTED_ACHIEVEMENT_BULLET", codes)
+
+    def test_rule_4_hard_gate_blocks_unquantified_resume(self):
+        """Rule 4 Hard Gate: Ensure transforming raw Profile.pdf without metrics is blocked."""
+        profile_path = "/Users/moderntechnepal/Downloads/Profile.pdf"
+        if not os.path.exists(profile_path):
+            self.skipTest(f"Test file not found: {profile_path}")
+
+        from pdf_parser import extract_pdf_data
+        parsed = extract_pdf_data(profile_path)
+
+        # Transform resume without user_metrics
+        res = self.agent.transform_resume(parsed["text"])
+        qa = res["qa_report"]
+
+        self.assertEqual(qa["overall_status"], "QA_FAILED")
+        self.assertTrue(qa["hard_gate_blocked"])
+        self.assertGreaterEqual(len(qa["critical_failures"]), 1)
+        # Verify hard gate violations include unquantified roles
+        violations = qa["pillars"]["rule_compliance"]["role_quantification"]["hard_gate_violations"]
+        violation_roles = [v["role"] for v in violations]
+        self.assertTrue(any("SCSS Consulting" in r for r in violation_roles))
+
+    def test_formatting_gate_role_metadata(self):
+        """Fix 2: Verify role metadata validator enforces title + company + date + location."""
+        # Incomplete header: missing date and location
+        bad_md = """# Candidate Name
+## WORK EXPERIENCE
+### Associate Project Manager | TechSaintIT
+- Led cross-functional team deliveries.
+"""
+        bad_qa = validate_role_headers_metadata(bad_md)
+        self.assertFalse(bad_qa["passed"])
+        self.assertTrue(any("INCOMPLETE_ROLE_HEADER" in iss for iss in bad_qa["issues"]))
+
+        # Complete header: title, company, date, location
+        good_md = """# Candidate Name
+## WORK EXPERIENCE
+### Associate Project Manager | TechSaintIT
+*May 2020 - September 2021 | Kathmandu, Bagmati, Nepal*
+- Led cross-functional team deliveries.
+"""
+        good_qa = validate_role_headers_metadata(good_md)
+        self.assertTrue(good_qa["passed"])
+        self.assertEqual(len(good_qa["issues"]), 0)
+
+    def test_formatting_gate_clean_latex_artifacts(self):
+        """Fix 3: Verify clean_latex_artifacts strips math-mode delimiters, escaped %, $, and circ."""
+        dirty = r"Scaled from \(5+\) to \(10K\) users with \(50\%\) growth, saving \(\$120K+\) and \(25\%\) latency. Item \circ bullet."
+        cleaned = clean_latex_artifacts(dirty)
+        self.assertEqual(cleaned, "Scaled from 5+ to 10K users with 50% growth, saving $120K+ and 25% latency. Item • bullet.")
+        self.assertNotIn(r"\(", cleaned)
+        self.assertNotIn(r"\)", cleaned)
+        self.assertNotIn(r"\%", cleaned)
+        self.assertNotIn(r"\$", cleaned)
+        self.assertNotIn(r"\circ", cleaned)
+
+    def test_universal_currency_detection(self):
+        """Verify Rule 4 recognizes metrics across all major world currencies ($ € £ ¥ ₹ AED CAD AUD CHF R$ zł kr)."""
+        from rules.rule4_google_xyz import analyze_metrics
+        currencies = [
+            "Protected $150K in project scope across 12 sprint cycles.",
+            "Scaled payment processing handling €2.5M in quarterly transaction volume.",
+            "Reduced infrastructure expenditure, saving £80,000 annually.",
+            "Governed enterprise delivery portfolio valued at ₹10 Lakhs with 98% on-time milestone release.",
+            "Optimized Tokyo database queries, handling ¥12,000,000 in monthly transactions.",
+            "Delivered fintech MVP under budget, saving AED 200,000 in vendor licensing.",
+            "Cut cloud compute costs by CAD 120K through serverless migration.",
+            "Accelerated Australian billing pipeline, processing AUD 95,000 daily.",
+            "Secured Swiss banking audit compliance, mitigating CHF 150,000 in regulatory penalty risks.",
+            "Streamlined Brazilian logistics routing, reducing operating spend by R$ 50,000.",
+            "Automated Warsaw reporting workflows, cutting overhead by 50,000 zł.",
+            "Optimized Stockholm cluster capacity, reducing annual server leasing by 100,000 kr."
+        ]
+        for bullet in currencies:
+            result = analyze_metrics(bullet)
+            self.assertTrue(result["has_metrics"], f"Failed to recognize currency metric in: '{bullet}'")
+
+    def test_universal_location_detection(self):
+        """Verify universal location detection for candidates from any country worldwide."""
+        from qa_validator import is_valid_location, validate_role_headers_metadata
+        sample_locations = [
+            "Paris, France", "São Paulo, Brazil", "Dubai, UAE", "Tokyo, Japan",
+            "Lagos, Nigeria", "Dublin, Ireland", "Sydney, Australia", "Toronto, Canada",
+            "Berlin, Germany", "Zurich, Switzerland", "Singapore", "Seoul, South Korea",
+            "Nairobi, Kenya", "Remote", "Hybrid", "On-site"
+        ]
+        for loc in sample_locations:
+            self.assertTrue(is_valid_location(loc), f"Failed to recognize valid location: '{loc}'")
+
+        # Verify role headers with international locations pass metadata QA
+        intl_md = """# Global Candidate
+## WORK EXPERIENCE
+### Product Lead | Spotify
+*Jan 2022 – Present | Stockholm, Sweden*
+- Led feature development for 10M active listeners.
+
+### Senior Engineering Manager | Grab
+*Mar 2019 – Dec 2021 | Singapore*
+- Directed multi-service architecture across Southeast Asia.
+
+### Staff Software Engineer | Nubank
+*Jan 2017 – Feb 2019 | São Paulo, Brazil*
+- Automated credit evaluation engine processing R$ 20M monthly.
+"""
+        qa = validate_role_headers_metadata(intl_md)
+        self.assertTrue(qa["passed"])
+        self.assertEqual(len(qa["issues"]), 0)
+
+    def test_international_candidate_end_to_end(self):
+        """Verify end-to-end processing of an international candidate (French/EU, Euro metrics, phone, languages)."""
+        intl_raw = """# Marie Curie
+Paris, France | marie.curie@example.eu | +33 1 42 68 55 00 | linkedin.com/in/marie-curie
+
+## PROFESSIONAL SUMMARY
+Product Manager with 6+ years of experience delivering cloud and fintech platforms across European markets. Experienced in agile delivery and AI-assisted sprint planning.
+
+## WORK EXPERIENCE
+### Senior Product Manager | BNP Paribas
+*January 2021 – Present | Paris, France*
+- Leveraged Generative AI tools (ChatGPT, Claude) to automate sprint requirement synthesis, saving 4+ hours weekly.
+- Directed payments integration across 14 European markets, scaling quarterly transaction volume to €45M.
+- Reduced payment dispute turnaround time from 5 business days to 1.5 business days across 250,000 accounts.
+- Led cross-functional squad of 12 engineers and 3 designers to launch biometric verification MVP.
+
+### Associate Product Manager | Blablacar
+*June 2018 – December 2020 | Paris, France*
+- Managed ride-scheduling algorithm enhancements, lifting trip completion rates by 28%.
+- Standardized sprint backlog refinement in Jira, increasing team delivery velocity by 32%.
+- Accelerated customer incident triage from 24 hours to 4 hours across 80,000 monthly active riders.
+
+## CORE COMPETENCIES & TECHNICAL SKILLS
+- **Project & Agile Governance:** Scrum, Agile, Jira, Sprint Planning, Stakeholder Management
+- **Technical & Architecture:** REST APIs, Microservices, SQL, PostgreSQL, AWS
+- **Languages:** French (Native), English (Fluent), German (B2)
+
+## EDUCATION & CERTIFICATIONS
+### Master of Science in Management | HEC Paris
+*2016 – 2018*
+- **Professional Scrum Product Owner™ (PSPO I)** | Scrum.org
+
+## ADDITIONAL INFORMATION
+- **Work Authorization:** EU Citizen / Eligible to work across EU and UK without visa sponsorship
+"""
+        standard_md, meta = format_to_standard_template(intl_raw)
+        self.assertIn("PARIS, FRANCE", standard_md.upper())
+        self.assertIn("+33 1 42 68 55 00", standard_md)
+        self.assertIn("€45M", standard_md)
+        self.assertIn("**Languages:** French (Native)", standard_md)
+        self.assertIn("EU Citizen", standard_md)
+
+        # Generate PDF and run full QA
+        pdf_bytes = generate_pdf_from_markdown(standard_md)
+        qa = run_full_qa_pipeline(intl_raw, standard_md, pdf_bytes=pdf_bytes)
+        self.assertEqual(qa["overall_status"], "QA_PASSED")
+        self.assertGreaterEqual(qa["qa_score"], 85)
+        self.assertEqual(len(qa["critical_failures"]), 0)
+
 if __name__ == "__main__":
     unittest.main()
+
+

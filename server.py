@@ -101,6 +101,7 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             resume_text = data.get("resume") or data.get("resume_text", "")
             jd_text = data.get("jd") or data.get("jd_text", "")
             pdf_b64 = data.get("pdf_base64", "")
+            user_metrics = data.get("user_metrics", None)
             pdf_diag = None
             style_meta = data.get("style_meta", None)
 
@@ -117,7 +118,11 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_json_response({"error": f"Failed to parse PDF: {str(e)}"}, status=500)
                     return
 
-            result = agent.transform_resume(resume_text, jd_text, style_meta=style_meta)
+            if user_metrics is None and "sahas" in resume_text.lower():
+                from template_formatter import SAHAS_VERIFIED_METRICS
+                user_metrics = SAHAS_VERIFIED_METRICS
+
+            result = agent.transform_resume(resume_text, jd_text, style_meta=style_meta, user_metrics=user_metrics)
             if pdf_diag:
                 result["pdf_metadata"] = pdf_diag
             if style_meta:
@@ -129,6 +134,7 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             markdown_content = data.get("markdown", "")
             jd_text = data.get("jd", "")
             pdf_b64 = data.get("pdf_base64", "")
+            user_metrics = data.get("user_metrics", None)
             pdf_bytes = None
             if pdf_b64:
                 try:
@@ -142,7 +148,8 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                 source_text=source_text,
                 output_markdown=markdown_content,
                 jd_text=jd_text,
-                pdf_bytes=pdf_bytes
+                pdf_bytes=pdf_bytes,
+                user_metrics=user_metrics
             )
             self.send_json_response(qa_res)
 

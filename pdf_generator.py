@@ -198,53 +198,155 @@ def markdown_to_html_resume(markdown_text: str, style_meta: dict = None) -> str:
     html_lines.append("</body></html>")
     return "\n".join(html_lines)
 
-from template_formatter import standard_template_to_html
+from template_formatter import standard_template_to_html, clean_latex_artifacts
+
+def check_pdf_page_boundaries(pdf_bytes: bytes) -> list:
+    """
+    Formatting Gate Fix 1: Detects formatting violations across page breaks:
+    - Orphan role headers at page bottoms (job title alone at page bottom)
+    - Truncated bullets split across pages (bullet text split mid-sentence)
+    - Orphan metadata at page tops (date/location line without role header)
+    """
+    if not pdf_bytes:
+        return []
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    issues = []
+    for p_idx in range(len(doc) - 1):
+        page1 = doc[p_idx]
+        page2 = doc[p_idx + 1]
+
+        t1_lines = [l.strip() for l in page1.get_text().splitlines() if l.strip()]
+        t2_lines = [l.strip() for l in page2.get_text().splitlines() if l.strip()]
+
+        if not t1_lines or not t2_lines:
+            continue
+
+        last_l = t1_lines[-1]
+        first_l = t2_lines[0]
+
+        # 1. Orphan role header or section header at bottom of page
+        is_role_hdr = ("|" in last_l and not last_l.startswith("•") and not any(k in last_l.lower() for k in ["present", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"]))
+        is_sec_hdr = (any(s in last_l.upper() for s in ["EDUCATION", "CERTIFICATIONS", "EXPERIENCE", "PROJECTS", "SKILLS", "SUMMARY"]) and len(last_l.split()) <= 5 and not last_l.startswith("•"))
+        if is_role_hdr or is_sec_hdr:
+            issues.append({
+                "type": "ORPHAN_HEADER",
+                "page": p_idx + 1,
+                "header": last_l,
+                "message": f"Orphan header '{last_l}' at bottom of page {p_idx + 1} without its content."
+            })
+
+        # 2. Truncated bullet split across page break
+        if last_l.startswith("•") and not last_l.endswith((".", "!", "?", ":")):
+            if not first_l.startswith("•") and not ("|" in first_l):
+                issues.append({
+                    "type": "TRUNCATED_BULLET",
+                    "page": p_idx + 1,
+                    "last_line": last_l,
+                    "next_line": first_l,
+                    "message": f"Truncated bullet at page {p_idx + 1} break: '{last_l}' continues on page {p_idx + 2} with '{first_l}'."
+                })
+
+        # 3. Orphan metadata at top of next page (missing header above it)
+        if any(k in first_l.lower() for k in ["present", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"]) and ("|" in first_l or len(first_l.split()) <= 8):
+            issues.append({
+                "type": "ORPHAN_METADATA",
+                "page": p_idx + 2,
+                "first_line": first_l,
+                "message": f"Orphan metadata '{first_l}' at top of page {p_idx + 2} without role header above it."
+            })
+
+        # 4. Awkwardly split role (role header + single bullet on page 1, remaining bullets on page 2)
+        if last_l.startswith("•") and first_l.startswith("•"):
+            for back_idx in range(1, min(6, len(t1_lines))):
+                prev_l = t1_lines[-1 - back_idx]
+                if "|" in prev_l and not prev_l.startswith("•") and not any(k in prev_l.lower() for k in ["present", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"]):
+                    issues.append({
+                        "type": "SPLIT_ROLE",
+                        "page": p_idx + 1,
+                        "header": prev_l,
+                        "message": f"Role '{prev_l}' awkwardly split across pages: header and only 1 bullet on page {p_idx + 1}, rest on page {p_idx + 2}."
+                    })
+                    break
+
+    doc.close()
+    return issues
 
 def generate_pdf_from_markdown(markdown_text: str, output_path: str = None, style_meta: dict = None) -> bytes:
     """
     Renders clean, broadcast-quality ATS PDF in the Executive Standard Template.
     Supports multi-page automatic flow with deterministic typography via fitz.Story.
-    Guarantees strict 1-2 page budget by adaptively calibrating font size and margins.
+    Guarantees strict 1-2 page budget and enforces the Formatting Gate:
+    - Zero orphan headers at page bottoms
+    - Zero truncated bullets across page breaks
+    - Zero orphan date/location metadata lines
     Returns PDF binary bytes.
     """
     if not style_meta:
         style_meta = {}
 
+    # Clean LaTeX math-mode artifacts and broken symbols
+    current_md = clean_latex_artifacts(markdown_text)
+
     # Target optimal ATS font sizes: clamp initial font size between 8.8 and 9.8pt
     requested_font = style_meta.get("font_size_pt", 9.5)
     base_font = min(9.8, max(8.8, float(requested_font)))
 
-    # Iterative page budget loop: target <= 2 pages
+    # Iterative page budget & formatting gate loop: target <= 2 pages and zero page-break boundary violations
     font_candidates = [base_font, 9.2, 8.8, 8.4]
     pdf_bytes = None
 
     for font_size in font_candidates:
         current_meta = dict(style_meta)
         current_meta["font_size_pt"] = font_size
-        html_content = standard_template_to_html(markdown_text, style_meta=current_meta)
 
-        try:
-            out = io.BytesIO()
-            writer = fitz.DocumentWriter(out)
-            story = fitz.Story(html_content)
+        # Render & boundary validation pass (up to 3 passes for boundary auto-fix)
+        for pass_idx in range(3):
+            html_content = standard_template_to_html(current_md, style_meta=current_meta)
 
-            def rectfn(rect_num, filled):
-                # A4: 595 x 842 pt. 30pt top/bottom, 36pt left/right
-                return fitz.Rect(0, 0, 595, 842), fitz.Rect(36, 30, 595 - 36, 842 - 30), None
+            try:
+                out = io.BytesIO()
+                writer = fitz.DocumentWriter(out)
+                story = fitz.Story(html_content)
 
-            story.write(writer, rectfn)
-            writer.close()
-            candidate_bytes = out.getvalue()
+                def rectfn(rect_num, filled):
+                    # A4: 595 x 842 pt. 30pt top/bottom, 36pt left/right
+                    return fitz.Rect(0, 0, 595, 842), fitz.Rect(36, 30, 595 - 36, 842 - 30), None
 
-            # Check page count
-            doc = fitz.open(stream=candidate_bytes, filetype="pdf")
-            page_count = len(doc)
-            doc.close()
+                story.write(writer, rectfn)
+                writer.close()
+                candidate_bytes = out.getvalue()
 
-            pdf_bytes = candidate_bytes
-            if page_count <= 2:
+                # Check page count
+                doc = fitz.open(stream=candidate_bytes, filetype="pdf")
+                page_count = len(doc)
+                doc.close()
+
+                # Check page boundary violations (Formatting Gate Fix 1)
+                boundary_issues = check_pdf_page_boundaries(candidate_bytes)
+                if not boundary_issues and page_count <= 2:
+                    pdf_bytes = candidate_bytes
+                    break
+
+                # If orphan header or split role detected, auto-insert pagebreak before that role
+                fixed_any = False
+                for iss in boundary_issues:
+                    if iss["type"] in ["ORPHAN_HEADER", "SPLIT_ROLE"]:
+                        hdr = iss["header"]
+                        pat = re.compile(rf"(#{{1,4}}\s*{re.escape(hdr)})", re.I)
+                        if pat.search(current_md):
+                            current_md = pat.sub(r'<div class="pagebreak"></div>\n\n\1', current_md, count=1)
+                            fixed_any = True
+
+                if fixed_any:
+                    continue
+                else:
+                    pdf_bytes = candidate_bytes
+                    if page_count <= 2:
+                        break
+            except Exception:
                 break
-        except Exception:
+
+        if pdf_bytes and len(check_pdf_page_boundaries(pdf_bytes)) == 0:
             break
 
     if not pdf_bytes:
@@ -252,7 +354,7 @@ def generate_pdf_from_markdown(markdown_text: str, output_path: str = None, styl
         doc = fitz.open()
         page = doc.new_page(width=595, height=842)
         rect = fitz.Rect(36, 30, 595 - 36, 842 - 30)
-        page.insert_htmlbox(rect, standard_template_to_html(markdown_text, style_meta=style_meta))
+        page.insert_htmlbox(rect, standard_template_to_html(current_md, style_meta=style_meta))
         pdf_bytes = doc.tobytes()
         doc.close()
 

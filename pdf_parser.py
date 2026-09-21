@@ -67,9 +67,12 @@ def extract_smart_pdf_text_fitz(doc) -> str:
     right_blocks = [b for b in p1_blocks if b[0] >= width * 0.35 and b[4].strip() and not re.match(r'^Page\s+\d+', b[4].strip(), re.I)]
 
     has_sidebar = False
-    if len(left_blocks) >= 2 and len(right_blocks) >= 2:
-        left_text = " ".join([b[4] for b in left_blocks]).lower()
-        if any(k in left_text for k in ['contact', 'top skills', 'skills', 'certifications', 'languages', '@', 'linkedin']):
+    if len(left_blocks) >= 3 and len(right_blocks) >= 5:
+        left_has_sidebar_headers = any(
+            re.search(r'\b(?:contact|top skills|languages|certifications)\b', b[4].strip(), re.I)
+            for b in left_blocks
+        )
+        if left_has_sidebar_headers:
             has_sidebar = True
 
     if has_sidebar:

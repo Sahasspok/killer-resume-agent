@@ -1,0 +1,119 @@
+ARJUN SHARMA
+Technical Project Manager
+Kathmandu, Nepal
+arjun.sharma.pm@example.com | +977-98XXXXXXXX
+LinkedIn: linkedin.com/in/arjunsharma-pm
+
+PROFESSIONAL SUMMARY
+Technical Project Manager with 5+ years of experience delivering web, mobile, and SaaS products across distributed engineering teams. Experienced in Agile delivery, stakeholder management, roadmap execution, risk management, and software development lifecycle management.
+Strong technical foundation with hands-on exposure to REST APIs, SQL, Git, AWS, CI/CD, React, and Node.js. Recently focused on using AI tools to improve project planning, documentation, risk identification, and delivery workflows.
+Experienced working with Product Managers, Engineering Leads, QA, Designers, and business stakeholders to move projects from requirements through production release.
+
+CORE SKILLS
+Project Management
+Agile / Scrum
+Project Planning & Execution
+Roadmap Management
+Sprint Planning
+Risk & Dependency Management
+Stakeholder Management
+Resource Planning
+Release Management
+RAID Management
+Scope & Change Management
+Technical
+SDLC
+REST APIs
+SQL
+Git / GitHub
+AWS
+CI/CD
+React
+Node.js
+Postman
+Software Architecture Fundamentals
+Tools
+Jira
+Confluence
+ClickUp
+GitHub
+Slack
+Notion
+Google Workspace
+Claude
+Gemini
+ChatGPT
+
+PROFESSIONAL EXPERIENCE
+Senior Project Manager
+Nexora Technologies — Kathmandu, Nepal
+Jan 2023 – Present
+Lead delivery of web and mobile software products for international clients across fintech, e-commerce, and SaaS.
+Manage 3 concurrent software projects with cross-functional teams of 8–18 members.
+Own project execution from requirements clarification through development, QA, UAT, and production release.
+Coordinate Product, Engineering, QA, Design, and client stakeholders across multiple time zones.
+Facilitate sprint planning, daily coordination, sprint reviews, retrospectives, and release planning.
+Maintain project roadmaps, RAID logs, dependency trackers, delivery dashboards, and stakeholder reports.
+Partner with Engineering Leads to identify technical dependencies and delivery risks.
+Introduced standardized risk reviews before major releases, reducing late-stage project escalations.
+Worked with Product Managers to break high-level roadmap initiatives into epics and engineering-ready work.
+Improved sprint planning by introducing historical velocity and capacity data into estimation discussions.
+Coordinated a major SaaS migration involving 25+ services and 3 engineering teams.
+Managed production release planning and coordinated QA/UAT sign-off before deployment.
+Built AI-assisted workflows for meeting summaries, project status reporting, risk identification, and Jira ticket preparation.
+Reduced weekly manual reporting effort by approximately 8 hours per project manager.
+Project Manager
+CloudPeak Solutions — Kathmandu, Nepal
+Aug 2021 – Dec 2022
+Managed software development projects for clients in the United States, United Kingdom, and Australia.
+Managed end-to-end delivery of web and mobile applications.
+Created project plans, schedules, sprint plans, and milestone tracking systems.
+Coordinated developers, QA engineers, designers, and client stakeholders.
+Managed scope changes, project risks, dependencies, and client expectations.
+Used Jira and Confluence to maintain project documentation and delivery visibility.
+Supported Scrum ceremonies and helped teams remove delivery blockers.
+Prepared weekly project reports covering progress, risks, dependencies, and upcoming milestones.
+Worked with developers to clarify API requirements and integration dependencies.
+Coordinated UAT activities and production releases.
+Supported onboarding and mentoring of junior project coordinators.
+
+SELECTED PROJECTS
+AI Customer Support Platform
+Role: Technical Project Manager
+Led delivery of an AI-assisted customer support platform integrating an LLM-based assistant with an existing SaaS product.
+Responsibilities:
+Coordinated Product, Engineering, QA, and AI engineering teams.
+Managed integration dependencies between the SaaS platform and AI services.
+Coordinated API testing and UAT.
+Managed model-evaluation milestones and release criteria.
+Established risk tracking for hallucination, latency, and integration failures.
+Coordinated phased production rollout.
+Technology: REST APIs, Python, React, AWS, PostgreSQL, LLM APIs
+
+E-commerce Platform Migration
+Role: Project Manager
+Managed migration of a legacy e-commerce platform to a modern cloud-based architecture.
+Coordinated three engineering teams.
+Managed migration milestones and dependencies.
+Coordinated QA and UAT.
+Maintained release readiness checklist.
+Reported progress and risks to executive stakeholders.
+Technology: AWS, Node.js, React, PostgreSQL, GitHub Actions
+
+EDUCATION
+Bachelor of Science in Computer Science
+Tribhuvan University, Nepal
+2019
+
+CERTIFICATIONS
+Professional Scrum Master I (PSM I)
+Google Project Management Certificate
+AWS Cloud Practitioner
+Agile Project Management — Coursera
+
+ADDITIONAL INFORMATION
+Languages: English, Nepali, Hindi
+Work Authorization: Nepal
+Availability: 30 days
+Preferred Work: Remote / Hybrid
+References: Available upon request
