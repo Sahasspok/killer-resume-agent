@@ -270,11 +270,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (diag.ats_status === "PASS") {
       pdfAtsBadge.textContent = "ATS READABLE";
       pdfAtsBadge.className = "diag-status";
-      pdfWarningBanner.classList.add("hidden");
+      if (diag.removed_fillers && diag.removed_fillers.length > 0) {
+        pdfWarningBanner.classList.remove("hidden");
+        pdfWarningBanner.style.background = "rgba(16, 185, 129, 0.1)";
+        pdfWarningBanner.style.borderColor = "rgba(16, 185, 129, 0.3)";
+        pdfWarningBanner.style.color = "var(--accent-green)";
+        pdfWarningBanner.innerHTML = `<strong>Rule 1 & Clean ATS Template:</strong> Automatically stripped ${diag.removed_fillers.length} unwanted page fillers/artifacts (e.g. "Page X of Y"). Clean selectable text loaded.`;
+      } else {
+        pdfWarningBanner.classList.add("hidden");
+      }
     } else {
       pdfAtsBadge.textContent = "ATS BLOCKED";
       pdfAtsBadge.className = "diag-status fail";
       pdfWarningBanner.classList.remove("hidden");
+      pdfWarningBanner.style.background = "rgba(244, 63, 94, 0.1)";
+      pdfWarningBanner.style.borderColor = "rgba(244, 63, 94, 0.3)";
+      pdfWarningBanner.style.color = "var(--accent-rose)";
       pdfWarningBanner.innerHTML = `<strong>Rule 1 Alert:</strong> Text trapped in images or unselectable! AI hiring systems will fail to parse this PDF.`;
     }
   }
@@ -434,8 +445,13 @@ document.addEventListener("DOMContentLoaded", () => {
         outputMarkdown.textContent = data.optimized_markdown || "";
         if (data.style_meta) currentStyleMeta = data.style_meta;
 
+        let fillerBadge = "";
+        if (data.transform_meta && data.transform_meta.fillers_removed_count > 0) {
+          fillerBadge = `<span style="margin-left:6px; font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(56,189,248,0.15); color:var(--accent-blue); border:1px solid rgba(56,189,248,0.3);">Stripped ${data.transform_meta.fillers_removed_count} Page Fillers</span>`;
+        }
+
         document.getElementById("preview-score-delta").innerHTML = 
-          `<span>Initial: ${data.initial_score}/100 ➔ Optimized: <strong>${data.optimized_score}/100</strong></span> <span style="margin-left:8px; font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(16,185,129,0.15); color:var(--accent-green); border:1px solid rgba(16,185,129,0.3);">✓ 100% Original Formatting Preserved</span>`;
+          `<span>Initial: ${data.initial_score}/100 ➔ Optimized: <strong>${data.optimized_score}/100</strong></span> <span style="margin-left:8px; font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(16,185,129,0.15); color:var(--accent-green); border:1px solid rgba(16,185,129,0.3);">✓ Executive ATS Standard Template</span>${fillerBadge}`;
 
         setOutputTab("preview");
         renderAuditResults(data.post_audit_details || data.audit_details);

@@ -72,13 +72,25 @@ def extract_pdf_data(source: Union[str, bytes], filename: str = "uploaded_resume
     else:
         raise RuntimeError("No PDF extraction library available (install PyMuPDF or pypdf).")
 
-    char_count = len(extracted_text)
+    # Clean out unwanted fillers like 'Page 1 of 5', running headers, and artifacts
+    from template_formatter import clean_unwanted_fillers
+    cleaned_text, removed_fillers = clean_unwanted_fillers(extracted_text)
+
+    char_count = len(cleaned_text)
     is_selectable = char_count >= 50
     is_oversized = file_size_mb > 2.5
     image_trapped_warning = (not is_selectable) or (char_count < 100 and image_count > 0)
 
     # Diagnostic Rule 1 evaluation for PDF
     flags = []
+    if removed_fillers:
+        flags.append({
+            "code": "FILLERS_REMOVED",
+            "severity": "PASS",
+            "message": f"Automatically stripped {len(removed_fillers)} unwanted PDF filler/page artifact(s) (e.g. 'Page X of Y').",
+            "recommendation": "Clean content parsed directly into Executive ATS Standard Template."
+        })
+
     if image_trapped_warning:
         flags.append({
             "code": "IMAGE_TRAPPED_TEXT",
@@ -125,7 +137,8 @@ def extract_pdf_data(source: Union[str, bytes], filename: str = "uploaded_resume
         "image_count": image_count,
         "is_selectable": is_selectable,
         "image_trapped_warning": image_trapped_warning,
-        "text": extracted_text,
+        "text": cleaned_text,
         "flags": flags,
+        "removed_fillers": removed_fillers,
         "ats_status": "PASS" if is_selectable and not is_oversized else "FAIL"
     }

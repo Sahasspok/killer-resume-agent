@@ -9,11 +9,12 @@ Key Findings (Jeff Su):
 import re
 
 METRIC_PATTERNS = [
-    r"\b\d+%\b",
-    r"\$\d+[\d,]*",
-    r"\b\d+\s*(?:x|times|hours|days|weeks|months|minutes|sec|seconds)\b",
-    r"\b\d+[\d,]*\s*(?:users|customers|clients|leads|tickets|endpoints|servers|engineers|teams)\b",
-    r"\b\d+(?:k|m|b)\b"
+    r"\b\d+(?:\.\d+)?%",
+    r"\$\d+[\d,]*(?:\.\d+)?(?:\s*[kmb])?",
+    r"\b\d+(?:\+)?\s*(?:x|times|hours?|days?|weeks?|months?|minutes?|secs?|seconds?|hrs?|mins?)\b",
+    r"\b\d+[\d,]*(?:\+)?\s*(?:users?|customers?|clients?|leads?|tickets?|endpoints?|servers?|engineers?|teams?|initiatives?|microservices?|releases?)\b",
+    r"\b\d+(?:\.\d+)?\s*(?:k|m|b)\b",
+    r"\b\d+x\b"
 ]
 
 DIMENSIONS = {

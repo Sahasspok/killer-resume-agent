@@ -8,23 +8,55 @@ from rules.rule2_keyword_mapping import map_keywords
 from rules.rule3_human_gate import enforce_human_gate
 from rules.rule4_google_xyz import transform_to_xyz, analyze_metrics
 from rules.rule5_prove_ai import audit_and_prove_ai_skills
-from format_preserver import transform_preserving_format
+from template_formatter import format_to_standard_template, clean_unwanted_fillers
 
 class KillerResumeAgent:
     def __init__(self):
         pass
 
     def run_comprehensive_audit(self, resume_text: str, jd_text: str = "") -> dict:
-        r1 = audit_readability(resume_text)
-        r2 = map_keywords(resume_text, jd_text)
-        r5 = audit_and_prove_ai_skills(resume_text)
+        # First strip fillers so audit is evaluated on actual resume content
+        cleaned_text, removed_fillers = clean_unwanted_fillers(resume_text)
+        
+        r1 = audit_readability(cleaned_text)
+        r2 = map_keywords(cleaned_text, jd_text)
+        r5 = audit_and_prove_ai_skills(cleaned_text)
 
-        # Audit individual bullet points for R3 & R4
-        raw_bullets = [
-            l.strip().lstrip("-*•> ").strip()
-            for l in resume_text.splitlines()
-            if l.strip().startswith(("-", "*", "•", ">")) or (len(l) > 15 and l.strip()[:2].isdigit() and l.strip()[2] == '.')
-        ]
+        # Audit individual bullet points from Experience & Projects
+        lines = cleaned_text.splitlines()
+        raw_bullets = []
+        in_bullet_section = False
+
+        for l in lines:
+            s = l.strip()
+            if not s:
+                continue
+            lower = s.lower()
+            if any(w in lower for w in ['experience', 'work history', 'projects', 'initiatives', 'portfolio']):
+                in_bullet_section = True
+            elif any(w in lower for w in ['skills', 'education', 'certifications', 'summary', 'about me']):
+                in_bullet_section = False
+
+            # Ignore italic date lines (*Jan 2023 - Present*) and bold category headings (**Skill:**)
+            if s.startswith("*") and s.endswith("*"):
+                continue
+            if s.startswith(("- **", "* **", "• **")):
+                continue
+
+            if in_bullet_section or s.startswith(("- ", "* ", "• ", "> ")):
+                m = re.match(r'^\s*[-*•>]\s+(?!\*\*)(.*)', s)
+                if m:
+                    raw_bullets.append(m.group(1).strip())
+                elif len(s) > 20 and s[:2].isdigit() and s[2] == '.':
+                    raw_bullets.append(s[3:].strip())
+
+        # Fallback if no bullets explicitly matched
+        if not raw_bullets:
+            raw_bullets = [
+                l.strip().lstrip("-*•> ").strip()
+                for l in cleaned_text.splitlines()
+                if l.strip().startswith(("-", "*", "•", ">")) and not (l.strip().startswith("*") and l.strip().endswith("*"))
+            ]
 
         bullet_audits = []
         quantified_count = 0
@@ -100,13 +132,13 @@ class KillerResumeAgent:
 
     def transform_resume(self, resume_text: str, jd_text: str = "", style_meta: dict = None) -> dict:
         """
-        Generates an optimized, ATS-certified killer resume draft while strictly preserving
-        100% of the candidate's original document formatting, headings, spacing, and styling.
+        Transforms input resume into the pristine Ex-Apple / Google Executive ATS Standard Template.
+        Removes 100% of unwanted fillers (e.g. 'Page 1 of 5', running headers, metadata noise).
         """
         audit = self.run_comprehensive_audit(resume_text, jd_text)
         
-        # Surgical in-place format-preserving transformation
-        optimized_markdown, transform_meta = transform_preserving_format(resume_text, jd_text, style_meta)
+        # Standard ATS Template Transformation
+        optimized_markdown, transform_meta = format_to_standard_template(resume_text, jd_text)
         post_audit = self.run_comprehensive_audit(optimized_markdown, jd_text)
 
         return {

@@ -198,23 +198,36 @@ def markdown_to_html_resume(markdown_text: str, style_meta: dict = None) -> str:
     html_lines.append("</body></html>")
     return "\n".join(html_lines)
 
+from template_formatter import standard_template_to_html
+
 def generate_pdf_from_markdown(markdown_text: str, output_path: str = None, style_meta: dict = None) -> bytes:
     """
-    Renders clean ATS PDF using PyMuPDF insert_htmlbox.
-    Faithfully replicates font family, margins, and header alignment of the input file.
+    Renders clean, broadcast-quality ATS PDF in the Executive Standard Template.
+    Supports multi-page automatic flow with deterministic typography via fitz.Story.
     Returns PDF binary bytes.
     """
-    html_content = markdown_to_html_resume(markdown_text, style_meta=style_meta)
+    html_content = standard_template_to_html(markdown_text, style_meta=style_meta)
     
-    doc = fitz.open()
-    page = doc.new_page(width=595, height=842) # A4 dimensions
-    rect = fitz.Rect(36, 32, 595 - 36, 842 - 32) # Standard 0.5in margins
-    
-    # insert_htmlbox renders styled HTML
-    page.insert_htmlbox(rect, html_content)
-    
-    pdf_bytes = doc.tobytes()
-    doc.close()
+    # Render using fitz.Story for multi-page overflow and crisp vector layout
+    try:
+        out = io.BytesIO()
+        writer = fitz.DocumentWriter(out)
+        story = fitz.Story(html_content)
+
+        def rectfn(rect_num, filled):
+            return fitz.Rect(0, 0, 595, 842), fitz.Rect(36, 32, 595 - 36, 842 - 32), None
+
+        story.write(writer, rectfn)
+        writer.close()
+        pdf_bytes = out.getvalue()
+    except Exception:
+        # Fallback to insert_htmlbox
+        doc = fitz.open()
+        page = doc.new_page(width=595, height=842)
+        rect = fitz.Rect(36, 32, 595 - 36, 842 - 32)
+        page.insert_htmlbox(rect, html_content)
+        pdf_bytes = doc.tobytes()
+        doc.close()
 
     if output_path:
         with open(output_path, "wb") as f:
