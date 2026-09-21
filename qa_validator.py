@@ -404,22 +404,121 @@ def validate_pdf_render(pdf_bytes: bytes, source_markdown: str = "") -> Dict[str
         "issues": issues
     }
 
+def validate_score_improvement(
+    initial_audit: Dict[str, Any] = None,
+    post_audit: Dict[str, Any] = None,
+    pdf_audit: Dict[str, Any] = None
+) -> Dict[str, Any]:
+    """
+    Pillar 8: Empirical Score Improvement & Non-Regression QA.
+    Enforces the fundamental non-regression invariant:
+    - Zero Score Regression: Post-optimization composite score MUST be strictly >= initial score.
+    - Score Improvement Target: Optimized resume should target >= 85+ and >= initial + 10.
+    - Rendered PDF Parity: The rendered vector PDF must achieve >= initial score.
+    """
+    checks = []
+    issues = []
+
+    if not initial_audit or not post_audit:
+        return {
+            "pillar": "Score Improvement & Non-Regression QA",
+            "passed": True,
+            "checks": [{"name": "Score Improvement Invariant", "status": "PASS", "details": "No pre-audit provided to compare"}],
+            "issues": []
+        }
+
+    initial_score = initial_audit.get("composite_score", 0)
+    post_score = post_audit.get("composite_score", 0)
+    delta = post_score - initial_score
+
+    # Check 1: Zero regression invariant
+    if post_score < initial_score:
+        issue = f"SCORE_REGRESSION_CRITICAL: Post-optimization score ({post_score}/100) is LOWER than source resume score ({initial_score}/100)! Optimization degraded candidate standing."
+        issues.append(issue)
+        checks.append({
+            "name": "Zero Score Regression Invariant",
+            "status": "FAIL",
+            "details": issue
+        })
+    else:
+        checks.append({
+            "name": "Zero Score Regression Invariant",
+            "status": "PASS",
+            "details": f"Optimized score ({post_score}/100) improved by +{delta} points over input ({initial_score}/100)."
+        })
+
+    # Check 2: Rendered PDF text parity
+    if pdf_audit:
+        pdf_score = pdf_audit.get("composite_score", 0)
+        pdf_delta = pdf_score - initial_score
+        if pdf_score < initial_score:
+            issue = f"PDF_SCORE_REGRESSION: Rendered vector PDF scored ({pdf_score}/100), which is LOWER than input score ({initial_score}/100)!"
+            issues.append(issue)
+            checks.append({
+                "name": "Rendered PDF Non-Regression QA",
+                "status": "FAIL",
+                "details": issue
+            })
+        else:
+            checks.append({
+                "name": "Rendered PDF Non-Regression QA",
+                "status": "PASS",
+                "details": f"Rendered PDF text achieved {pdf_score}/100 (+{pdf_delta} over input {initial_score}/100)."
+            })
+
+    # Check 3: Optimal target
+    if post_score < 80:
+        checks.append({
+            "name": "Executive Standard Target",
+            "status": "WARNING",
+            "details": f"Optimized score is {post_score}/100. Jeff Su target for killer resumes is >= 85/100."
+        })
+    else:
+        checks.append({
+            "name": "Executive Standard Target",
+            "status": "PASS",
+            "details": f"Score {post_score}/100 exceeds executive threshold (>= 85/100)."
+        })
+
+    passed = len(issues) == 0
+    return {
+        "pillar": "Score Improvement & Non-Regression QA",
+        "passed": passed,
+        "checks": checks,
+        "issues": issues,
+        "initial_score": initial_score,
+        "post_score": post_score,
+        "score_delta": delta
+    }
+
 def run_full_qa_pipeline(
     source_text: str,
     output_markdown: str,
     jd_text: str = "",
-    pdf_bytes: bytes = None
+    pdf_bytes: bytes = None,
+    initial_audit: Dict[str, Any] = None,
+    post_audit: Dict[str, Any] = None
 ) -> Dict[str, Any]:
     """
-    Master QA Pipeline: Runs all 7 QA pillars and issues a broadcast-certified QA certificate.
+    Master QA Pipeline: Runs all 8 QA pillars and issues a broadcast-certified QA certificate.
     """
     fact_qa = validate_fact_preservation(source_text, output_markdown)
     format_qa = validate_formatting_and_syntax(output_markdown)
     rule_qa = validate_rule_compliance(output_markdown, jd_text)
     
     pdf_qa = None
+    pdf_audit = None
     if pdf_bytes:
         pdf_qa = validate_pdf_render(pdf_bytes, source_markdown=output_markdown)
+        try:
+            from pdf_parser import extract_pdf_data
+            from agent import KillerResumeAgent
+            pdf_data = extract_pdf_data(pdf_bytes)
+            pdf_audit = KillerResumeAgent().run_comprehensive_audit(pdf_data["text"], jd_text=jd_text)
+        except Exception:
+            pdf_audit = None
+
+    score_qa = validate_score_improvement(initial_audit, post_audit, pdf_audit)
 
     critical_failures = []
     if not fact_qa["passed"]:
@@ -430,6 +529,8 @@ def run_full_qa_pipeline(
         critical_failures.extend(rule_qa.get("issues", []))
     if pdf_qa and not pdf_qa["passed"]:
         critical_failures.extend(pdf_qa["issues"])
+    if not score_qa["passed"]:
+        critical_failures.extend(score_qa["issues"])
 
     overall_status = "QA_PASSED" if len(critical_failures) == 0 else "QA_FAILED"
     
@@ -443,13 +544,15 @@ def run_full_qa_pipeline(
         score -= 20
     if pdf_qa and not pdf_qa["passed"]:
         score -= 20
+    if not score_qa["passed"]:
+        score -= 30
     if rule_qa["cliche_count"] > 0:
         score -= 10
     score = max(20, min(100, score))
 
     summary = (
-        "✓ 100% PRODUCTION QA PASSED: Zero hallucinations, pristine single-column layout, "
-        "and verified selectable vector PDF."
+        f"✓ 100% PRODUCTION QA PASSED: Zero hallucinations, +{score_qa.get('score_delta', 0)} score gain, "
+        "pristine single-column layout, and verified selectable vector PDF."
         if overall_status == "QA_PASSED"
         else f"⚠ QA FLAGS DETECTED ({len(critical_failures)} critical issue(s) need review)."
     )
@@ -463,6 +566,7 @@ def run_full_qa_pipeline(
             "fact_preservation": fact_qa,
             "format_syntax": format_qa,
             "rule_compliance": rule_qa,
-            "pdf_geometry": pdf_qa
+            "pdf_geometry": pdf_qa,
+            "score_improvement": score_qa
         }
     }

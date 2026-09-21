@@ -40,17 +40,18 @@ class KillerResumeAgent:
             lower = s.lower()
             if any(w in lower for w in ['experience', 'work history', 'projects', 'initiatives', 'portfolio']):
                 in_bullet_section = True
-            elif any(w in lower for w in ['skills', 'education', 'certifications', 'summary', 'about me']):
+            elif any(w in lower for w in ['skills', 'education', 'certifications', 'summary', 'about me', 'contact', 'languages', 'awards']):
                 in_bullet_section = False
 
-            # Ignore italic date lines (*Jan 2023 - Present*) and bold category headings (**Skill:**)
+            # Ignore italic date lines (*Jan 2023 - Present*)
             if s.startswith("*") and s.endswith("*"):
                 continue
-            if s.startswith(("- **", "* **", "• **")):
+            # Ignore category definitions like - **Tools:** or **Category:**
+            if re.match(r'^\s*[-*•>]?\s*\*\*[^*:]+:\*\*', s):
                 continue
 
-            if in_bullet_section or s.startswith(("- ", "* ", "• ", "> ")):
-                m = re.match(r'^\s*[-*•>]\s+(?!\*\*)(.*)', s)
+            if in_bullet_section:
+                m = re.match(r'^\s*[-*•>]\s+(.*)', s)
                 if m:
                     raw_bullets.append(m.group(1).strip())
                 elif len(s) > 20 and s[:2].isdigit() and s[2] == '.':
@@ -62,6 +63,7 @@ class KillerResumeAgent:
                 l.strip().lstrip("-*•> ").strip()
                 for l in cleaned_text.splitlines()
                 if l.strip().startswith(("-", "*", "•", ">")) and not (l.strip().startswith("*") and l.strip().endswith("*"))
+                and not re.match(r'^\s*[-*•>]?\s*\*\*[^*:]+:\*\*', l.strip())
             ]
 
         bullet_audits = []
@@ -86,8 +88,11 @@ class KillerResumeAgent:
 
         r3_score = max(40, 100 - (cliche_count * 15))
         # Jeff Su Rule 4: Quantify high-impact wins (3-6 quantified wins per resume is sweet spot)
-        target_wins = min(8, max(3, int(total_bullets * 0.25)))
-        r4_score = min(100, int((quantified_count / max(1, target_wins)) * 100)) if quantified_count > 0 else 50
+        target_wins = min(6, max(3, int(total_bullets * 0.25)))
+        if quantified_count == 0:
+            r4_score = 40
+        else:
+            r4_score = min(100, 45 + int((quantified_count / max(1, target_wins)) * 55))
 
         # Overall composite score weighted by empirical impact
         composite_score = int(
@@ -156,14 +161,16 @@ class KillerResumeAgent:
             source_text=resume_text,
             output_markdown=optimized_markdown,
             jd_text=jd_text,
-            pdf_bytes=pdf_bytes
+            pdf_bytes=pdf_bytes,
+            initial_audit=audit,
+            post_audit=post_audit
         )
 
         pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
 
         return {
             "initial_score": audit["composite_score"],
-            "optimized_score": max(post_audit["composite_score"], audit["composite_score"] + 10),
+            "optimized_score": post_audit["composite_score"],
             "optimized_markdown": optimized_markdown,
             "qa_report": qa_report,
             "pdf_base64": pdf_b64,

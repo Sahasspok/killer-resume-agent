@@ -12,10 +12,11 @@ import re
 METRIC_PATTERNS = [
     r"\b\d+(?:\.\d+)?%",
     r"\$\d+[\d,]*(?:\.\d+)?(?:\s*[kmb])?",
-    r"\b\d+(?:\+)?\s*(?:x|times|hours?|days?|weeks?|months?|minutes?|secs?|seconds?|hrs?|mins?)\b",
-    r"\b\d+[\d,]*(?:\+)?\s*(?:users?|customers?|clients?|leads?|tickets?|endpoints?|servers?|engineers?|teams?|initiatives?|microservices?|releases?)\b",
-    r"\b\d+(?:\.\d+)?\s*(?:k|m|b)\b",
-    r"\b\d+x\b"
+    r"\b\d+(?:[–-]\d+)?(?:\+)?\s*(?:x|times|hours?|days?|weeks?|months?|minutes?|secs?|seconds?|hrs?|mins?)\b",
+    r"\b\d+[\d,]*(?:\+)?\s*(?:users?|customers?|clients?|leads?|tickets?|endpoints?|servers?|engineers?|teams?|initiatives?|microservices?|releases?|bugs?|features?|story\s+points?|points?|sprints?)\b",
+    r"\b\d+(?:\.\d+)?\s*(?:k|m|b)(?:\+)?(?:\s*(?:dau|mau|wau|users?|views?|downloads?))?\b",
+    r"\b\d+x\b",
+    r"\bfrom\s+\d+\s+to\s+\d+\b"
 ]
 
 DIMENSIONS = {

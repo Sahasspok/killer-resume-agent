@@ -147,13 +147,27 @@ def extract_smart_pdf_text_fitz(doc) -> str:
 
         return "\n".join(text_lines)
 
-    # Standard fallback with whitespace normalization
+    # Standard single-column flow with block unwrapping to preserve wrapped bullets & metrics
     text_parts = []
     for page in doc:
-        t = page.get_text("text")
-        if t:
-            clean_t = t.replace('\xa0', ' ').replace('\u202f', ' ')
-            text_parts.append(clean_t.strip())
+        blocks = page.get_text("blocks")
+        for b in blocks:
+            # b = (x0, y0, x1, y1, text, block_no, block_type)
+            if len(b) > 4 and b[4]:
+                clean_b = b[4].replace('\xa0', ' ').replace('\u202f', ' ').strip()
+                if not clean_b:
+                    continue
+                # If block starts with a bullet point, join internal wrapped lines
+                if clean_b.startswith(('•', '-', '*', '○', '·', '▪', '▫', '>')):
+                    joined_bullet = ' '.join(clean_b.splitlines())
+                    text_parts.append(joined_bullet)
+                else:
+                    # Check if this block is an orphan continuation line of previous bullet
+                    starts_new_section = clean_b.startswith(('#', 'WORK EXPERIENCE', 'CORE COMPETENCIES', 'EDUCATION', 'CERTIFICATIONS', 'PROFESSIONAL SUMMARY')) or (len(clean_b.split()) <= 4 and clean_b.isupper())
+                    if text_parts and text_parts[-1].startswith(('•', '-', '*', '○', '·', '▪', '▫', '>')) and not starts_new_section and not text_parts[-1].endswith(('.', '!', '?', ':')):
+                        text_parts[-1] = text_parts[-1] + ' ' + ' '.join(clean_b.splitlines())
+                    else:
+                        text_parts.append(clean_b)
     return "\n\n".join(text_parts)
 
 def extract_pdf_data(source: Union[str, bytes], filename: str = "uploaded_resume.pdf") -> Dict[str, Any]:

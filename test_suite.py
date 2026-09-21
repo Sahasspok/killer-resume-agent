@@ -212,17 +212,24 @@ class TestKillerResumeAgent(unittest.TestCase):
         self.assertIn("Computer Engineering", opt_md)
 
         # 4. Verify genuine metrics preserved and bolded
-        self.assertIn("**10K**", opt_md)
+        self.assertIn("**10K DAU**", opt_md)
         self.assertIn("**50%**", opt_md)
         self.assertIn("**24 hours**", opt_md)
 
-        # 5. Full Production QA Verification
+        # 5. Full Production QA Verification & Non-Regression QA
         qa = res["qa_report"]
         self.assertEqual(qa["overall_status"], "QA_PASSED", f"QA Failed with critical failures: {qa['critical_failures']}")
         self.assertEqual(qa["qa_score"], 100)
         self.assertEqual(len(qa["critical_failures"]), 0)
 
-        # 6. Rule 1 Readability QA Integration Verification (Zero heading/readability issues)
+        # 6. Verify Non-Regression Guarantee: Optimized Score strictly > Initial Score
+        self.assertGreaterEqual(res["optimized_score"], res["initial_score"] + 10)
+        self.assertGreaterEqual(res["optimized_score"], 90)
+        score_pillar = qa["pillars"]["score_improvement"]
+        self.assertTrue(score_pillar["passed"])
+        self.assertGreaterEqual(score_pillar["score_delta"], 10)
+
+        # 7. Rule 1 Readability QA Integration Verification (Zero heading/readability issues)
         post_r1 = res["post_audit_details"]["rule_1_readability"]
         self.assertEqual(post_r1["score"], 100)
         self.assertEqual(post_r1["issues"], [], f"Rule 1 issues found on generated resume: {post_r1['issues']}")
@@ -231,7 +238,7 @@ class TestKillerResumeAgent(unittest.TestCase):
         self.assertIn("Skills", post_r1["headings_found"])
         self.assertIn("Education", post_r1["headings_found"])
 
-        # 7. Verify vector PDF geometry (Strictly 2 pages, never 3 pages)
+        # 8. Verify vector PDF geometry (Strictly 2 pages, never 3 pages)
         pdf_bytes = base64.b64decode(res["pdf_base64"])
         self.assertLess(len(pdf_bytes), 2.5 * 1024 * 1024)
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
