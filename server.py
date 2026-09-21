@@ -15,6 +15,7 @@ from agent import KillerResumeAgent
 from rules.rule4_google_xyz import transform_to_xyz, DIMENSIONS
 from pdf_parser import extract_pdf_data
 from pdf_generator import generate_pdf_from_markdown
+from format_preserver import extract_pdf_style_fingerprint
 
 PORT = 5050
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -61,11 +62,12 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json_response({"error": "No PDF data supplied"}, status=400)
                 return
             try:
-                # remove data URI header if present
                 if "," in pdf_b64:
                     pdf_b64 = pdf_b64.split(",", 1)[1]
                 pdf_bytes = base64.b64decode(pdf_b64)
                 pdf_diag = extract_pdf_data(pdf_bytes, filename=filename)
+                style_meta = extract_pdf_style_fingerprint(pdf_bytes)
+                pdf_diag["style_meta"] = style_meta
                 self.send_json_response(pdf_diag)
             except Exception as e:
                 self.send_json_response({"error": f"Failed to parse PDF: {str(e)}"}, status=500)
@@ -82,6 +84,7 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                         pdf_b64 = pdf_b64.split(",", 1)[1]
                     pdf_bytes = base64.b64decode(pdf_b64)
                     pdf_diag = extract_pdf_data(pdf_bytes, filename=data.get("filename", "resume.pdf"))
+                    pdf_diag["style_meta"] = extract_pdf_style_fingerprint(pdf_bytes)
                     resume_text = pdf_diag["text"]
                 except Exception as e:
                     self.send_json_response({"error": f"Failed to parse PDF: {str(e)}"}, status=500)
@@ -97,6 +100,7 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             jd_text = data.get("jd", "")
             pdf_b64 = data.get("pdf_base64", "")
             pdf_diag = None
+            style_meta = data.get("style_meta", None)
 
             if pdf_b64:
                 try:
@@ -104,28 +108,34 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                         pdf_b64 = pdf_b64.split(",", 1)[1]
                     pdf_bytes = base64.b64decode(pdf_b64)
                     pdf_diag = extract_pdf_data(pdf_bytes, filename=data.get("filename", "resume.pdf"))
+                    style_meta = extract_pdf_style_fingerprint(pdf_bytes)
+                    pdf_diag["style_meta"] = style_meta
                     resume_text = pdf_diag["text"]
                 except Exception as e:
                     self.send_json_response({"error": f"Failed to parse PDF: {str(e)}"}, status=500)
                     return
 
-            result = agent.transform_resume(resume_text, jd_text)
+            result = agent.transform_resume(resume_text, jd_text, style_meta=style_meta)
             if pdf_diag:
                 result["pdf_metadata"] = pdf_diag
+            if style_meta:
+                result["style_meta"] = style_meta
             self.send_json_response(result)
 
         elif parsed.path == "/api/generate-pdf":
             markdown_content = data.get("markdown", "")
+            style_meta = data.get("style_meta", None)
             if not markdown_content:
                 self.send_json_response({"error": "No markdown content provided"}, status=400)
                 return
             try:
-                pdf_bytes = generate_pdf_from_markdown(markdown_content)
+                pdf_bytes = generate_pdf_from_markdown(markdown_content, style_meta=style_meta)
                 pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
                 self.send_json_response({
                     "pdf_base64": pdf_b64,
                     "filename": "killer_resume_updated.pdf",
-                    "size_kb": round(len(pdf_bytes) / 1024, 1)
+                    "size_kb": round(len(pdf_bytes) / 1024, 1),
+                    "style_meta": style_meta
                 })
             except Exception as e:
                 self.send_json_response({"error": f"Failed to generate PDF: {str(e)}"}, status=500)
