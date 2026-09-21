@@ -98,8 +98,8 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(result)
 
         elif parsed.path == "/api/transform":
-            resume_text = data.get("resume", "")
-            jd_text = data.get("jd", "")
+            resume_text = data.get("resume") or data.get("resume_text", "")
+            jd_text = data.get("jd") or data.get("jd_text", "")
             pdf_b64 = data.get("pdf_base64", "")
             pdf_diag = None
             style_meta = data.get("style_meta", None)
