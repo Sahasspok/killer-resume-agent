@@ -1,5 +1,10 @@
-// Killer Resume Agent - Client App (QA Hardened)
+// Killer Resume Agent - Client App (QA Hardened + Theme + PDF Export)
 document.addEventListener("DOMContentLoaded", () => {
+  // Theme Switcher Elements
+  const btnThemeToggle = document.getElementById("btn-theme-toggle");
+  const themeIcon = document.getElementById("theme-icon");
+  const themeLabel = document.getElementById("theme-label");
+
   // Input elements
   const resumeInput = document.getElementById("resume-input");
   const jdInput = document.getElementById("jd-input");
@@ -55,12 +60,39 @@ document.addEventListener("DOMContentLoaded", () => {
   const outputMarkdown = document.getElementById("output-markdown");
   const btnCopyMarkdown = document.getElementById("btn-copy-markdown");
   const btnDownloadMd = document.getElementById("btn-download-md");
+  const btnDownloadPdf = document.getElementById("btn-download-pdf");
   const btnPrintPdf = document.getElementById("btn-print-pdf");
 
   let currentPdfBase64 = null;
   let currentPdfFilename = null;
 
-  // Toast Notification System
+  // --- Theme Management (Light & Dark) ---
+  function applyTheme(theme) {
+    document.body.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+    if (theme === "light") {
+      themeIcon.textContent = "☀️";
+      themeLabel.textContent = "Light";
+    } else {
+      themeIcon.textContent = "🌙";
+      themeLabel.textContent = "Dark";
+    }
+  }
+
+  // Initialize theme
+  const savedTheme = localStorage.getItem("theme") || "dark";
+  applyTheme(savedTheme);
+
+  if (btnThemeToggle) {
+    btnThemeToggle.addEventListener("click", () => {
+      const currentTheme = document.body.getAttribute("data-theme") || "dark";
+      const newTheme = currentTheme === "dark" ? "light" : "dark";
+      applyTheme(newTheme);
+      showToast(`Switched to ${newTheme.toUpperCase()} theme`, "success");
+    });
+  }
+
+  // --- Toast Notification System ---
   function showToast(message, type = "success") {
     const container = document.getElementById("toast-container");
     if (!container) return;
@@ -76,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3500);
   }
 
-  // Toggle Output Tabs (Scorecard vs Output)
+  // --- Toggle Output Tabs (Scorecard vs Output) ---
   function setOutputTab(target) {
     if (target === "scorecard") {
       tabBtnScorecard.classList.add("active");
@@ -98,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tabBtnPreview.addEventListener("click", () => setOutputTab("preview"));
   }
 
-  // Toggle Input Modes (Upload PDF vs Edit/Paste Text)
+  // --- Toggle Input Modes (Upload PDF vs Edit/Paste Text) ---
   function setInputMode(mode) {
     if (mode === "pdf") {
       tabModePdf.classList.add("active");
@@ -124,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tabModeText.addEventListener("click", () => setInputMode("text"));
   }
 
-  // Native File Input Change Handler
+  // --- Native File Input Change Handler ---
   if (pdfFileInput) {
     pdfFileInput.addEventListener("change", (e) => {
       if (e.target.files && e.target.files.length > 0) {
@@ -144,7 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     pdfDropzone.addEventListener("drop", (e) => {
       pdfDropzone.classList.remove("drag-over");
-      // The native file input or drop event handles the transfer
       if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         handleFileSelection(e.dataTransfer.files[0]);
       }
@@ -480,6 +511,57 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Download Exact-Formatted ATS PDF
+  if (btnDownloadPdf) {
+    btnDownloadPdf.addEventListener("click", async () => {
+      const text = outputMarkdown.textContent;
+      if (!text) {
+        showToast("Generate a killer resume first!", "warning");
+        return;
+      }
+
+      try {
+        btnDownloadPdf.textContent = "Generating PDF...";
+        btnDownloadPdf.disabled = true;
+
+        const resp = await fetch("/api/generate-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ markdown: text })
+        });
+        const data = await resp.json();
+
+        if (data.error) {
+          showToast(data.error, "error");
+          return;
+        }
+
+        // Convert base64 to blob and download
+        const byteCharacters = atob(data.pdf_base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = data.filename || "killer_resume_updated.pdf";
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast(`Downloaded updated ATS PDF (${data.size_kb} KB)!`, "success");
+      } catch (err) {
+        console.error("PDF download error:", err);
+        showToast("Failed to generate PDF.", "error");
+      } finally {
+        btnDownloadPdf.textContent = "📥 Download Updated PDF";
+        btnDownloadPdf.disabled = false;
+      }
+    });
+  }
+
   // Print Selectable PDF
   if (btnPrintPdf) {
     btnPrintPdf.addEventListener("click", () => {
@@ -562,16 +644,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (data.pdf_metadata) {
       const pm = data.pdf_metadata;
       const pmChars = Number(pm.char_count || 0).toLocaleString();
-      r1Html += `<div style="margin-top:4px; padding:6px; background:rgba(56,189,248,0.1); border-radius:4px; font-size:11px; color:#38bdf8;">
+      r1Html += `<div style="margin-top:4px; padding:6px; background:rgba(56,189,248,0.1); border-radius:4px; font-size:11px; color:var(--accent-blue);">
         <strong>PDF Diagnostic:</strong> ${pm.file_size_mb} MB | ${pm.page_count} page(s) | ${pmChars} selectable characters
       </div>`;
     }
 
     if (r1.strengths && r1.strengths.length) {
-      r1Html += `<ul>${r1.strengths.map(s => `<li style="color: #34d399">✓ ${s}</li>`).join('')}</ul>`;
+      r1Html += `<ul>${r1.strengths.map(s => `<li style="color: var(--accent-green)">✓ ${s}</li>`).join('')}</ul>`;
     }
     if (r1.issues && r1.issues.length) {
-      r1Html += `<ul>${r1.issues.map(i => `<li style="color: #fb7185">⚠ <strong>${i.code}</strong>: ${i.message} <br><em>Fix:</em> ${i.fix}</li>`).join('')}</ul>`;
+      r1Html += `<ul>${r1.issues.map(i => `<li style="color: var(--accent-rose)">⚠ <strong>${i.code}</strong>: ${i.message} <br><em>Fix:</em> ${i.fix}</li>`).join('')}</ul>`;
     }
     document.getElementById("feedback-rule-1").innerHTML = r1Html;
 
@@ -582,10 +664,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let r2Html = `<div><strong>Coverage:</strong> ${r2.coverage_percent || 0}% | <strong>Zone:</strong> ${r2.status || 'N/A'}</div>`;
     r2Html += `<p style="margin-top:4px;">${r2.advice || ''}</p>`;
     if (r2.matched_keywords && r2.matched_keywords.length) {
-      r2Html += `<p style="color: #38bdf8; margin-top:4px;"><strong>Mapped Keywords (${r2.matched_keywords.length}):</strong> ${r2.matched_keywords.join(', ')}</p>`;
+      r2Html += `<p style="color: var(--accent-blue); margin-top:4px;"><strong>Mapped Keywords (${r2.matched_keywords.length}):</strong> ${r2.matched_keywords.join(', ')}</p>`;
     }
     if (r2.missing_keywords && r2.missing_keywords.length) {
-      r2Html += `<p style="color: #fbbf24; margin-top:4px;"><strong>High-Impact Missing Keywords:</strong> ${r2.missing_keywords.join(', ')}</p>`;
+      r2Html += `<p style="color: var(--accent-amber); margin-top:4px;"><strong>High-Impact Missing Keywords:</strong> ${r2.missing_keywords.join(', ')}</p>`;
     }
     document.getElementById("feedback-rule-2").innerHTML = r2Html;
 
@@ -595,7 +677,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderBadge("badge-rule-3", r3.score, r3Pass);
     let r3Html = `<div><strong>Defense Status:</strong> ${r3.human_defense_gate} | Cliches Detected: ${r3.cliche_count || 0}</div>`;
     r3Html += `<p style="margin-top:4px; color:var(--text-secondary);">${r3.insight}</p>`;
-    r3Html += `<div style="margin-top:6px; font-size:11px; color:#cbd5e1;"><strong>Human Review Rule:</strong> Never allow AI to invent facts. If you cannot explain the step-by-step implementation in a live technical screen, prune it.</div>`;
+    r3Html += `<div style="margin-top:6px; font-size:11px; color:var(--text-muted);"><strong>Human Review Rule:</strong> Never allow AI to invent facts. If you cannot explain the step-by-step implementation in a live technical screen, prune it.</div>`;
     document.getElementById("feedback-rule-3").innerHTML = r3Html;
 
     // Rule 4
@@ -604,7 +686,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderBadge("badge-rule-4", r4.score, r4Pass);
     let r4Html = `<div><strong>Quantified Bullets:</strong> ${r4.quantified_count || 0} / ${r4.total_bullets_audited || 0} (${r4.quantified_ratio_percent || 0}%)</div>`;
     r4Html += `<p style="margin-top:4px; color:var(--text-secondary);">${r4.insight}</p>`;
-    r4Html += `<div style="margin-top:6px; font-size:11px; color: #a7f3d0;">Standard: <em>Accomplished [X], as measured by [Y], by doing [Z]</em> (+75% interview rate).</div>`;
+    r4Html += `<div style="margin-top:6px; font-size:11px; color: var(--accent-green);">Standard: <em>Accomplished [X], as measured by [Y], by doing [Z]</em> (+75% interview rate).</div>`;
     document.getElementById("feedback-rule-4").innerHTML = r4Html;
 
     // Rule 5
@@ -614,7 +696,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let r5Html = `<div><strong>AI Proof Status:</strong> ${r5.has_proven_ai_skills ? 'Demonstrated with Project Outcomes' : 'Static Skill or Missing'}</div>`;
     r5Html += `<p style="margin-top:4px;">${r5.advice || ''}</p>`;
     if (r5.proven_bullets_found && r5.proven_bullets_found.length) {
-      r5Html += `<div style="margin-top:4px; color: #34d399;"><strong>Proven Bullets:</strong><br>${r5.proven_bullets_found.map(b => `• ${b}`).join('<br>')}</div>`;
+      r5Html += `<div style="margin-top:4px; color: var(--accent-green);"><strong>Proven Bullets:</strong><br>${r5.proven_bullets_found.map(b => `• ${b}`).join('<br>')}</div>`;
     }
     document.getElementById("feedback-rule-5").innerHTML = r5Html;
   }

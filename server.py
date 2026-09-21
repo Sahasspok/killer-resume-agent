@@ -14,6 +14,7 @@ import base64
 from agent import KillerResumeAgent
 from rules.rule4_google_xyz import transform_to_xyz, DIMENSIONS
 from pdf_parser import extract_pdf_data
+from pdf_generator import generate_pdf_from_markdown
 
 PORT = 5050
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -112,6 +113,22 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             if pdf_diag:
                 result["pdf_metadata"] = pdf_diag
             self.send_json_response(result)
+
+        elif parsed.path == "/api/generate-pdf":
+            markdown_content = data.get("markdown", "")
+            if not markdown_content:
+                self.send_json_response({"error": "No markdown content provided"}, status=400)
+                return
+            try:
+                pdf_bytes = generate_pdf_from_markdown(markdown_content)
+                pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+                self.send_json_response({
+                    "pdf_base64": pdf_b64,
+                    "filename": "killer_resume_updated.pdf",
+                    "size_kb": round(len(pdf_bytes) / 1024, 1)
+                })
+            except Exception as e:
+                self.send_json_response({"error": f"Failed to generate PDF: {str(e)}"}, status=500)
 
         elif parsed.path == "/api/xyz":
             bullet = data.get("bullet", "")

@@ -1,4 +1,6 @@
+/* Killer Resume Agent - Theme Styles (Light & Dark) */
 :root {
+  /* Default: Dark Theme */
   --bg-primary: #0a0c10;
   --bg-secondary: #12161f;
   --bg-card: #181e2b;
@@ -14,12 +16,36 @@
   --accent-amber: #f59e0b;
   --accent-rose: #f43f5e;
   --accent-purple: #8b5cf6;
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --code-bg: #090d14;
+}
+
+body[data-theme="light"] {
+  /* Clean Swiss Light Theme */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #f1f5f9;
+  --bg-input: #ffffff;
+  --border-color: #cbd5e1;
+  --border-focus: #0284c7;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --accent-blue: #0284c7;
+  --accent-cyan: #0891b2;
+  --accent-green: #059669;
+  --accent-amber: #d97706;
+  --accent-rose: #e11d48;
+  --accent-purple: #7c3aed;
+  --shadow-card: 0 4px 15px rgba(0, 0, 0, 0.05);
+  --code-bg: #f8fafc;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 body {
@@ -55,7 +81,7 @@ body {
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -65,20 +91,20 @@ body {
 
 .toast.success {
   border-color: rgba(16, 185, 129, 0.4);
-  background: #0f201b;
-  color: #34d399;
+  background: var(--bg-card);
+  color: var(--accent-green);
 }
 
 .toast.warning {
   border-color: rgba(245, 158, 11, 0.4);
-  background: #261c0d;
-  color: #fbbf24;
+  background: var(--bg-card);
+  color: var(--accent-amber);
 }
 
 .toast.error {
   border-color: rgba(244, 63, 94, 0.4);
-  background: #251216;
-  color: #fb7185;
+  background: var(--bg-card);
+  color: var(--accent-rose);
 }
 
 @keyframes slideIn {
@@ -111,10 +137,20 @@ body {
   margin-bottom: 6px;
 }
 
+body[data-theme="light"] .badge-tag {
+  background: #e0f2fe;
+  border-color: #bae6fd;
+  color: #0369a1;
+}
+
 .header h1 {
   font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+body[data-theme="dark"] .header h1 {
   background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -128,6 +164,43 @@ body {
 
 .header .subtitle strong {
   color: var(--text-primary);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.btn-theme-toggle {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-theme-toggle:hover {
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
+.theme-icon {
+  font-size: 14px;
 }
 
 .metrics-ticker {
@@ -155,17 +228,11 @@ body {
   border-color: rgba(16, 185, 129, 0.3);
   color: var(--accent-green);
 }
-.metric-pill.highlight span {
-  color: #34d399;
-}
 
 .metric-pill.danger {
   background: rgba(244, 63, 94, 0.12);
   border-color: rgba(244, 63, 94, 0.3);
   color: var(--accent-rose);
-}
-.metric-pill.danger span {
-  color: #fb7185;
 }
 
 /* Workspace Grid */
@@ -188,6 +255,7 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-card);
 }
 
 .panel-header {
@@ -243,7 +311,7 @@ body {
 .mode-tab.active {
   background: var(--bg-card);
   color: var(--accent-blue);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 /* PDF Dropzone */
@@ -291,11 +359,6 @@ body {
   font-size: 12px;
   color: var(--text-secondary);
   margin-top: 2px;
-}
-
-.browse-link {
-  color: var(--accent-blue);
-  text-decoration: underline;
 }
 
 .dropzone-meta {
@@ -393,11 +456,11 @@ body {
   padding: 2px 6px;
   border-radius: 4px;
   background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
+  color: var(--accent-green);
 }
 .diag-status.fail {
   background: rgba(244, 63, 94, 0.2);
-  color: #fb7185;
+  color: var(--accent-rose);
 }
 
 .diag-grid {
@@ -434,7 +497,7 @@ body {
   line-height: 1.4;
   background: rgba(244, 63, 94, 0.15);
   border: 1px solid rgba(244, 63, 94, 0.4);
-  color: #fca5a5;
+  color: #fb7185;
 }
 .pdf-warning-banner.hidden {
   display: none;
@@ -512,21 +575,21 @@ textarea:focus {
 }
 
 .btn-primary {
-  background: #2563eb;
+  background: var(--accent-blue);
   color: #ffffff;
   flex: 1;
 }
 .btn-primary:hover {
-  background: #1d4ed8;
+  filter: brightness(0.92);
 }
 
 .btn-accent {
-  background: #10b981;
+  background: var(--accent-green);
   color: #ffffff;
   flex: 1;
 }
 .btn-accent:hover {
-  background: #059669;
+  filter: brightness(0.92);
 }
 
 .btn-secondary {
@@ -535,8 +598,7 @@ textarea:focus {
   border: 1px solid var(--border-color);
 }
 .btn-secondary:hover {
-  background: #222b3d;
-  border-color: #38bdf8;
+  border-color: var(--border-focus);
 }
 
 .btn-ghost {
@@ -628,7 +690,7 @@ textarea:focus {
   padding: 10px 12px;
   border-radius: 6px;
   font-size: 13px;
-  color: #ffffff;
+  color: var(--text-primary);
   line-height: 1.4;
   margin-bottom: 10px;
 }
@@ -640,7 +702,7 @@ textarea:focus {
 }
 
 .metric-prompt-item {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   padding: 6px 10px;
   border-radius: 6px;
@@ -764,7 +826,6 @@ textarea:focus {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 14px 16px;
-  transition: border-color 0.2s;
 }
 
 .rule-card-header {
@@ -801,17 +862,17 @@ textarea:focus {
 .rule-score-badge.pass {
   background: rgba(16, 185, 129, 0.15);
   border-color: rgba(16, 185, 129, 0.4);
-  color: #34d399;
+  color: var(--accent-green);
 }
 .rule-score-badge.warn {
   background: rgba(245, 158, 11, 0.15);
   border-color: rgba(245, 158, 11, 0.4);
-  color: #fbbf24;
+  color: var(--accent-amber);
 }
 .rule-score-badge.fail {
   background: rgba(244, 63, 94, 0.15);
   border-color: rgba(244, 63, 94, 0.4);
-  color: #f87171;
+  color: var(--accent-rose);
 }
 
 .rule-research-note {
@@ -856,10 +917,11 @@ textarea:focus {
 .preview-buttons {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .output-preview-container {
-  background: var(--bg-input);
+  background: var(--code-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 16px;
