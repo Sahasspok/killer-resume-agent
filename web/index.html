@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Killer Résumé Agent | Jeff Su's 5 Research-Backed Rules (PDF + Text)</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260921_qa">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -41,31 +41,37 @@
         <div class="panel-header">
           <h2>1. Candidate & Target Context</h2>
           <div class="actions-group">
-            <button id="btn-load-sample-pdf" class="btn btn-secondary btn-sm" title="Test with a real Ex-Apple TPM PDF">Load Sample PDF</button>
-            <button id="btn-load-sample" class="btn btn-secondary btn-sm">Load Text Sample</button>
-            <button id="btn-clear" class="btn btn-ghost btn-sm">Clear</button>
+            <button type="button" id="btn-load-sample-pdf" class="btn btn-secondary btn-sm" title="Test with a real Ex-Apple TPM PDF">Load Sample PDF</button>
+            <button type="button" id="btn-load-sample" class="btn btn-secondary btn-sm">Load Text Sample</button>
+            <button type="button" id="btn-clear" class="btn btn-ghost btn-sm">Clear</button>
           </div>
         </div>
 
         <!-- Input Mode Switcher -->
         <div class="input-mode-tabs">
-          <button class="mode-tab active" data-mode="pdf">
-            <span class="mode-icon">📄</span> Upload PDF
+          <button type="button" class="mode-tab active" id="tab-mode-pdf" data-mode="pdf">
+            <span class="mode-icon">📄</span> Upload PDF Mode
           </button>
-          <button class="mode-tab" data-mode="text">
-            <span class="mode-icon">✏️</span> Edit / Paste Text
+          <button type="button" class="mode-tab" id="tab-mode-text" data-mode="text">
+            <span class="mode-icon">✏️</span> Edit / Paste Text Mode
           </button>
         </div>
 
-        <!-- PDF Dropzone -->
+        <!-- PDF Dropzone Container -->
         <div id="pdf-dropzone" class="pdf-dropzone">
-          <input type="file" id="pdf-file-input" accept=".pdf,.txt,.md" class="hidden-file-input">
+          <!-- Native File Input Overlay -->
+          <input type="file" id="pdf-file-input" accept=".pdf,.txt,.md" class="file-overlay-input" title="Click or drop file to upload">
+          
           <div class="dropzone-content" id="dropzone-prompt">
             <div class="dropzone-icon">📥</div>
             <div class="dropzone-title">Drag & Drop Your Résumé PDF Here</div>
-            <div class="dropzone-subtitle">or <span class="browse-link">browse files</span> (.pdf, .md, .txt)</div>
+            <div class="dropzone-subtitle">or click anywhere to browse (.pdf, .md, .txt)</div>
+            <div style="margin-top: 8px;">
+              <button type="button" id="btn-browse-trigger" class="btn btn-secondary btn-sm" style="pointer-events: none;">Browse Files</button>
+            </div>
             <div class="dropzone-meta">Jeff Su Rule 1: We inspect selectable text layer & verify file &lt; 2.5 MB</div>
           </div>
+
           <!-- Loaded PDF Pill -->
           <div id="loaded-pdf-pill" class="loaded-pdf-pill hidden">
             <div class="file-icon">📄</div>
@@ -123,10 +129,10 @@
         </div>
 
         <div class="button-bar">
-          <button id="btn-audit" class="btn btn-primary">
+          <button type="button" id="btn-audit" class="btn btn-primary">
             <span class="btn-icon">⚡</span> Run 5-Rule Audit
           </button>
-          <button id="btn-transform" class="btn btn-accent">
+          <button type="button" id="btn-transform" class="btn btn-accent">
             <span class="btn-icon">🚀</span> Generate Killer Résumé
           </button>
         </div>
@@ -142,7 +148,7 @@
           </p>
           <div class="input-inline">
             <input type="text" id="quick-bullet-input" placeholder="e.g. Responsible for sprint planning and writing user stories...">
-            <button id="btn-quick-xyz" class="btn btn-secondary btn-sm">Transform Bullet</button>
+            <button type="button" id="btn-quick-xyz" class="btn btn-secondary btn-sm">Transform Bullet</button>
           </div>
           <div id="xyz-result-container" class="xyz-result-container hidden">
             <div class="result-label">Recommended Google XYZ Formulation (+75% Interview Lift):</div>
@@ -155,8 +161,8 @@
       <!-- Right Column: Audit Scorecard & Live Output -->
       <section class="panel output-panel">
         <div class="tabs-header">
-          <button class="tab-btn active" data-tab="scorecard">5-Rule Audit Scorecard</button>
-          <button class="tab-btn" data-tab="preview">Killer Résumé Output</button>
+          <button type="button" class="tab-btn active" id="tab-btn-scorecard" data-tab="scorecard">5-Rule Audit Scorecard</button>
+          <button type="button" class="tab-btn" id="tab-btn-preview" data-tab="preview">Killer Résumé Output</button>
         </div>
 
         <!-- Tab 1: 5-Rule Scorecard -->
@@ -251,9 +257,9 @@
           <div class="preview-actions">
             <div class="preview-stats" id="preview-score-delta">Optimized Draft Ready</div>
             <div class="preview-buttons">
-              <button id="btn-copy-markdown" class="btn btn-secondary btn-sm">Copy Markdown</button>
-              <button id="btn-download-md" class="btn btn-secondary btn-sm">Download .MD</button>
-              <button id="btn-print-pdf" class="btn btn-accent btn-sm">Print / Save Selectable PDF</button>
+              <button type="button" id="btn-copy-markdown" class="btn btn-secondary btn-sm">Copy Markdown</button>
+              <button type="button" id="btn-download-md" class="btn btn-secondary btn-sm">Download .MD</button>
+              <button type="button" id="btn-print-pdf" class="btn btn-accent btn-sm">Print / Save Selectable PDF</button>
             </div>
           </div>
           <div class="output-preview-container">
@@ -264,6 +270,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=20260921_qa"></script>
 </body>
 </html>
