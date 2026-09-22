@@ -1,0 +1,26 @@
+{
+  "short_name": "KillerResume",
+  "name": "Killer Resume Agent - AI Resume Architect",
+  "description": "Transform resumes into high-impact, ATS-optimized, candidate-verified killer resumes using Google X-Y-Z formula & 7-Pillar QA.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#1a3a5c",
+  "background_color": "#0d1b2a",
+  "icons": [
+    {
+      "src": "icon16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "icon48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "icon128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    }
+  ]
+}

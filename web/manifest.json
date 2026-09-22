@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Killer Resume Agent",
+  "version": "1.0.0",
+  "description": "Transform resumes into high-impact, ATS-optimized, candidate-verified killer resumes using Google X-Y-Z formula & 7-Pillar QA.",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Killer Resume Agent",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:5050/*",
+    "http://localhost:5050/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.groq.com/*",
+    "https://openrouter.ai/*",
+    "https://api.mistral.ai/*"
+  ]
+}
