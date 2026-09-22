@@ -1922,6 +1922,18 @@ Return ONLY the complete, beautiful markdown resume.`;
     if (btnHeaderReset) btnHeaderReset.addEventListener("click", resetFn);
   }
 
+  // Open in Full Tab
+  const btnOpenFullTab = document.getElementById("btn-open-fulltab");
+  if (btnOpenFullTab) {
+    btnOpenFullTab.addEventListener("click", () => {
+      if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.create) {
+        chrome.tabs.create({ url: chrome.runtime.getURL("web/index.html") });
+      } else {
+        window.open(window.location.href, "_blank");
+      }
+    });
+  }
+
   // View Mode: Visual vs Plain Text
   if (btnViewVisual && btnViewMarkdown) {
     btnViewVisual.addEventListener("click", () => {

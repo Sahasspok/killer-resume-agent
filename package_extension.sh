@@ -10,7 +10,7 @@ DOWNLOADS_ZIP="$HOME/Downloads/killer-resume-extension.zip"
 rm -f "$OUTPUT_ZIP" "$DOWNLOADS_ZIP"
 
 echo "Packaging Chrome Extension with exactly ONE manifest.json at the root..."
-zip -r "$OUTPUT_ZIP" manifest.json icons web icon16.png icon48.png icon128.png -x "*.DS_Store*" -x "*__pycache__*"
+zip -r "$OUTPUT_ZIP" manifest.json background.js icons web icon16.png icon48.png icon128.png -x "*.DS_Store*" -x "*__pycache__*"
 
 # Copy to Downloads for easy upload from browser file picker
 cp "$OUTPUT_ZIP" "$DOWNLOADS_ZIP"
