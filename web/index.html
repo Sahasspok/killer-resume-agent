@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Killer Résumé Agent | Jeff Su's 5 Research-Backed Rules</title>
-  <link rel="stylesheet" href="style.css?v=20260921_prominent_delta">
+  <link rel="stylesheet" href="style.css?v=20260922_agent_interview_v2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -24,6 +24,21 @@
         </p>
       </div>
       <div class="header-right">
+        <!-- AI Engine Selector -->
+        <div class="ai-engine-selector-group">
+          <span class="ai-engine-icon">🤖</span>
+          <select id="select-ai-engine" class="select-ai-engine" title="Select AI Engine for Google XYZ Rewriting">
+            <option value="gemini">Gemini (Free / Rec.)</option>
+            <option value="openai">OpenAI (GPT-4o-mini)</option>
+            <option value="anthropic">Claude (3.5 Sonnet)</option>
+            <option value="ollama">Ollama (Local)</option>
+            <option value="heuristic" selected>Offline Engine</option>
+          </select>
+          <button type="button" id="btn-configure-api-key" class="btn btn-ghost btn-xs" title="Configure API Key">
+            🔑 <span id="api-key-badge">Key</span>
+          </button>
+        </div>
+
         <!-- Theme Toggle -->
         <div class="theme-toggle-wrapper">
           <button type="button" id="btn-theme-toggle" class="btn-theme-toggle" title="Toggle Light / Dark Theme">
@@ -36,6 +51,30 @@
         </button>
       </div>
     </header>
+
+    <!-- API Key Configuration Modal -->
+    <div id="modal-api-key" class="modal-overlay hidden" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>🔑 Configure AI Engine Key</h3>
+          <button type="button" id="btn-close-api-modal" class="btn-close-modal">×</button>
+        </div>
+        <p class="modal-desc">
+          Enter your API key to enable live AI reasoning for Google XYZ bullet reframing. Keys are kept in-browser memory only and never saved to disk.
+        </p>
+        <div class="modal-body">
+          <label id="modal-key-label" for="input-api-key">API Key:</label>
+          <input type="password" id="input-api-key" placeholder="Paste your API key here..." class="form-input" />
+          <div class="modal-key-help" id="modal-key-help">
+            Get a free Google Gemini key at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btn-save-api-key" class="btn btn-primary btn-sm">Save & Use Engine</button>
+          <button type="button" id="btn-clear-api-key" class="btn btn-ghost btn-sm">Use Offline Engine</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Interactive Stepper Bar -->
     <div class="stepper-container">
@@ -440,16 +479,77 @@
       <div class="wizard-pane" id="pane-step-4">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill optional">Step 4 of 5 • Optional</span>
-            <span class="badge-mini">RULE 4 & 5: METRICS & AI PROOF</span>
+            <span class="badge-step-pill required">Step 4 of 5 • Active Agent Interview</span>
+            <span class="badge-mini">JEFF SU RULES 3, 4 & 5</span>
           </div>
-          <h2>Any extra numbers or AI tools you used?</h2>
+          <h2>The Agent Interview: Turning Duties into Measurable Wins</h2>
           <p>
-            AI tools cannot guess accomplishments that aren't written down! If you remember any time savings, team sizes, bug reductions, or AI tools you use at work, mention them here. If not, feel free to generate your résumé immediately.
+            Jeff Su's research shows resumes with quantified impact receive <strong>+75% higher interview rates</strong>. The agent analyzed your CV and identified unquantified bullets below. Share your rough facts/numbers, and the agent will synthesize them into <strong>Google's XYZ formula</strong>.
           </p>
         </div>
 
-        <!-- Section 1: Key Quantified Achievements by Past Job (CRUD with ➕, ✏️, 🗑️) -->
+        <!-- Section 0: Active Agent Interview (Unquantified Bullets from your CV) -->
+        <div class="agent-interview-card" id="agent-interview-card">
+          <div class="agent-interview-header">
+            <div class="agent-avatar-badge">🤖</div>
+            <div class="agent-header-text">
+              <span class="badge-mini-green">ACTIVE AGENT INTERVIEW • GOOGLE XYZ</span>
+              <h3 class="agent-interview-title">Unquantified Duties from Your CV</h3>
+              <p class="agent-interview-subtitle">
+                Enter your real outcome (time saved, % increase, number of users, dollars saved). Click <strong>"✨ Reframe with Google XYZ"</strong> to generate an interview-defensible bullet.
+              </p>
+            </div>
+          </div>
+          <div id="agent-interview-bullets-list" class="agent-interview-bullets-list">
+            <div class="interview-loading-state">
+              <span>🔍 Analyzing your CV bullets...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 1: Rule 5 Proven AI Skills Interview -->
+        <div class="agent-ai-interview-card" id="agent-ai-interview-card">
+          <div class="agent-ai-header">
+            <span class="crud-icon">⚡</span>
+            <div>
+              <label class="crud-label">Rule 5: Prove Your AI Skills (Demonstration over Listing)</label>
+              <div class="crud-subtitle">
+                60% of hiring managers want proof, not just "ChatGPT" in a skills list. Adding role-relevant AI skills boosts interview selection by up to <strong>+15%</strong>.
+              </div>
+            </div>
+          </div>
+          <div class="ai-interview-toggle-row">
+            <span class="ai-toggle-prompt">Do you use AI tools (ChatGPT, Claude, Copilot, Cursor, etc.) in your daily work?</span>
+            <div class="btn-group-toggle">
+              <button type="button" id="btn-ai-toggle-yes" class="btn btn-sm btn-outline active">Yes, I use AI</button>
+              <button type="button" id="btn-ai-toggle-no" class="btn btn-sm btn-outline">No AI used</button>
+            </div>
+          </div>
+          <div id="ai-interview-details" class="ai-interview-details">
+            <div class="ai-inputs-grid">
+              <div class="ai-input-group">
+                <label for="ai-interview-tools">AI Tools Used:</label>
+                <input type="text" id="ai-interview-tools" placeholder="e.g. Claude, ChatGPT, Cursor" value="Claude, ChatGPT" class="form-input" />
+              </div>
+              <div class="ai-input-group">
+                <label for="ai-interview-task">Specific Task / Workflow Automated:</label>
+                <input type="text" id="ai-interview-task" placeholder="e.g. drafting technical documentation, backlog triage" value="sprint requirement synthesis and backlog triage" class="form-input" />
+              </div>
+              <div class="ai-input-group">
+                <label for="ai-interview-time">Time Saved or Measured Gain:</label>
+                <input type="text" id="ai-interview-time" placeholder="e.g. 4+ hours weekly, 30% faster" value="4+ hours weekly" class="form-input" />
+              </div>
+            </div>
+            <div class="ai-interview-preview-row">
+              <span class="ai-preview-label">Preview Verified AI Bullet:</span>
+              <div id="ai-interview-preview-text" class="ai-interview-preview-text">
+                Leveraged Generative AI tools (Claude, ChatGPT) to automate sprint requirement synthesis and backlog triage, saving <strong>4+ hours weekly</strong> in administrative overhead.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Key Quantified Achievements by Past Job (CRUD with ➕, ✏️, 🗑️) -->
         <div class="crud-card" id="achievements-crud-card">
           <div class="crud-header">
             <div class="crud-title-group">
@@ -826,6 +926,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=20260921_prominent_delta"></script>
+  <script src="app.js?v=20260922_agent_interview_v2"></script>
 </body>
 </html>

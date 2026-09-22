@@ -104,10 +104,42 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnStep4Skip = document.getElementById("btn-step4-skip");
   const btnStep4Generate = document.getElementById("btn-step4-generate");
 
+  // AI Engine & API Key Elements
+  const selectAiEngine = document.getElementById("select-ai-engine");
+  const btnConfigureApiKey = document.getElementById("btn-configure-api-key");
+  const modalApiKey = document.getElementById("modal-api-key");
+  const btnCloseApiModal = document.getElementById("btn-close-api-modal");
+  const btnSaveApiKey = document.getElementById("btn-save-api-key");
+  const btnClearApiKey = document.getElementById("btn-clear-api-key");
+  const inputApiKey = document.getElementById("input-api-key");
+  const apiKeyBadge = document.getElementById("api-key-badge");
+  const modalKeyLabel = document.getElementById("modal-key-label");
+  const modalKeyHelp = document.getElementById("modal-key-help");
+
+  // Active Agent Interview & Rule 5 Elements
+  const agentInterviewCard = document.getElementById("agent-interview-card");
+  const agentInterviewBulletsList = document.getElementById("agent-interview-bullets-list");
+  const btnAiToggleYes = document.getElementById("btn-ai-toggle-yes");
+  const btnAiToggleNo = document.getElementById("btn-ai-toggle-no");
+  const aiInterviewDetails = document.getElementById("ai-interview-details");
+  const aiInterviewTools = document.getElementById("ai-interview-tools");
+  const aiInterviewTask = document.getElementById("ai-interview-task");
+  const aiInterviewTime = document.getElementById("ai-interview-time");
+  const aiInterviewPreviewText = document.getElementById("ai-interview-preview-text");
+
   // Extra Context State
+  let currentProvider = "gemini";
+  let currentApiKey = "";
+  let detectedKeys = {};
   let customAchievements = [];
-  let customAiTools = ["Claude Code", "ChatGPT", "Cursor"];
+  let customAiTools = ["Claude", "ChatGPT"];
   let detectedRoles = [];
+  let customAiSettings = {
+    include_ai_bullet: true,
+    tools: ["Claude", "ChatGPT"],
+    task: "sprint requirement synthesis and backlog triage",
+    time_saved: "4+ hours weekly"
+  };
 
   // Step 4 Error Badges & Bodies
   const badgeErrRule1 = document.getElementById("badge-err-rule-1");
@@ -272,6 +304,8 @@ document.addEventListener("DOMContentLoaded", () => {
       triggerAuditFlow();
     } else if (currentStep === 4) {
       refreshDetectedRoles();
+      renderAgentInterview();
+      updateAiPreview();
     } else if (currentStep === 5) {
       if (lastTransformData) {
         slowlyScrollToOutput();
@@ -570,6 +604,283 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("Could not detect roles:", e);
     }
   }
+
+  // --- AI Engine & Modal Configuration ---
+  async function checkServerConfig() {
+    try {
+      const res = await fetch("/api/config");
+      if (res.ok) {
+        const data = await res.json();
+        detectedKeys = data.detected_keys || {};
+        updateApiKeyBadge();
+      }
+    } catch (e) {
+      console.warn("Could not check config:", e);
+    }
+  }
+
+  function updateApiKeyBadge() {
+    if (!apiKeyBadge) return;
+    if (currentApiKey) {
+      apiKeyBadge.textContent = "Custom ✓";
+      apiKeyBadge.style.color = "var(--accent-green)";
+    } else if (detectedKeys[currentProvider]) {
+      apiKeyBadge.textContent = "Env ✓";
+      apiKeyBadge.style.color = "var(--accent-green)";
+    } else if (currentProvider === "heuristic" || currentProvider === "ollama") {
+      apiKeyBadge.textContent = "Active";
+      apiKeyBadge.style.color = "var(--accent-blue)";
+    } else {
+      apiKeyBadge.textContent = "Set Key";
+      apiKeyBadge.style.color = "var(--accent-amber)";
+    }
+  }
+
+  if (selectAiEngine) {
+    selectAiEngine.addEventListener("change", () => {
+      currentProvider = selectAiEngine.value;
+      updateApiKeyBadge();
+      if (modalKeyLabel) {
+        modalKeyLabel.textContent = `${currentProvider.toUpperCase()} API Key:`;
+      }
+      if (modalKeyHelp) {
+        if (currentProvider === "gemini") {
+          modalKeyHelp.innerHTML = `Get a free Google Gemini key at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a>`;
+        } else if (currentProvider === "openai") {
+          modalKeyHelp.innerHTML = `Get an OpenAI key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>`;
+        } else if (currentProvider === "anthropic") {
+          modalKeyHelp.innerHTML = `Get an Anthropic key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>`;
+        } else {
+          modalKeyHelp.textContent = `No API key needed for ${currentProvider}.`;
+        }
+      }
+      showToast(`Switched to ${currentProvider.toUpperCase()} Engine`, "info");
+    });
+  }
+
+  if (btnConfigureApiKey && modalApiKey) {
+    btnConfigureApiKey.addEventListener("click", () => {
+      modalApiKey.classList.remove("hidden");
+      modalApiKey.style.display = "flex";
+      if (inputApiKey) {
+        inputApiKey.value = currentApiKey;
+        inputApiKey.focus();
+      }
+    });
+  }
+
+  if (btnCloseApiModal && modalApiKey) {
+    btnCloseApiModal.addEventListener("click", () => {
+      modalApiKey.classList.add("hidden");
+      modalApiKey.style.display = "none";
+    });
+  }
+
+  if (btnSaveApiKey && modalApiKey) {
+    btnSaveApiKey.addEventListener("click", () => {
+      if (inputApiKey) {
+        currentApiKey = inputApiKey.value.trim();
+        updateApiKeyBadge();
+        showToast("API Key updated for session!", "success");
+      }
+      modalApiKey.classList.add("hidden");
+      modalApiKey.style.display = "none";
+    });
+  }
+
+  if (btnClearApiKey && modalApiKey) {
+    btnClearApiKey.addEventListener("click", () => {
+      currentApiKey = "";
+      if (selectAiEngine) selectAiEngine.value = "heuristic";
+      currentProvider = "heuristic";
+      updateApiKeyBadge();
+      modalApiKey.classList.add("hidden");
+      modalApiKey.style.display = "none";
+      showToast("Switched to Offline Heuristic Engine", "info");
+    });
+  }
+
+  // --- Rule 5 AI Skills Interview Logic ---
+  function updateAiPreview() {
+    if (!aiInterviewPreviewText) return;
+    const tools = aiInterviewTools ? aiInterviewTools.value.trim() : "Claude, ChatGPT";
+    const task = aiInterviewTask ? aiInterviewTask.value.trim() : "automate sprint requirement synthesis and backlog triage";
+    const time = aiInterviewTime ? aiInterviewTime.value.trim() : "4+ hours weekly";
+
+    aiInterviewPreviewText.innerHTML = `Leveraged Generative AI tools (${escapeHtml(tools)}) to ${escapeHtml(task)}, saving <strong>${escapeHtml(time)}</strong> in administrative overhead.`;
+
+    customAiSettings = {
+      include_ai_bullet: customAiSettings.include_ai_bullet,
+      tools: tools.split(",").map(t => t.trim()).filter(Boolean),
+      task: task,
+      time_saved: time
+    };
+  }
+
+  if (btnAiToggleYes && btnAiToggleNo) {
+    btnAiToggleYes.addEventListener("click", () => {
+      btnAiToggleYes.classList.add("active");
+      btnAiToggleNo.classList.remove("active");
+      if (aiInterviewDetails) aiInterviewDetails.style.display = "block";
+      customAiSettings.include_ai_bullet = true;
+      updateAiPreview();
+      showToast("Rule 5: Proven AI workflow enabled!", "success");
+    });
+
+    btnAiToggleNo.addEventListener("click", () => {
+      btnAiToggleNo.classList.add("active");
+      btnAiToggleYes.classList.remove("active");
+      if (aiInterviewDetails) aiInterviewDetails.style.display = "none";
+      customAiSettings.include_ai_bullet = false;
+      showToast("Rule 3 Ground Truth: No synthetic AI claims will be added.", "info");
+    });
+  }
+
+  [aiInterviewTools, aiInterviewTask, aiInterviewTime].forEach(input => {
+    if (input) input.addEventListener("input", updateAiPreview);
+  });
+
+  // --- Active Agent Interview (Unquantified Bullets from Candidate's CV) ---
+  function renderAgentInterview() {
+    if (!agentInterviewBulletsList) return;
+
+    if (!lastAuditData || !lastAuditData.bullet_breakdowns) {
+      agentInterviewBulletsList.innerHTML = `
+        <div class="interview-loading-state" style="padding: 16px; color: var(--text-muted); font-size: 13px;">
+          <span>🎯 Upload your CV in Step 2 to generate your personalized Agent Interview.</span>
+        </div>
+      `;
+      return;
+    }
+
+    const unquantified = lastAuditData.bullet_breakdowns.filter(b => {
+      const noMetrics = !b.xyz_status || !b.xyz_status.has_metrics;
+      const weakVerb = b.human_gate && (b.human_gate.has_weak_verb || b.human_gate.has_cliche);
+      return noMetrics || weakVerb;
+    });
+
+    if (unquantified.length === 0) {
+      agentInterviewBulletsList.innerHTML = `
+        <div class="interview-bullet-card" style="border-color: var(--accent-green); background: rgba(16, 185, 129, 0.05);">
+          <span class="badge-mini-green">✓ ALL BULLETS QUANTIFIED</span>
+          <p style="margin: 6px 0 0 0; font-size: 13px; color: var(--text-primary);">
+            Outstanding! All audited bullets in your CV already include measurable metrics. You can add extra context below or proceed to generate your résumé!
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    agentInterviewBulletsList.innerHTML = "";
+    unquantified.slice(0, 5).forEach((item, idx) => {
+      const rawBullet = item.bullet;
+      const card = document.createElement("div");
+      card.className = "interview-bullet-card";
+      card.dataset.index = idx;
+      card.innerHTML = `
+        <div class="interview-bullet-header">
+          <span class="badge-duty">UNQUANTIFIED DUTY [${idx + 1}/${Math.min(unquantified.length, 5)}]</span>
+          <span class="badge-mini-green">Rule 4 Target (+75% Interviews)</span>
+        </div>
+        <div class="interview-bullet-original">
+          "${escapeHtml(rawBullet)}"
+        </div>
+        <div class="interview-bullet-prompt">
+          <label class="interview-question">
+            🤖 <strong>Agent Question:</strong> What was the measurable outcome? (e.g. time saved, % increase, number of users, dollars saved)
+          </label>
+          <div class="interview-input-row">
+            <input type="text" class="interview-notes-input form-input" placeholder="e.g. reduced turnaround from 14 to 4 days, cut defects by 35%" />
+            <button type="button" class="btn btn-secondary btn-sm btn-reframe-xyz">
+              ✨ Reframe with Google XYZ
+            </button>
+          </div>
+          <div class="interview-result-preview hidden" style="display: none;">
+            <div class="interview-suggestion-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong style="font-size: 12px; color: var(--accent-green);">✨ Proposed Google XYZ Bullet:</strong>
+              <span class="badge-mini-green">Zero Hallucinations</span>
+            </div>
+            <p class="interview-suggested-text" style="font-size: 13px; margin: 4px 0 10px 0;"></p>
+            <div class="interview-actions">
+              <button type="button" class="btn btn-primary btn-sm btn-accept-xyz">✓ Accept Improvement</button>
+              <button type="button" class="btn btn-ghost btn-sm btn-skip-xyz">Keep Original</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const btnReframe = card.querySelector(".btn-reframe-xyz");
+      const notesInput = card.querySelector(".interview-notes-input");
+      const previewBox = card.querySelector(".interview-result-preview");
+      const suggestedText = card.querySelector(".interview-suggested-text");
+      const btnAccept = card.querySelector(".btn-accept-xyz");
+      const btnSkip = card.querySelector(".btn-skip-xyz");
+
+      btnReframe.addEventListener("click", async () => {
+        const notes = notesInput.value.trim();
+        if (!notes) {
+          showToast("Please enter your rough outcome or numbers first!", "warning");
+          notesInput.focus();
+          return;
+        }
+
+        btnReframe.disabled = true;
+        btnReframe.textContent = "Synthesizing...";
+        try {
+          const jd = jdInput ? jdInput.value.trim() : "";
+          const res = await fetch("/api/xyz", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              bullet: rawBullet,
+              notes: notes,
+              provider: currentProvider,
+              api_key: currentApiKey,
+              jd: jd
+            })
+          });
+          const data = await res.json();
+          if (data.rewritten) {
+            suggestedText.innerHTML = escapeHtml(data.rewritten).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            previewBox.style.display = "block";
+            previewBox.classList.remove("hidden");
+            showToast("Reframed with Google XYZ!", "success");
+          }
+        } catch (err) {
+          showToast("Error reframing bullet: " + err.message, "error");
+        } finally {
+          btnReframe.disabled = false;
+          btnReframe.textContent = "✨ Reframe with Google XYZ";
+        }
+      });
+
+      btnAccept.addEventListener("click", () => {
+        const rewrittenBullet = suggestedText.textContent.trim();
+        if (rewrittenBullet) {
+          customAchievements.push({
+            text: rewrittenBullet,
+            role: "primary",
+            roleLabel: "Primary Role"
+          });
+          renderAchievements();
+          card.style.borderColor = "var(--accent-green)";
+          card.style.background = "rgba(16, 185, 129, 0.05)";
+          previewBox.innerHTML = `<span class="badge-mini-green">✓ Accepted & Added to Résumé</span>`;
+          showToast("Added Google XYZ bullet to your résumé!", "success");
+        }
+      });
+
+      btnSkip.addEventListener("click", () => {
+        previewBox.style.display = "none";
+        showToast("Kept original bullet", "info");
+      });
+
+      agentInterviewBulletsList.appendChild(card);
+    });
+  }
+
+  // Initialize config check
+  checkServerConfig();
 
   function updateRoleSelectOptions() {
     if (!achievementRoleSelect) return;
@@ -1141,15 +1452,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const resume = resumeInput ? resumeInput.value.trim() : "";
     const jd = jdInput ? jdInput.value.trim() : "";
 
-    let customMetrics = null;
-    if (customAchievements.length > 0 || customAiTools.length > 0) {
-      customMetrics = {
-        achievements: customAchievements,
-        ai_tools: customAiTools,
-        custom_input_metrics: customAchievements.map(a => (typeof a === "string" ? a : a.text)).join("\n"),
-        custom_ai_tools: customAiTools.join(", ")
-      };
-    }
+    let customMetrics = {
+      achievements: customAchievements,
+      ai_tools: customAiSettings.tools,
+      include_ai_bullet: customAiSettings.include_ai_bullet,
+      ai_task: customAiSettings.task,
+      ai_time_saved: customAiSettings.time_saved,
+      custom_input_metrics: customAchievements.map(a => (typeof a === "string" ? a : a.text)).join("\n"),
+      custom_ai_tools: (customAiSettings.tools || []).join(", ")
+    };
 
     try {
       const res = await fetch("/api/transform", {
@@ -1160,6 +1471,8 @@ document.addEventListener("DOMContentLoaded", () => {
           jd: jd,
           pdf_base64: currentPdfBase64,
           style_meta: currentStyleMeta,
+          provider: currentProvider,
+          api_key: currentApiKey,
           user_metrics: customMetrics
         })
       });

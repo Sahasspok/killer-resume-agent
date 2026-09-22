@@ -38,26 +38,27 @@ Every résumé passed through the agent is audited against a rigorous 7-pillar q
 
 ## 🚀 Quickstart
 
-### 1. Launch the Live Web App (Hosted Locally)
+### 1. Master Agent Workflow (Clone & Run)
+Anyone cloning your repository can simply run:
 ```bash
-cd /Users/moderntechnepal/killer-resume-agent
+python3 agent.py
+```
+By default, this automatically launches the **Killer Résumé Agent in your browser** at `http://localhost:5050` with the complete 5-step wizard, Active Agent Interview, multi-provider AI selection, and ATS vector PDF export.
+
+*(To run directly inside your terminal instead, use: `python3 agent.py --cli`)*
+
+### 2. Launch the Live Web App Directly
+```bash
 python3 server.py 5050
 ```
 Then navigate to: **`http://localhost:5050`**
 
-### 2. Run via Terminal CLI
+### 3. Run Headless via Terminal CLI
 ```bash
-# Run 5-rule audit on a resume against a target job description
-python3 cli.py audit \
-  --resume examples/sample_resume.md \
-  --jd examples/sample_jd.md
+# Scripted transform
+python3 agent.py --resume examples/sample_resume.md --jd examples/sample_jd.md --non-interactive
 
-# Run 7-pillar QA matrix validation
-python3 cli.py qa \
-  --resume examples/sample_resume.md \
-  --jd examples/sample_jd.md
-
-# Transform into an ATS-certified killer resume with vector PDF output
+# Or use cli.py
 python3 cli.py transform \
   --resume examples/sample_resume.md \
   --jd examples/sample_jd.md \

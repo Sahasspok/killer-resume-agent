@@ -912,20 +912,31 @@ def format_experience_section(exp_lines: List[str], target_role: str = "", user_
         if ai_bullet_found:
             output.append(f"- {ai_bullet_found}")
         elif idx == 0:
-            # Recent role: provide standard AI-augmented workflow bullet if none existed in candidate text
-            tools_list = None
-            if user_metrics:
-                tools_list = user_metrics.get("ai_tools") or user_metrics.get("custom_ai_tools")
-            if tools_list:
-                if isinstance(tools_list, list):
-                    tools_str = ", ".join(tools_list)
+            # Check if user explicitly wants to omit AI bullet (e.g. non-AI / ground-truth mode)
+            should_omit = (user_metrics is not None and user_metrics.get("include_ai_bullet") is False)
+            if not should_omit:
+                custom_ai_bullet = user_metrics.get("custom_ai_bullet") if user_metrics else None
+                if custom_ai_bullet:
+                    output.append(f"- {custom_ai_bullet}")
+                    transformed_bullets += 1
                 else:
-                    tools_str = str(tools_list)
-                ai_bullet = f"Leveraged Generative AI tools ({tools_str}) to automate sprint requirement synthesis and backlog triage, saving **4+ hours weekly** in administrative overhead."
-            else:
-                ai_bullet = "Leveraged Generative AI tools (ChatGPT, Claude) to automate sprint requirement synthesis and backlog triage, saving **4+ hours weekly** in administrative overhead."
-            output.append(f"- {ai_bullet}")
-            transformed_bullets += 1
+                    tools_list = None
+                    if user_metrics:
+                        tools_list = user_metrics.get("ai_tools") or user_metrics.get("custom_ai_tools")
+                    ai_task = user_metrics.get("ai_task") if user_metrics else None
+                    ai_time = user_metrics.get("ai_time_saved", "4+ hours weekly") if user_metrics else "4+ hours weekly"
+                    if tools_list:
+                        if isinstance(tools_list, list):
+                            tools_str = ", ".join(tools_list)
+                        else:
+                            tools_str = str(tools_list)
+                        task_str = ai_task if ai_task else "automate sprint requirement synthesis and backlog triage"
+                        ai_bullet = f"Leveraged Generative AI tools ({tools_str}) to {task_str}, saving **{ai_time}** in administrative overhead."
+                    else:
+                        task_str = ai_task if ai_task else "automate sprint requirement synthesis and backlog triage"
+                        ai_bullet = f"Leveraged Generative AI tools (ChatGPT, Claude) to {task_str}, saving **{ai_time}** in administrative overhead."
+                    output.append(f"- {ai_bullet}")
+                    transformed_bullets += 1
 
         # If user provided custom achievements, check if any match this role
         if user_metrics:

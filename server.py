@@ -12,7 +12,7 @@ import os
 import sys
 import base64
 
-from agent import KillerResumeAgent
+from agent import KillerResumeAgent, LLMClient
 from rules.rule4_google_xyz import transform_to_xyz, DIMENSIONS
 from pdf_parser import extract_pdf_data
 from pdf_generator import generate_pdf_from_markdown
@@ -41,11 +41,21 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/api/sample":
             self.handle_sample_data()
+        elif parsed.path == "/api/config":
+            self.handle_config()
         elif parsed.path == "/" or parsed.path == "":
             self.path = "/index.html"
             super().do_GET()
         else:
             super().do_GET()
+
+    def handle_config(self):
+        detected = {
+            "gemini": bool(os.environ.get("GEMINI_API_KEY")),
+            "openai": bool(os.environ.get("OPENAI_API_KEY")),
+            "anthropic": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        }
+        self.send_json_response({"detected_keys": detected})
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -107,6 +117,8 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             user_metrics = data.get("user_metrics", None)
             pdf_diag = None
             style_meta = data.get("style_meta", None)
+            provider = data.get("provider", "heuristic")
+            api_key = data.get("api_key", "")
 
             if pdf_b64:
                 try:
@@ -121,15 +133,15 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_json_response({"error": f"Failed to parse PDF: {str(e)}"}, status=500)
                     return
 
-            if user_metrics is None and "sahas" in resume_text.lower():
-                from template_formatter import SAHAS_VERIFIED_METRICS
-                user_metrics = SAHAS_VERIFIED_METRICS
+            llm = LLMClient(provider=provider, api_key=api_key)
+            t_agent = KillerResumeAgent(llm_client=llm)
 
-            result = agent.transform_resume(resume_text, jd_text, style_meta=style_meta, user_metrics=user_metrics)
+            result = t_agent.transform_resume(resume_text, jd_text, style_meta=style_meta, user_metrics=user_metrics)
             if pdf_diag:
                 result["pdf_metadata"] = pdf_diag
             if style_meta:
                 result["style_meta"] = style_meta
+            result.pop("pdf_bytes", None)
             self.send_json_response(result)
 
         elif parsed.path == "/api/qa-report":
@@ -178,9 +190,20 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
 
         elif parsed.path == "/api/xyz":
             bullet = data.get("bullet", "")
-            metric = data.get("metric", None)
-            result = transform_to_xyz(bullet, metric_value=metric)
-            self.send_json_response(result)
+            notes = data.get("notes") or data.get("metric", "")
+            provider = data.get("provider", "heuristic")
+            api_key = data.get("api_key", "")
+            role = data.get("role", "")
+            jd = data.get("jd", "")
+
+            llm = LLMClient(provider=provider, api_key=api_key)
+            rewritten = llm.rewrite_bullet_xyz(raw_bullet=bullet, user_notes=notes, role_title=role, jd_context=jd)
+            self.send_json_response({
+                "original": bullet,
+                "notes": notes,
+                "rewritten": rewritten,
+                "provider": llm.provider
+            })
 
         elif parsed.path == "/api/clarify":
             bullet = data.get("bullet", "")
@@ -234,7 +257,12 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
         })
 
     def send_json_response(self, data, status=200):
-        body = json.dumps(data).encode("utf-8")
+        def json_serializer(obj):
+            if isinstance(obj, bytes):
+                return base64.b64encode(obj).decode("utf-8")
+            return str(obj)
+
+        body = json.dumps(data, default=json_serializer).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
