@@ -3,24 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Killer Résumé Agent | Jeff Su's 5 Research-Backed Rules</title>
-  <link rel="stylesheet" href="style.css?v=20260922_agent_interview_v2">
+  <title>Killer Résumé Agent | TPM Curriculum · AI-Native Track</title>
+  <link rel="stylesheet" href="style.css?v=20260922_tpm_brand_v1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
 
   <div class="app-container wizard-layout">
-    <!-- Header -->
+    <!-- Header: TPM Curriculum · AI-Native Track Brand Architecture -->
     <header class="header">
       <div class="header-left">
-        <div class="badge-tag">JEFF SU'S 5 RESEARCH-BACKED RULES • 7-PILLAR PRODUCTION QA</div>
-        <h1>Killer Résumé Agent</h1>
+        <div class="brand-eyebrow">
+          <span class="badge-series">TPM CURRICULUM</span>
+          <span class="badge-track">AI-NATIVE TRACK</span>
+          <span class="badge-tag-gold">⚡ 5-RULE SPECIFICATION</span>
+        </div>
+        <h1 class="brand-title">Killer Résumé Agent</h1>
         <p class="subtitle">
-          Calibrated on <strong>4,000+ hiring managers</strong> & <strong>nearly 2 million applications</strong>. Upgrade your CV in 5 simple steps.
+          Calibrated on <strong>4,000+ hiring managers</strong> &amp; <strong>nearly 2 million job applications</strong>. Transform raw CVs into executive-grade, ATS-certified career artifacts.
         </p>
       </div>
       <div class="header-right">
@@ -29,7 +33,7 @@
           <span class="ai-engine-icon">🤖</span>
           <select id="select-ai-engine" class="select-ai-engine" title="Select AI Engine for Google XYZ Rewriting">
             <option value="gemini">Google Gemini (Free Tier)</option>
-            <option value="groq">Groq (Free & Fast)</option>
+            <option value="groq">Groq (Free &amp; Fast)</option>
             <option value="openrouter">OpenRouter (Free Models)</option>
             <option value="mistral">Mistral AI (Free Tier)</option>
             <option value="openai">OpenAI (GPT-4o-mini)</option>
@@ -50,7 +54,7 @@
           </button>
         </div>
         <button type="button" id="btn-header-reset" class="btn btn-ghost btn-sm" title="Start a fresh CV upgrade">
-          🔄 Start Over
+          🔄 Reset
         </button>
       </div>
     </header>
@@ -73,61 +77,66 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" id="btn-save-api-key" class="btn btn-primary btn-sm">Save & Use Engine</button>
+          <button type="button" id="btn-save-api-key" class="btn btn-primary btn-sm">Save &amp; Use Engine</button>
           <button type="button" id="btn-clear-api-key" class="btn btn-ghost btn-sm">Use Offline Engine</button>
         </div>
       </div>
     </div>
 
-    <!-- Interactive Stepper Bar -->
+    <!-- Apple-Style Segmented Stepper Bar with TPM Module Coding -->
     <div class="stepper-container">
       <div class="stepper-track">
-        <!-- Step 1 Node -->
-        <div class="step-node active" id="step-node-1" data-step="1">
-          <div class="step-badge">1</div>
+        <!-- Step 1 Node: Red #c8440a -->
+        <div class="step-node active" id="step-node-1" data-step="1" data-module="1.1">
+          <div class="step-badge">01</div>
           <div class="step-text">
+            <span class="step-module-kicker">MODULE 1.1</span>
             <span class="step-title">Target Job</span>
             <span class="step-tag optional">Optional</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-1"></div>
 
-        <!-- Step 2 Node -->
-        <div class="step-node" id="step-node-2" data-step="2">
-          <div class="step-badge">2</div>
+        <!-- Step 2 Node: Teal #0d7377 -->
+        <div class="step-node" id="step-node-2" data-step="2" data-module="1.2">
+          <div class="step-badge">02</div>
           <div class="step-text">
-            <span class="step-title">Your Current CV</span>
+            <span class="step-module-kicker">MODULE 1.2</span>
+            <span class="step-title">Current CV</span>
             <span class="step-tag required">Required</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-2"></div>
 
-        <!-- Step 3 Node -->
-        <div class="step-node" id="step-node-3" data-step="3">
-          <div class="step-badge">3</div>
+        <!-- Step 3 Node: Gold #d4a017 -->
+        <div class="step-node" id="step-node-3" data-step="3" data-module="1.3">
+          <div class="step-badge">03</div>
           <div class="step-text">
-            <span class="step-title">CV Health Check</span>
-            <span class="step-tag">Errors & Fixes</span>
+            <span class="step-module-kicker">MODULE 1.3</span>
+            <span class="step-title">Health Check</span>
+            <span class="step-tag">Diagnostics</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-3"></div>
 
-        <!-- Step 4 Node -->
-        <div class="step-node" id="step-node-4" data-step="4">
-          <div class="step-badge">4</div>
+        <!-- Step 4 Node: Green #2d6a4f -->
+        <div class="step-node" id="step-node-4" data-step="4" data-module="1.4">
+          <div class="step-badge">04</div>
           <div class="step-text">
-            <span class="step-title">Extra Context</span>
+            <span class="step-module-kicker">MODULE 1.4</span>
+            <span class="step-title">Context &amp; XYZ</span>
             <span class="step-tag optional">Optional</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-4"></div>
 
-        <!-- Step 5 Node -->
-        <div class="step-node" id="step-node-5" data-step="5">
-          <div class="step-badge">5</div>
+        <!-- Step 5 Node: Purple #6b3fa0 + Gold AI -->
+        <div class="step-node" id="step-node-5" data-step="5" data-module="1.5">
+          <div class="step-badge">05</div>
           <div class="step-text">
+            <span class="step-module-kicker">MODULE 1.5</span>
             <span class="step-title">Killer Résumé</span>
-            <span class="step-tag">Upgraded & Tips</span>
+            <span class="step-tag ai-tag">⚡ AI-Leveraged</span>
           </div>
         </div>
       </div>
@@ -148,12 +157,12 @@
       <div class="wizard-pane active" id="pane-step-1">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill optional">Step 1 of 5 • Optional</span>
+            <span class="badge-step-pill module-1-1">MODULE 1.1 · TARGET JOB</span>
             <span class="badge-mini">RULE 2: KEYWORD MAPPING</span>
           </div>
-          <h2>What job are you aiming for?</h2>
+          <h2>Target Job Specification</h2>
           <p>
-            Paste the job post or requirements below. We will scan it to make sure automated screening filters find the exact skills and keywords this employer wants.
+            Paste the target job description or requirements below. We will extract critical competency signals to ensure your application clears automated screening filters in the 45%–75% sweet spot.
           </p>
         </div>
 
@@ -194,12 +203,12 @@
       <div class="wizard-pane" id="pane-step-2">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill required">Step 2 of 5 • Required</span>
+            <span class="badge-step-pill module-1-2">MODULE 1.2 · CURRENT CV</span>
             <span class="badge-mini">RULE 1: ATS READABILITY</span>
           </div>
-          <h2>Add your current CV</h2>
+          <h2>Current Career Document</h2>
           <p>
-            Upload your resume as a <strong>PDF</strong> or switch to <strong>Paste Text</strong> mode. We will check it for formatting errors, unreadable graphics, and missing numbers.
+            Upload your resume as a <strong>PDF</strong> or switch to <strong>Paste Text</strong> mode. We will execute pre-flight diagnostics to verify a clean vector text layer, valid margins, and zero image traps.
           </p>
         </div>
 
@@ -318,12 +327,12 @@
       <div class="wizard-pane" id="pane-step-3">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill">Step 3 of 5 • Health Check</span>
-            <span class="badge-mini">5-RULE EVALUATION</span>
+            <span class="badge-step-pill module-1-3">MODULE 1.3 · HEALTH CHECK</span>
+            <span class="badge-mini">5-RULE BOT AUDIT</span>
           </div>
-          <h2>Here is what's holding your CV back</h2>
+          <h2>Empirical Screening Diagnostics</h2>
           <p>
-            We evaluated your CV against automated screening bots and Jeff Su's research on 2 million applications. Here are the errors we found in simple terms:
+            Evaluated against automated screening algorithms and empirical benchmarks from 2 million applications. Here is the diagnostic breakdown:
           </p>
         </div>
 
@@ -482,12 +491,12 @@
       <div class="wizard-pane" id="pane-step-4">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill required">Step 4 of 5 • Active Agent Interview</span>
-            <span class="badge-mini">JEFF SU RULES 3, 4 & 5</span>
+            <span class="badge-step-pill module-1-4">MODULE 1.4 · CONTEXT &amp; XYZ</span>
+            <span class="badge-mini">RULE 4 &amp; 5: QUANTIFIED IMPACT</span>
           </div>
           <h2>The Agent Interview: Turning Duties into Measurable Wins</h2>
           <p>
-            Jeff Su's research shows resumes with quantified impact receive <strong>+75% higher interview rates</strong>. The agent analyzed your CV and identified unquantified bullets below. Share your rough facts/numbers, and the agent will synthesize them into <strong>Google's XYZ formula</strong>.
+            Jeff Su's research shows resumes with quantified impact receive <strong>+75% higher interview rates</strong>. Share your authentic outcomes below, and the agent will synthesize them into <strong>Google's XYZ formula</strong>.
           </p>
         </div>
 
@@ -671,14 +680,12 @@
       <div class="wizard-pane" id="pane-step-5">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border-color: rgba(16, 185, 129, 0.3);">
-              🎉 Upgrade Complete
-            </span>
-            <span class="badge-mini" id="final-score-delta-badge">Score: 74 → 95 / 100 (+21 pts)</span>
+            <span class="badge-step-pill module-1-5">MODULE 1.5 · EXECUTIVE CAREER ARTIFACT</span>
+            <span class="badge-tag-gold" id="final-score-delta-badge">Score: 74 → 95 / 100 (+21 pts)</span>
           </div>
-          <h2>Your Upgraded Killer Résumé is Ready!</h2>
+          <h2>Your Upgraded Killer Résumé is Ready</h2>
           <p>
-            Your CV has been restructured into a single-column, ATS-verified format with Google XYZ metrics bolded for the 6-second recruiter scan.
+            Restructured into an executive-grade single-column format with Google XYZ metrics bolded for the 6-second recruiter scan and 100% ATS vector certification.
           </p>
         </div>
 
