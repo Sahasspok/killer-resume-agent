@@ -82,6 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Step 3: Extra Context (CRUD & Tags)
   const achievementInput = document.getElementById("achievement-input");
+  const achievementRoleSelect = document.getElementById("achievement-role-select");
+  const achievementRoleCustom = document.getElementById("achievement-role-custom");
   const btnAddAchievement = document.getElementById("btn-add-achievement");
   const achievementsListEl = document.getElementById("achievements-list");
   const aiToolInput = document.getElementById("ai-tool-input");
@@ -90,19 +92,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnStep3Back = document.getElementById("btn-step3-back");
   const btnStep3Skip = document.getElementById("btn-step3-skip");
   const btnStep3Next = document.getElementById("btn-step3-next");
-  const quickInput = document.getElementById("quick-bullet-input");
-  const quickMetricInput = document.getElementById("quick-metric-input");
-  const xyzDimensionInput = document.getElementById("xyz-dimension-input");
-  const btnQuickXyz = document.getElementById("btn-quick-xyz");
-  const xyzContainer = document.getElementById("xyz-result-container");
-  const xyzResultText = document.getElementById("xyz-result-text");
-  const btnAddXyzToAchievements = document.getElementById("btn-add-xyz-to-achievements");
-  const xyzAddedFeedback = document.getElementById("xyz-added-feedback");
 
   // Step 3 State
   let customAchievements = [];
   let customAiTools = ["Claude Code", "ChatGPT", "Cursor"];
-  let lastTransformedBullet = null;
+  let detectedRoles = [];
 
   // Step 4: Health Check & Errors
   const auditScoreCircle = document.getElementById("audit-score-circle");
@@ -271,7 +265,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Automated action hooks upon entering steps
-    if (currentStep === 4) {
+    if (currentStep === 3) {
+      refreshDetectedRoles();
+    } else if (currentStep === 4) {
       triggerAuditFlow();
     } else if (currentStep === 5) {
       if (lastTransformData) {
@@ -383,10 +379,27 @@ document.addEventListener("DOMContentLoaded", () => {
             showLoadedPdfPill(currentPdfFilename, "148 KB • 1 Page (Selectable Vector)");
             await runPdfPreflight(currentPdfBase64, currentPdfFilename);
           }
+          detectedRoles = [
+            { company: "Veel", title: "Technical Project Manager", label: "Veel (Technical Project Manager)" },
+            { company: "TechSaintIT", title: "Project Manager", label: "TechSaintIT (Project Manager)" }
+          ];
+          updateRoleSelectOptions();
           customAchievements = [
-            "Led cross-functional team of 12 (engineers, QA, DevOps) delivering high-scale B2B SaaS platform across 8 sprints with 98% on-time milestone delivery.",
-            "Accelerated sprint velocity by 25% and cut sprint planning cycle time by 4 hours weekly by introducing automated ClickUp/Jira workflows and AI backlog triage.",
-            "Spearheaded migration of legacy services to microservices architecture, reducing deployment cycle times by 40%."
+            {
+              text: "Led cross-functional team of 12 (engineers, QA, DevOps) delivering high-scale B2B SaaS platform across 8 sprints with 98% on-time milestone delivery.",
+              role: "Veel",
+              roleLabel: "Veel (Technical Project Manager)"
+            },
+            {
+              text: "Accelerated sprint velocity by 25% and cut sprint planning cycle time by 4 hours weekly by introducing automated ClickUp/Jira workflows and AI backlog triage.",
+              role: "Veel",
+              roleLabel: "Veel (Technical Project Manager)"
+            },
+            {
+              text: "Spearheaded migration of legacy services to microservices architecture, reducing deployment cycle times by 40%.",
+              role: "TechSaintIT",
+              roleLabel: "TechSaintIT (Project Manager)"
+            }
           ];
           customAiTools = ["Claude Code", "ChatGPT", "Cursor", "GitHub Copilot"];
           renderAchievements();
@@ -507,6 +520,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (diag.style_meta) currentStyleMeta = diag.style_meta;
+      if (diag.detected_roles && Array.isArray(diag.detected_roles) && diag.detected_roles.length > 0) {
+        detectedRoles = diag.detected_roles;
+        updateRoleSelectOptions();
+      }
       if (diag.text && resumeInput && !resumeInput.value.trim()) {
         resumeInput.value = diag.text;
       }
@@ -516,7 +533,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Step 3 Events (Extra Context: Achievements CRUD, AI Tags, & Workshop) ---
+  // --- Step 3 Events (Extra Context: Achievements by Job & AI Tags) ---
   function escapeHtml(str) {
     if (!str) return "";
     return String(str)
@@ -527,12 +544,60 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/'/g, "&#039;");
   }
 
+  async function refreshDetectedRoles() {
+    const resume = resumeInput ? resumeInput.value.trim() : "";
+    if (!resume && !currentPdfBase64) return;
+    try {
+      const res = await fetch("/api/detect-roles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resume: resume, pdf_base64: currentPdfBase64 })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.roles && Array.isArray(data.roles) && data.roles.length > 0) {
+          detectedRoles = data.roles;
+          updateRoleSelectOptions();
+        }
+      }
+    } catch (e) {
+      console.warn("Could not detect roles:", e);
+    }
+  }
+
+  function updateRoleSelectOptions() {
+    if (!achievementRoleSelect) return;
+    const currentSelected = achievementRoleSelect.value;
+    let html = `<option value="primary">Current / Most Recent Role (Primary)</option>`;
+    detectedRoles.forEach(r => {
+      const val = r.company || r.title || r.header;
+      const label = r.label || r.title || r.company;
+      html += `<option value="${escapeHtml(val)}">${escapeHtml(label)}</option>`;
+    });
+    html += `<option value="__custom__">+ Specific / Other Job...</option>`;
+    achievementRoleSelect.innerHTML = html;
+    if (currentSelected && achievementRoleSelect.querySelector(`option[value="${currentSelected}"]`)) {
+      achievementRoleSelect.value = currentSelected;
+    }
+  }
+
+  if (achievementRoleSelect && achievementRoleCustom) {
+    achievementRoleSelect.addEventListener("change", () => {
+      if (achievementRoleSelect.value === "__custom__") {
+        achievementRoleCustom.classList.remove("hidden");
+        achievementRoleCustom.focus();
+      } else {
+        achievementRoleCustom.classList.add("hidden");
+      }
+    });
+  }
+
   function renderAchievements() {
     if (!achievementsListEl) return;
     if (customAchievements.length === 0) {
       achievementsListEl.innerHTML = `
         <div class="achievements-empty-state">
-          🎯 No custom achievements added yet. Type an achievement above, click a preset, or transform a bullet in the workshop below!
+          🎯 No custom achievements added yet. Select a past job, type an accomplishment above, or click a preset!
         </div>
       `;
       return;
@@ -540,13 +605,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     achievementsListEl.innerHTML = "";
     customAchievements.forEach((item, idx) => {
+      const itemObj = (typeof item === "string") ? { text: item, role: "primary", roleLabel: "Primary Role" } : item;
       const row = document.createElement("div");
       row.className = "achievement-item";
       row.dataset.index = idx;
       row.innerHTML = `
         <span class="achievement-bullet-icon">🎯</span>
+        <span class="achievement-role-badge">🏢 ${escapeHtml(itemObj.roleLabel || itemObj.role || 'Primary Role')}</span>
         <div class="achievement-text-wrapper">
-          <span class="achievement-text">${escapeHtml(item)}</span>
+          <span class="achievement-text">${escapeHtml(itemObj.text)}</span>
         </div>
         <div class="achievement-actions">
           <button type="button" class="btn-icon-action btn-edit-achievement" data-index="${idx}" title="Edit achievement">✏️</button>
@@ -556,7 +623,7 @@ document.addEventListener("DOMContentLoaded", () => {
       achievementsListEl.appendChild(row);
     });
 
-    // Attach edit and delete handlers
+    // Attach delete handlers
     achievementsListEl.querySelectorAll(".btn-delete-achievement").forEach(btn => {
       btn.addEventListener("click", () => {
         const idx = parseInt(btn.getAttribute("data-index"), 10);
@@ -568,6 +635,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
+    // Attach edit handlers
     achievementsListEl.querySelectorAll(".btn-edit-achievement").forEach(btn => {
       btn.addEventListener("click", () => {
         const idx = parseInt(btn.getAttribute("data-index"), 10);
@@ -575,26 +643,52 @@ document.addEventListener("DOMContentLoaded", () => {
         const row = achievementsListEl.querySelector(`.achievement-item[data-index="${idx}"]`);
         if (!row) return;
 
-        const currentVal = customAchievements[idx];
+        const currentItem = (typeof customAchievements[idx] === "string")
+          ? { text: customAchievements[idx], role: "primary", roleLabel: "Primary Role" }
+          : customAchievements[idx];
+
+        let roleOptionsHtml = `<option value="primary" ${currentItem.role === 'primary' ? 'selected' : ''}>Current / Most Recent Role (Primary)</option>`;
+        detectedRoles.forEach(r => {
+          const val = r.company || r.title || r.header;
+          const label = r.label || r.title || r.company;
+          const isSel = (currentItem.role === val || currentItem.roleLabel === label);
+          roleOptionsHtml += `<option value="${escapeHtml(val)}" ${isSel ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+        });
+        roleOptionsHtml += `<option value="__custom__" ${currentItem.role !== 'primary' && !detectedRoles.some(r => (r.company === currentItem.role || r.title === currentItem.role)) ? 'selected' : ''}>+ Custom Job...</option>`;
+
         row.className = "achievement-item editing";
         row.innerHTML = `
-          <input type="text" class="achievement-edit-input" value="${escapeHtml(currentVal)}">
-          <div class="achievement-actions">
-            <button type="button" class="btn-icon-action btn-save-achievement" data-index="${idx}" title="Save">💾</button>
-            <button type="button" class="btn-icon-action btn-cancel-achievement" data-index="${idx}" title="Cancel">✕</button>
+          <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <select class="achievement-edit-role-select" style="background: var(--bg-input); border: 1px solid var(--accent-blue); border-radius: 4px; padding: 4px 8px; color: var(--text-primary); font-size: 11px;">
+                ${roleOptionsHtml}
+              </select>
+              <input type="text" class="achievement-edit-input" value="${escapeHtml(currentItem.text)}" style="flex: 1; min-width: 200px;">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 6px;">
+              <button type="button" class="btn-icon-action btn-save-achievement" data-index="${idx}" title="Save">💾 Save</button>
+              <button type="button" class="btn-icon-action btn-cancel-achievement" data-index="${idx}" title="Cancel">✕ Cancel</button>
+            </div>
           </div>
         `;
 
         const editInput = row.querySelector(".achievement-edit-input");
+        const editRoleSelect = row.querySelector(".achievement-edit-role-select");
         editInput.focus();
         editInput.select();
 
         const saveEdit = () => {
-          const newVal = editInput.value.trim();
-          if (newVal) {
-            customAchievements[idx] = newVal;
+          const newText = editInput.value.trim();
+          if (newText) {
+            let newRole = editRoleSelect.value;
+            let newRoleLabel = editRoleSelect.options[editRoleSelect.selectedIndex].textContent;
+            customAchievements[idx] = {
+              text: newText,
+              role: newRole,
+              roleLabel: newRoleLabel
+            };
             renderAchievements();
-            showToast("Updated achievement", "success");
+            showToast("Updated achievement & role association", "success");
           } else {
             customAchievements.splice(idx, 1);
             renderAchievements();
@@ -616,13 +710,36 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function addAchievement(text) {
+  function addAchievement(text, roleVal, roleLabelVal) {
     const val = text.trim();
     if (!val) return;
-    customAchievements.push(val);
+
+    let role = roleVal;
+    let roleLabel = roleLabelVal;
+
+    if (!role) {
+      if (achievementRoleSelect && achievementRoleSelect.value === "__custom__") {
+        role = achievementRoleCustom ? achievementRoleCustom.value.trim() : "Custom Job";
+        roleLabel = role || "Custom Job";
+      } else if (achievementRoleSelect && achievementRoleSelect.value !== "primary") {
+        role = achievementRoleSelect.value;
+        const opt = achievementRoleSelect.options[achievementRoleSelect.selectedIndex];
+        roleLabel = opt ? opt.textContent : role;
+      } else {
+        role = "primary";
+        roleLabel = (detectedRoles.length > 0 && detectedRoles[0].company) ? detectedRoles[0].company : "Primary Role";
+      }
+    }
+
+    customAchievements.push({
+      text: val,
+      role: role || "primary",
+      roleLabel: roleLabel || "Primary Role"
+    });
+
     renderAchievements();
     if (achievementInput) achievementInput.value = "";
-    showToast("Added achievement to Work Experience!", "success");
+    showToast(`Added achievement to ${roleLabel}!`, "success");
   }
 
   if (btnAddAchievement && achievementInput) {
@@ -720,63 +837,6 @@ document.addEventListener("DOMContentLoaded", () => {
     btnStep3Next.addEventListener("click", () => {
       showToast("Context captured! Running comprehensive audit...", "success");
       goToStep(4);
-    });
-  }
-
-  // Quick XYZ Transformer Workshop in Step 3
-  if (btnQuickXyz) {
-    btnQuickXyz.addEventListener("click", async () => {
-      const bullet = quickInput ? quickInput.value.trim() : "";
-      const metric = quickMetricInput ? quickMetricInput.value.trim() : "";
-      const dimension = xyzDimensionInput ? xyzDimensionInput.value.trim() : "";
-      if (!bullet) {
-        showToast("Please enter a bullet point first", "warning");
-        return;
-      }
-      try {
-        btnQuickXyz.disabled = true;
-        btnQuickXyz.textContent = "Formatting...";
-        const res = await fetch("/api/xyz", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bullet, metric, dimension })
-        });
-        const data = await res.json();
-        const formatted = data.suggested || data.xyz_formulation || data.formatted_bullet || bullet;
-        lastTransformedBullet = formatted;
-
-        if (xyzContainer) xyzContainer.classList.remove("hidden");
-        if (xyzResultText) {
-          xyzResultText.textContent = formatted;
-        }
-        if (xyzAddedFeedback) {
-          xyzAddedFeedback.classList.add("hidden");
-        }
-        showToast("Transformed into Google XYZ formula!", "success");
-      } catch (e) {
-        showToast("Failed to transform bullet", "error");
-      } finally {
-        btnQuickXyz.disabled = false;
-        btnQuickXyz.innerHTML = `<span class="btn-icon">✨</span> Transform to Google XYZ Formula`;
-      }
-    });
-  }
-
-  // Add transformed bullet to Achievements list!
-  if (btnAddXyzToAchievements) {
-    btnAddXyzToAchievements.addEventListener("click", () => {
-      if (!lastTransformedBullet) {
-        showToast("Transform a bullet first", "warning");
-        return;
-      }
-      addAchievement(lastTransformedBullet);
-      if (xyzAddedFeedback) {
-        xyzAddedFeedback.classList.remove("hidden");
-      }
-      const crudCard = document.getElementById("achievements-crud-card");
-      if (crudCard) {
-        crudCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
     });
   }
 
@@ -1058,7 +1118,7 @@ document.addEventListener("DOMContentLoaded", () => {
       customMetrics = {
         achievements: customAchievements,
         ai_tools: customAiTools,
-        custom_input_metrics: customAchievements.join("\n"),
+        custom_input_metrics: customAchievements.map(a => (typeof a === "string" ? a : a.text)).join("\n"),
         custom_ai_tools: customAiTools.join(", ")
       };
     }

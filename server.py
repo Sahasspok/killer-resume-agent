@@ -18,6 +18,7 @@ from pdf_parser import extract_pdf_data
 from pdf_generator import generate_pdf_from_markdown
 from format_preserver import extract_pdf_style_fingerprint
 from qa_validator import run_full_qa_pipeline, validate_pdf_render
+from template_formatter import extract_roles_from_resume
 
 PORT = 5050
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -70,6 +71,7 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                 pdf_diag = extract_pdf_data(pdf_bytes, filename=filename)
                 style_meta = extract_pdf_style_fingerprint(pdf_bytes)
                 pdf_diag["style_meta"] = style_meta
+                pdf_diag["detected_roles"] = extract_roles_from_resume(pdf_diag.get("text", ""))
                 self.send_json_response(pdf_diag)
             except Exception as e:
                 self.send_json_response({"error": f"Failed to parse PDF: {str(e)}"}, status=500)
@@ -93,6 +95,7 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                     return
 
             result = agent.run_comprehensive_audit(resume_text, jd_text)
+            result["detected_roles"] = extract_roles_from_resume(resume_text)
             if pdf_diag:
                 result["pdf_metadata"] = pdf_diag
             self.send_json_response(result)
@@ -187,6 +190,21 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                 "xyz": xyz,
                 "dimensions": DIMENSIONS
             })
+        elif parsed.path == "/api/detect-roles":
+            resume_text = data.get("resume", "")
+            pdf_b64 = data.get("pdf_base64", "")
+            if pdf_b64 and not resume_text:
+                try:
+                    if "," in pdf_b64:
+                        pdf_b64 = pdf_b64.split(",", 1)[1]
+                    pdf_bytes = base64.b64decode(pdf_b64)
+                    pdf_diag = extract_pdf_data(pdf_bytes)
+                    resume_text = pdf_diag.get("text", "")
+                except Exception:
+                    pass
+            roles = extract_roles_from_resume(resume_text)
+            self.send_json_response({"roles": roles})
+
         else:
             self.send_json_response({"error": f"Endpoint {parsed.path} not found"}, status=404)
 

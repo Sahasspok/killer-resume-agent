@@ -546,6 +546,107 @@ def curate_role_bullets(raw_bullets: List[str], max_bullets: int = 5) -> List[st
     selected_set = set(b for _, _, b in scored[:max_bullets])
     return [b for b in raw_bullets if b in selected_set]
 
+def extract_roles_from_resume(raw_text: str) -> List[Dict[str, str]]:
+    """
+    Parses resume text and returns a list of detected employment roles with title, company, and clean label.
+    """
+    if not raw_text or not raw_text.strip():
+        return []
+    cleaned_text, _ = clean_unwanted_fillers(raw_text)
+    lines = cleaned_text.splitlines()
+    _, _, _, remaining_lines, sidebar_skills, sidebar_certs = extract_candidate_header(lines)
+    sections = parse_sections(remaining_lines, sidebar_skills=sidebar_skills, sidebar_certs=sidebar_certs)
+    exp_lines = sections.get('experience', [])
+    if not exp_lines:
+        exp_lines = remaining_lines
+
+    expanded_lines = []
+    for l in exp_lines:
+        l_clean = l.replace('\u200b', ' ').replace('\xa0', ' ').strip()
+        if l_clean:
+            expanded_lines.append(l_clean)
+
+    clean_lines = expanded_lines
+    roles = []
+    i = 0
+    while i < len(clean_lines):
+        line = clean_lines[i]
+        is_candidate_l0 = (not line.startswith(('#', '-', '* ', '•', '○', '·', '>', '●'))) and len(line.split()) <= 7 and not line.endswith('.')
+        is_candidate_l1 = (i + 1 < len(clean_lines)) and (not clean_lines[i+1].startswith(('#', '-', '* ', '•', '○', '·', '>', '●'))) and len(clean_lines[i+1].split()) <= 7 and not clean_lines[i+1].endswith('.')
+
+        if is_candidate_l0 and is_candidate_l1 and i + 2 < len(clean_lines) and is_date_line(clean_lines[i+2]):
+            l0, l1 = clean_lines[i], clean_lines[i+1]
+            l2 = clean_lines[i+2]
+            l3 = clean_lines[i+3] if (i + 3 < len(clean_lines) and not is_date_line(clean_lines[i+3]) and not clean_lines[i+3].startswith(('-', '*', '•', '○', '·', '●')) and len(clean_lines[i+3].split()) <= 6 and not clean_lines[i+3].endswith('.')) else ""
+
+            if ROLE_KEYWORDS.search(l1):
+                title, company = l1, l0
+            else:
+                title, company = l0, l1
+
+            if " — " in company:
+                company = company.split(" — ", 1)[0]
+            elif " – " in company:
+                company = company.split(" – ", 1)[0]
+
+            label = f"{company.strip()} ({title.strip()})" if company and title else (title or company)
+            roles.append({
+                "header": f"### {title.strip()} | {company.strip()}",
+                "title": title.strip(),
+                "company": company.strip(),
+                "label": label,
+                "date_loc": l2.strip()
+            })
+            i += 4 if l3 else 3
+            continue
+
+        if is_date_line(line):
+            i += 1
+            continue
+
+        is_bullet = line.startswith(('-', '* ', '• ', '> ', '○ ', '· ', '● ')) or (re.match(r'^\d+\.\s+', line) and not is_date_line(line))
+        clean_text = line.lstrip('#*•-○·>● ').strip()
+        is_role_header = (not is_bullet) and (not is_date_line(clean_text)) and (
+            line.startswith('###') or
+            ('|' in line and len(line.split()) <= 10) or
+            (' at ' in line and len(line.split()) <= 10) or
+            (' — ' in line and len(line.split()) <= 10) or
+            (' – ' in line and len(line.split()) <= 10) or
+            (ROLE_KEYWORDS.search(clean_text) and len(clean_text.split()) <= 6 and not clean_text.endswith('.'))
+        )
+
+        if is_role_header:
+            clean_title = re.sub(r'^#{1,6}\s*', '', line).strip()
+            clean_title = re.sub(r'\([^)]+\)', '', clean_title).strip()
+            title, company = clean_title, ""
+            if " | " in clean_title:
+                parts = clean_title.split(" | ", 1)
+                title, company = parts[0].strip(), parts[1].strip()
+            elif " at " in clean_title:
+                parts = clean_title.split(" at ", 1)
+                title, company = parts[0].strip(), parts[1].strip()
+            elif " — " in clean_title:
+                parts = clean_title.split(" — ", 1)
+                title, company = parts[0].strip(), parts[1].strip()
+            elif " – " in clean_title:
+                parts = clean_title.split(" – ", 1)
+                title, company = parts[0].strip(), parts[1].strip()
+
+            label = f"{company} ({title})" if company and title else (title or company or clean_title)
+            roles.append({
+                "header": f"### {clean_title}",
+                "title": title,
+                "company": company,
+                "label": label,
+                "date_loc": ""
+            })
+            i += 1
+            continue
+
+        i += 1
+
+    return roles
+
 def format_experience_section(exp_lines: List[str], target_role: str = "", user_metrics: Optional[Dict[str, Any]] = None) -> Tuple[List[str], int]:
     """
     Parses experience roles, titles, dates, and bullets into clean ATS structure.
@@ -769,7 +870,7 @@ def format_experience_section(exp_lines: List[str], target_role: str = "", user_
         matched_user_bullets = None
         if user_metrics:
             for k, v in user_metrics.items():
-                if k.lower() in header.lower() and isinstance(v, list):
+                if k.lower() in header.lower() and isinstance(v, list) and k not in ["achievements", "ai_tools"]:
                     matched_user_bullets = v
                     break
 
@@ -826,12 +927,37 @@ def format_experience_section(exp_lines: List[str], target_role: str = "", user_
             output.append(f"- {ai_bullet}")
             transformed_bullets += 1
 
-        # If primary role (idx == 0) and user provided custom achievements in Step 3 / Workshop, insert them
-        if idx == 0 and user_metrics:
+        # If user provided custom achievements, check if any match this role
+        if user_metrics:
             custom_achievements = []
-            if isinstance(user_metrics.get("achievements"), list):
-                custom_achievements.extend(user_metrics["achievements"])
-            elif user_metrics.get("custom_input_metrics"):
+            raw_achievements = user_metrics.get("achievements")
+            if isinstance(raw_achievements, list):
+                for ach in raw_achievements:
+                    if isinstance(ach, dict):
+                        ach_text = ach.get("text", "").strip()
+                        ach_role = (ach.get("role") or ach.get("company") or "").strip()
+                    elif isinstance(ach, str):
+                        ach_text = ach.strip()
+                        ach_role = "primary"
+                    else:
+                        continue
+
+                    if not ach_text:
+                        continue
+
+                    # Check match:
+                    # 1. Matches primary / most recent role (idx == 0)
+                    is_primary_target = ach_role.lower() in ["primary", "most recent", "latest", "current", "default", ""]
+                    if is_primary_target and idx == 0:
+                        custom_achievements.append(ach_text)
+                    elif not is_primary_target:
+                        # Match company or title or header substring
+                        ar_low = ach_role.lower()
+                        hdr_low = header.lower()
+                        if ar_low in hdr_low or hdr_low in ar_low or any(w in hdr_low for w in ar_low.split() if len(w) > 3):
+                            custom_achievements.append(ach_text)
+
+            elif user_metrics.get("custom_input_metrics") and idx == 0:
                 ci = user_metrics["custom_input_metrics"]
                 if isinstance(ci, str):
                     for l in ci.splitlines():

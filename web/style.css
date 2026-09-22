@@ -747,6 +747,70 @@ textarea:focus {
   transform: translateY(-1px);
 }
 
+/* Role Selector Controls */
+.crud-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.role-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.role-selector-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  white-space: nowrap;
+}
+
+.role-select-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 260px;
+}
+
+.achievement-role-select {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.achievement-role-select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.achievement-role-custom {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+}
+.achievement-role-custom:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+.achievement-role-custom.hidden {
+  display: none;
+}
+
 /* CRUD Input Row */
 .crud-input-row {
   display: flex;
@@ -767,6 +831,22 @@ textarea:focus {
 .crud-input-row input:focus {
   outline: none;
   border-color: var(--border-focus);
+}
+
+/* Achievement Item with Role Badge */
+.achievement-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-blue);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Achievements List */

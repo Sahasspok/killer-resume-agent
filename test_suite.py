@@ -597,7 +597,54 @@ Product Manager with 6+ years of experience delivering cloud and fintech platfor
         self.assertIn("## CORE COMPETENCIES & TECHNICAL SKILLS", standard_md)
         self.assertIn("Claude Code", standard_md)
 
+    def test_multi_role_achievement_mapping(self):
+        """Verify role detection and that achievements are injected under their specific matching past job."""
+        from template_formatter import extract_roles_from_resume, format_to_standard_template
+
+        # 1. Test role detection from resume text
+        detected = extract_roles_from_resume(SAMPLE_RESUME)
+        self.assertGreaterEqual(len(detected), 2)
+        companies = [r["company"] for r in detected]
+        self.assertIn("Datasync Networks", companies)
+        self.assertIn("ScaleCloud Technologies", companies)
+
+        # 2. Test targeted achievement assignment to specific past jobs
+        user_metrics = {
+            "achievements": [
+                {
+                    "text": "Deployed multi-region disaster recovery failover across AWS in under 4 minutes.",
+                    "role": "Datasync Networks",
+                    "roleLabel": "Datasync Networks (Staff Infrastructure Engineer)"
+                },
+                {
+                    "text": "Re-architected real-time streaming pipeline cutting Kafka cluster memory footprint by 35% on 50 brokers.",
+                    "role": "ScaleCloud Technologies",
+                    "roleLabel": "ScaleCloud Technologies (Software Engineer)"
+                }
+            ]
+        }
+
+        standard_md, _ = format_to_standard_template(SAMPLE_RESUME, user_metrics=user_metrics)
+
+        # Split markdown by role headers to verify correct role placement
+        parts = standard_md.split("### ")
+        self.assertGreaterEqual(len(parts), 3)
+
+        # Part 1 should contain Datasync Networks and its achievement
+        datasync_part = [p for p in parts if "Datasync Networks" in p][0]
+        self.assertIn("disaster recovery failover", datasync_part)
+        self.assertIn("**4 minutes**", datasync_part)
+        self.assertNotIn("Kafka cluster memory footprint", datasync_part)
+
+        # Part 2 should contain ScaleCloud Technologies and its achievement
+        scalecloud_part = [p for p in parts if "ScaleCloud Technologies" in p][0]
+        self.assertIn("Kafka cluster memory footprint", scalecloud_part)
+        self.assertIn("**35%**", scalecloud_part)
+        self.assertIn("50 brokers", scalecloud_part)
+        self.assertNotIn("disaster recovery failover", scalecloud_part)
+
 if __name__ == "__main__":
     unittest.main()
+
 
 
