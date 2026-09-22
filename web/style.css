@@ -2709,5 +2709,131 @@ body[data-theme="light"] .banner-badge {
   }
 }
 
+/* ===================================================================
+   CV Health Check Two-Option Choice Card
+   =================================================================== */
+.health-check-choices-card {
+  margin-top: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  animation: fadeIn 0.4s ease;
+}
 
+.choice-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
 
+.choice-icon {
+  font-size: 24px;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 8px;
+  padding: 6px 10px;
+  line-height: 1;
+}
+
+.choice-heading {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.choice-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.choice-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .choice-options-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.choice-option-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.choice-option-box:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-focus);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.choice-option-box.featured {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  position: relative;
+}
+
+.choice-option-box.featured:hover {
+  border-color: var(--accent-blue);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.18);
+}
+
+.choice-option-header {
+  margin-bottom: 8px;
+}
+
+.choice-box-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.choice-box-badge.featured {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent-blue);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.choice-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+}
+
+.choice-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+  flex: 1;
+}
+
+.choice-option-box button {
+  width: 100%;
+  justify-content: center;
+  font-weight: 600;
+  padding: 8px 14px;
+}

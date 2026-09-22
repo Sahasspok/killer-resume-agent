@@ -64,8 +64,8 @@
         <div class="step-node" id="step-node-3" data-step="3">
           <div class="step-badge">3</div>
           <div class="step-text">
-            <span class="step-title">Extra Context</span>
-            <span class="step-tag optional">Optional</span>
+            <span class="step-title">CV Health Check</span>
+            <span class="step-tag">Errors & Fixes</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-3"></div>
@@ -74,8 +74,8 @@
         <div class="step-node" id="step-node-4" data-step="4">
           <div class="step-badge">4</div>
           <div class="step-text">
-            <span class="step-title">CV Health Check</span>
-            <span class="step-tag">Errors & Fixes</span>
+            <span class="step-title">Extra Context</span>
+            <span class="step-tag optional">Optional</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-4"></div>
@@ -264,24 +264,188 @@
           <div class="nav-right">
             <!-- NOTICE: User is NOT allowed to skip this step -->
             <button type="button" id="btn-step2-next" class="btn btn-primary">
-              Continue to Extra Context →
+              Run CV Health Check →
             </button>
           </div>
         </div>
       </div>
 
       <!-- ===================================================================
-           STEP 3: Extra Context & Numbers (Optional / Skippable)
+           STEP 3: CV Health Check & Error Breakdown (QA Evaluation)
            =================================================================== -->
       <div class="wizard-pane" id="pane-step-3">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill optional">Step 3 of 5 • Optional</span>
+            <span class="badge-step-pill">Step 3 of 5 • Health Check</span>
+            <span class="badge-mini">5-RULE EVALUATION</span>
+          </div>
+          <h2>Here is what's holding your CV back</h2>
+          <p>
+            We evaluated your CV against automated screening bots and Jeff Su's research on 2 million applications. Here are the errors we found in simple terms:
+          </p>
+        </div>
+
+        <!-- Score Hero Card -->
+        <div class="score-hero-card">
+          <div class="score-hero-circle" id="audit-score-circle">
+            <span class="score-hero-val" id="audit-score-val">--</span>
+            <span class="score-hero-denom">/ 100</span>
+          </div>
+          <div class="score-hero-info">
+            <h3 id="audit-score-status">Calculating Score...</h3>
+            <p id="audit-score-summary">
+              Scanning your layout, keyword match, bullet metrics, and readability...
+            </p>
+          </div>
+        </div>
+
+        <!-- 5 Non-Technical Error Breakdown Cards -->
+        <div class="error-cards-grid" id="error-cards-container">
+          <!-- Card 1: Layout & Bot Readability -->
+          <div class="error-card" id="card-err-rule-1">
+            <div class="error-card-header">
+              <div class="error-card-title-group">
+                <span class="error-card-icon">📄</span>
+                <span class="error-card-title">1. Bot Readability & Layout (Rule 1)</span>
+              </div>
+              <span class="error-card-badge" id="badge-err-rule-1">Checking...</span>
+            </div>
+            <div class="error-card-body" id="body-err-rule-1">
+              Automated hiring software fails on 87% of multi-column Canva resumes. We check that your CV is clean single-column text that bots can read.
+            </div>
+            <div class="error-card-fix" id="fix-err-rule-1"></div>
+          </div>
+
+          <!-- Card 2: Job Match & Keywords -->
+          <div class="error-card" id="card-err-rule-2">
+            <div class="error-card-header">
+              <div class="error-card-title-group">
+                <span class="error-card-icon">🎯</span>
+                <span class="error-card-title">2. Job Match & Keywords (Rule 2)</span>
+              </div>
+              <span class="error-card-badge" id="badge-err-rule-2">Checking...</span>
+            </div>
+            <div class="error-card-body" id="body-err-rule-2">
+              Tailoring keywords gives an 84% higher interview rate, but stuffing too many words drops interviews by 21%. We aim for the 45–75% sweet spot.
+            </div>
+            <div class="error-card-fix" id="fix-err-rule-2"></div>
+          </div>
+
+          <!-- Card 3: Measurable Numbers -->
+          <div class="error-card" id="card-err-rule-4">
+            <div class="error-card-header">
+              <div class="error-card-title-group">
+                <span class="error-card-icon">🔢</span>
+                <span class="error-card-title">3. Measurable Results & Numbers (Rule 4)</span>
+              </div>
+              <span class="error-card-badge" id="badge-err-rule-4">Checking...</span>
+            </div>
+            <div class="error-card-body" id="body-err-rule-4">
+              Resumes that quantify results get 75% more interview callbacks. We format your bullet points into Google's XYZ formula.
+            </div>
+            <div class="error-card-fix" id="fix-err-rule-4"></div>
+          </div>
+
+          <!-- Card 4: Generic AI Buzzwords -->
+          <div class="error-card" id="card-err-rule-3">
+            <div class="error-card-header">
+              <div class="error-card-title-group">
+                <span class="error-card-icon">🛡️</span>
+                <span class="error-card-title">4. Generic Buzzwords & Cliches (Rule 3)</span>
+              </div>
+              <span class="error-card-badge" id="badge-err-rule-3">Checking...</span>
+            </div>
+            <div class="error-card-body" id="body-err-rule-3">
+              28% of hiring managers instantly reject resumes full of generic AI fluff ("results-driven professional"). We replace clichés with authentic action verbs.
+            </div>
+            <div class="error-card-fix" id="fix-err-rule-3"></div>
+          </div>
+
+          <!-- Card 5: Proof of AI Skills -->
+          <div class="error-card" id="card-err-rule-5">
+            <div class="error-card-header">
+              <div class="error-card-title-group">
+                <span class="error-card-icon">⚡</span>
+                <span class="error-card-title">5. Proof of AI Skills (Rule 5)</span>
+              </div>
+              <span class="error-card-badge" id="badge-err-rule-5">Checking...</span>
+            </div>
+            <div class="error-card-body" id="body-err-rule-5">
+              60% of hiring managers want proof of how you used AI, not just 'ChatGPT' in a list. Oxford found proven AI experience gives a +15% interview lift.
+            </div>
+            <div class="error-card-fix" id="fix-err-rule-5"></div>
+          </div>
+        </div>
+
+        <!-- Prominent Next Action Choices Card -->
+        <div class="health-check-choices-card" id="health-check-choices-card">
+          <div class="choice-card-header">
+            <span class="choice-icon">⚡</span>
+            <div>
+              <h3 class="choice-heading">Ready to Upgrade? Choose How to Proceed:</h3>
+              <p class="choice-sub">You can add numbers and AI tools to your past jobs to maximize your score, or generate your killer résumé right away.</p>
+            </div>
+          </div>
+          <div class="choice-options-grid">
+            <!-- Option 1: Add Data -->
+            <div class="choice-option-box">
+              <div class="choice-option-header">
+                <span class="choice-box-badge">OPTION 1 • RECOMMENDED (+75% INTERVIEWS)</span>
+                <h4 class="choice-title">🎯 Add Missing Numbers & AI Tools</h4>
+              </div>
+              <p class="choice-desc">
+                Associate specific metrics (hours saved, % speedup, budgets) with your detected past jobs and tag modern AI tools.
+              </p>
+              <button type="button" id="btn-choice-add-data" class="btn btn-secondary btn-sm">
+                <span>Add Extra Context (Step 4) →</span>
+              </button>
+            </div>
+
+            <!-- Option 2: Generate Anyway -->
+            <div class="choice-option-box featured">
+              <div class="choice-option-header">
+                <span class="choice-box-badge featured">OPTION 2 • INSTANT UPGRADE</span>
+                <h4 class="choice-title">🚀 Generate Killer Résumé Anyway</h4>
+              </div>
+              <p class="choice-desc">
+                Upgrade immediately using your existing CV text into ATS single-column format with Google XYZ formula bolding and vector PDF.
+              </p>
+              <button type="button" id="btn-choice-generate-anyway" class="btn btn-primary btn-sm btn-pulse">
+                <span>Generate Killer Résumé Now →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wizard-nav-bar">
+          <div class="nav-left">
+            <button type="button" id="btn-step3-back" class="btn btn-ghost">
+              ← Back to CV Upload
+            </button>
+          </div>
+          <div class="nav-right">
+            <button type="button" id="btn-step3-add-data" class="btn btn-secondary">
+              <span class="btn-icon">🎯</span> Add Missing Numbers (Step 4) →
+            </button>
+            <button type="button" id="btn-step3-generate-anyway" class="btn btn-primary btn-pulse">
+              <span class="btn-icon">🚀</span> Generate Killer Résumé Anyway →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================================
+           STEP 4: Extra Context & Numbers (Optional / Skippable)
+           =================================================================== -->
+      <div class="wizard-pane" id="pane-step-4">
+        <div class="pane-intro">
+          <div class="pane-badge-row">
+            <span class="badge-step-pill optional">Step 4 of 5 • Optional</span>
             <span class="badge-mini">RULE 4 & 5: METRICS & AI PROOF</span>
           </div>
           <h2>Any extra numbers or AI tools you used?</h2>
           <p>
-            AI tools cannot guess accomplishments that aren't written down! If you remember any time savings, team sizes, bug reductions, or AI tools you use at work, mention them here. If not, feel free to skip directly to your audit.
+            AI tools cannot guess accomplishments that aren't written down! If you remember any time savings, team sizes, bug reductions, or AI tools you use at work, mention them here. If not, feel free to generate your résumé immediately.
           </p>
         </div>
 
@@ -383,136 +547,15 @@
 
         <div class="wizard-nav-bar">
           <div class="nav-left">
-            <button type="button" id="btn-step3-back" class="btn btn-ghost">
-              ← Back
-            </button>
-          </div>
-          <div class="nav-right">
-            <button type="button" id="btn-step3-skip" class="btn-skip">
-              Skip this step (Audit My CV Now) →
-            </button>
-            <button type="button" id="btn-step3-next" class="btn btn-primary">
-              Audit CV with Context →
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===================================================================
-           STEP 4: CV Health Check & Error Breakdown (QA Evaluation)
-           =================================================================== -->
-      <div class="wizard-pane" id="pane-step-4">
-        <div class="pane-intro">
-          <div class="pane-badge-row">
-            <span class="badge-step-pill">Step 4 of 5 • Health Check</span>
-            <span class="badge-mini">5-RULE EVALUATION</span>
-          </div>
-          <h2>Here is what's holding your CV back</h2>
-          <p>
-            We evaluated your CV against automated screening bots and Jeff Su's research on 2 million applications. Here are the errors we found in simple terms:
-          </p>
-        </div>
-
-        <!-- Score Hero Card -->
-        <div class="score-hero-card">
-          <div class="score-hero-circle" id="audit-score-circle">
-            <span class="score-hero-val" id="audit-score-val">--</span>
-            <span class="score-hero-denom">/ 100</span>
-          </div>
-          <div class="score-hero-info">
-            <h3 id="audit-score-status">Calculating Score...</h3>
-            <p id="audit-score-summary">
-              Scanning your layout, keyword match, bullet metrics, and readability...
-            </p>
-          </div>
-        </div>
-
-        <!-- 5 Non-Technical Error Breakdown Cards -->
-        <div class="error-cards-grid" id="error-cards-container">
-          <!-- Card 1: Layout & Bot Readability -->
-          <div class="error-card" id="card-err-rule-1">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">📄</span>
-                <span class="error-card-title">1. Bot Readability & Layout (Rule 1)</span>
-              </div>
-              <span class="error-card-badge" id="badge-err-rule-1">Checking...</span>
-            </div>
-            <div class="error-card-body" id="body-err-rule-1">
-              Automated hiring software fails on 87% of multi-column Canva resumes. We check that your CV is clean single-column text that bots can read.
-            </div>
-            <div class="error-card-fix" id="fix-err-rule-1"></div>
-          </div>
-
-          <!-- Card 2: Job Match & Keywords -->
-          <div class="error-card" id="card-err-rule-2">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">🎯</span>
-                <span class="error-card-title">2. Job Match & Keywords (Rule 2)</span>
-              </div>
-              <span class="error-card-badge" id="badge-err-rule-2">Checking...</span>
-            </div>
-            <div class="error-card-body" id="body-err-rule-2">
-              Tailoring keywords gives an 84% higher interview rate, but stuffing too many words drops interviews by 21%. We aim for the 45–75% sweet spot.
-            </div>
-            <div class="error-card-fix" id="fix-err-rule-2"></div>
-          </div>
-
-          <!-- Card 3: Measurable Numbers -->
-          <div class="error-card" id="card-err-rule-4">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">🔢</span>
-                <span class="error-card-title">3. Measurable Results & Numbers (Rule 4)</span>
-              </div>
-              <span class="error-card-badge" id="badge-err-rule-4">Checking...</span>
-            </div>
-            <div class="error-card-body" id="body-err-rule-4">
-              Resumes that quantify results get 75% more interview callbacks. We format your bullet points into Google's XYZ formula.
-            </div>
-            <div class="error-card-fix" id="fix-err-rule-4"></div>
-          </div>
-
-          <!-- Card 4: Generic AI Buzzwords -->
-          <div class="error-card" id="card-err-rule-3">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">🛡️</span>
-                <span class="error-card-title">4. Generic Buzzwords & Cliches (Rule 3)</span>
-              </div>
-              <span class="error-card-badge" id="badge-err-rule-3">Checking...</span>
-            </div>
-            <div class="error-card-body" id="body-err-rule-3">
-              28% of hiring managers instantly reject resumes full of generic AI fluff ("results-driven professional"). We replace clichés with authentic action verbs.
-            </div>
-            <div class="error-card-fix" id="fix-err-rule-3"></div>
-          </div>
-
-          <!-- Card 5: Proof of AI Skills -->
-          <div class="error-card" id="card-err-rule-5">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">⚡</span>
-                <span class="error-card-title">5. Proof of AI Skills (Rule 5)</span>
-              </div>
-              <span class="error-card-badge" id="badge-err-rule-5">Checking...</span>
-            </div>
-            <div class="error-card-body" id="body-err-rule-5">
-              60% of hiring managers want proof of how you used AI, not just 'ChatGPT' in a list. Oxford found proven AI experience gives a +15% interview lift.
-            </div>
-            <div class="error-card-fix" id="fix-err-rule-5"></div>
-          </div>
-        </div>
-
-        <div class="wizard-nav-bar">
-          <div class="nav-left">
             <button type="button" id="btn-step4-back" class="btn btn-ghost">
-              ← Back / Edit CV
+              ← Back to Health Check
             </button>
           </div>
           <div class="nav-right">
-            <button type="button" id="btn-step4-generate" class="btn btn-accent btn-pulse">
+            <button type="button" id="btn-step4-skip" class="btn-skip">
+              Skip & Generate Résumé →
+            </button>
+            <button type="button" id="btn-step4-generate" class="btn btn-primary btn-pulse">
               <span class="btn-icon">🚀</span> Generate My Upgraded Killer Résumé →
             </button>
           </div>

@@ -80,7 +80,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnStep2Back = document.getElementById("btn-step2-back");
   const btnStep2Next = document.getElementById("btn-step2-next");
 
-  // Step 3: Extra Context (CRUD & Tags)
+  // Step 3: Health Check & Errors
+  const auditScoreCircle = document.getElementById("audit-score-circle");
+  const auditScoreVal = document.getElementById("audit-score-val");
+  const auditScoreStatus = document.getElementById("audit-score-status");
+  const auditScoreSummary = document.getElementById("audit-score-summary");
+  const btnStep3Back = document.getElementById("btn-step3-back");
+  const btnStep3AddData = document.getElementById("btn-step3-add-data");
+  const btnStep3GenerateAnyway = document.getElementById("btn-step3-generate-anyway");
+  const btnChoiceAddData = document.getElementById("btn-choice-add-data");
+  const btnChoiceGenerateAnyway = document.getElementById("btn-choice-generate-anyway");
+
+  // Step 4: Extra Context (CRUD & Tags)
   const achievementInput = document.getElementById("achievement-input");
   const achievementRoleSelect = document.getElementById("achievement-role-select");
   const achievementRoleCustom = document.getElementById("achievement-role-custom");
@@ -89,22 +100,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const aiToolInput = document.getElementById("ai-tool-input");
   const btnAddAiTool = document.getElementById("btn-add-ai-tool");
   const aiToolsListEl = document.getElementById("ai-tools-list");
-  const btnStep3Back = document.getElementById("btn-step3-back");
-  const btnStep3Skip = document.getElementById("btn-step3-skip");
-  const btnStep3Next = document.getElementById("btn-step3-next");
+  const btnStep4Back = document.getElementById("btn-step4-back");
+  const btnStep4Skip = document.getElementById("btn-step4-skip");
+  const btnStep4Generate = document.getElementById("btn-step4-generate");
 
-  // Step 3 State
+  // Extra Context State
   let customAchievements = [];
   let customAiTools = ["Claude Code", "ChatGPT", "Cursor"];
   let detectedRoles = [];
-
-  // Step 4: Health Check & Errors
-  const auditScoreCircle = document.getElementById("audit-score-circle");
-  const auditScoreVal = document.getElementById("audit-score-val");
-  const auditScoreStatus = document.getElementById("audit-score-status");
-  const auditScoreSummary = document.getElementById("audit-score-summary");
-  const btnStep4Back = document.getElementById("btn-step4-back");
-  const btnStep4Generate = document.getElementById("btn-step4-generate");
 
   // Step 4 Error Badges & Bodies
   const badgeErrRule1 = document.getElementById("badge-err-rule-1");
@@ -266,9 +269,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Automated action hooks upon entering steps
     if (currentStep === 3) {
-      refreshDetectedRoles();
-    } else if (currentStep === 4) {
       triggerAuditFlow();
+    } else if (currentStep === 4) {
+      refreshDetectedRoles();
     } else if (currentStep === 5) {
       if (lastTransformData) {
         slowlyScrollToOutput();
@@ -407,7 +410,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (cvRequiredAlert) cvRequiredAlert.classList.add("hidden");
           hideLoading();
-          showToast("Loaded Ex-Apple PM Sample CV & Job Description", "success");
+          showToast("Loaded Ex-Apple PM Sample! Running CV Health Check...", "success");
+          setTimeout(() => goToStep(3), 500);
         }
       } catch (err) {
         hideLoading();
@@ -471,6 +475,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
       showLoadedPdfPill(file.name, `${sizeMb} MB • Analyzing text layer...`);
       await runPdfPreflight(b64, file.name);
+      showToast("PDF verified! Running CV Health Check...", "success");
+      setTimeout(() => goToStep(3), 500);
     };
     reader.readAsDataURL(file);
   }
@@ -821,32 +827,54 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Step 3 Navigation Buttons
+  // --- Step 3 Navigation Buttons (CV Health Check: Two Options) ---
   if (btnStep3Back) {
     btnStep3Back.addEventListener("click", () => goToStep(2));
   }
 
-  if (btnStep3Skip) {
-    btnStep3Skip.addEventListener("click", () => {
-      showToast("Auditing CV with existing accomplishments", "success");
+  // Option 1: Add Missing Numbers & AI Tools (Go to Step 4)
+  if (btnStep3AddData) {
+    btnStep3AddData.addEventListener("click", () => {
+      showToast("Opening extra accomplishments & AI tools editor...", "success");
+      goToStep(4);
+    });
+  }
+  if (btnChoiceAddData) {
+    btnChoiceAddData.addEventListener("click", () => {
+      showToast("Opening extra accomplishments & AI tools editor...", "success");
       goToStep(4);
     });
   }
 
-  if (btnStep3Next) {
-    btnStep3Next.addEventListener("click", () => {
-      showToast("Context captured! Running comprehensive audit...", "success");
-      goToStep(4);
+  // Option 2: Generate Killer Résumé Anyway (Go to Step 5)
+  if (btnStep3GenerateAnyway) {
+    btnStep3GenerateAnyway.addEventListener("click", () => {
+      showToast("Generating upgraded Killer Résumé...", "success");
+      goToStep(5);
+    });
+  }
+  if (btnChoiceGenerateAnyway) {
+    btnChoiceGenerateAnyway.addEventListener("click", () => {
+      showToast("Generating upgraded Killer Résumé...", "success");
+      goToStep(5);
     });
   }
 
-  // --- Step 4 Events (Health Check & QA Error Showcase) ---
+  // --- Step 4 Events (Extra Context: Achievements by Job & AI Tags) ---
   if (btnStep4Back) {
-    btnStep4Back.addEventListener("click", () => goToStep(2));
+    btnStep4Back.addEventListener("click", () => goToStep(3));
+  }
+
+  if (btnStep4Skip) {
+    btnStep4Skip.addEventListener("click", () => {
+      showToast("Generating upgraded Killer Résumé...", "success");
+      goToStep(5);
+    });
   }
 
   if (btnStep4Generate) {
     btnStep4Generate.addEventListener("click", () => {
+      showToast("Generating upgraded Killer Résumé...", "success");
       goToStep(5);
     });
   }
