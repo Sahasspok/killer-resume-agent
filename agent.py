@@ -71,27 +71,51 @@ class LLMClient:
         return True  # heuristic mode always configured
 
     def generate(self, prompt: str, system_prompt: str = "") -> str:
-        """Generates text from configured LLM provider with graceful error handling."""
-        if self.provider == "heuristic" or not self.api_key and self.provider != "ollama":
+        """Generates text from configured LLM provider with visible tracing and error handling."""
+        if self.provider == "heuristic":
             return ""
+        if not self.api_key and self.provider != "ollama":
+            print(f"⚠️  [AGENT TRACE] Provider '{self.provider.upper()}' requested but no API key was provided. Set your key in the UI or environment.")
+            return ""
+
+        print(f"\n{'='*70}")
+        print(f"🤖 [AGENT TRACE] CONNECTING TO {self.provider.upper()} (Model: {self.model})")
+        print(f"   Prompt preview: {prompt[:120].strip()}...")
+        print(f"{'='*70}")
 
         try:
+            res = ""
             if self.provider == "gemini":
-                return self._call_gemini(prompt, system_prompt)
+                res = self._call_gemini(prompt, system_prompt)
             elif self.provider == "openai":
-                return self._call_openai(prompt, system_prompt)
+                res = self._call_openai(prompt, system_prompt)
             elif self.provider == "anthropic":
-                return self._call_anthropic(prompt, system_prompt)
+                res = self._call_anthropic(prompt, system_prompt)
             elif self.provider == "ollama":
-                return self._call_ollama(prompt, system_prompt)
+                res = self._call_ollama(prompt, system_prompt)
+
+            if res:
+                print(f"✓ [AGENT TRACE SUCCESS] {self.provider.upper()} returned {len(res)} characters:")
+                print(f"   \"{res[:100]}...\"")
+                print(f"{'='*70}\n")
+                return res
+            else:
+                print(f"⚠️  [AGENT TRACE WARNING] {self.provider.upper()} returned empty text. Falling back to heuristic.")
+                print(f"{'='*70}\n")
+                return ""
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode("utf-8")
+            print(f"❌ [AGENT TRACE ERROR] {self.provider.upper()} HTTP {e.code}: {err_body}")
+            print(f"{'='*70}\n")
+            raise RuntimeError(f"{self.provider.upper()} API Error ({e.code}): {err_body}")
         except Exception as e:
-            # Silently fall back to heuristic on network/auth error
-            return ""
-        return ""
+            print(f"❌ [AGENT TRACE ERROR] {self.provider.upper()} call failed: {type(e).__name__}: {e}")
+            print(f"{'='*70}\n")
+            raise
 
     def _call_gemini(self, prompt: str, system_prompt: str = "") -> str:
-        # Try primary model, fallback to gemini-1.5-flash if needed
         models = [self.model, "gemini-1.5-flash", "gemini-2.0-flash"]
+        last_err = None
         for m in dict.fromkeys(models):
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={self.api_key}"
             full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
@@ -108,8 +132,11 @@ class LLMClient:
                         parts = candidates[0].get("content", {}).get("parts", [])
                         if parts:
                             return parts[0].get("text", "").strip()
-            except Exception:
+            except Exception as e:
+                last_err = e
                 continue
+        if last_err:
+            raise last_err
         return ""
 
     def _call_openai(self, prompt: str, system_prompt: str = "") -> str:
@@ -162,6 +189,10 @@ class LLMClient:
         Accomplished [X], as measured by [Y], by doing [Z].
         Guarantees zero hallucinations and preserves candidate facts.
         """
+        if self.provider != "heuristic" and not self.is_configured():
+            print(f"⚠️  [AGENT TRACE] Provider '{self.provider.upper()}' was selected, but no API key was provided. Falling back to offline heuristic engine.")
+            return self._heuristic_xyz_rewrite(raw_bullet, user_notes)
+
         if not self.is_configured() or self.provider == "heuristic":
             # Heuristic offline rewrite
             return self._heuristic_xyz_rewrite(raw_bullet, user_notes)
@@ -375,7 +406,67 @@ class KillerResumeAgent:
     def transform_resume(self, resume_text: str, jd_text: str = "", style_meta: dict = None, user_metrics: dict = None) -> dict:
         """Transforms input resume into the pristine Executive ATS Standard Template."""
         audit = self.run_comprehensive_audit(resume_text, jd_text)
+
+        # Agentic Enhancement Pass if an active LLM provider (OpenAI, Gemini, Anthropic, Ollama) is configured
+        if self.llm.is_configured() and self.llm.provider != "heuristic":
+            print(f"\n{'='*70}")
+            print(f"🤖 [AGENT TRACE] RUNNING AGENTIC RESUME ENHANCEMENT VIA {self.llm.provider.upper()} ({self.llm.model})")
+            print(f"   Applying Jeff Su's 5 Research-Backed Rules & Google XYZ Formula...")
+            print(f"{'='*70}")
+
+            # 1. Polish candidate custom achievements
+            if user_metrics and user_metrics.get("achievements"):
+                for ach in user_metrics["achievements"]:
+                    if isinstance(ach, dict) and ach.get("text"):
+                        orig_text = ach["text"]
+                        if not re.search(r'\*\*\d', orig_text):
+                            print(f"🤖 [AGENT TRACE] Re-synthesizing achievement via {self.llm.provider.upper()}: \"{orig_text[:60]}...\"")
+                            try:
+                                polished = self.llm.rewrite_bullet_xyz(orig_text, orig_text, role_title=ach.get("role", ""), jd_context=jd_text)
+                                if polished:
+                                    ach["text"] = polished
+                            except Exception as e:
+                                print(f"⚠️  [AGENT TRACE] Bullet polish notice: {e}")
+
+            # 2. Fact-Preserving Executive Summary Polish with Target JD Context
+            summary_match = re.search(r'(?:##\s*)?(?:PROFESSIONAL SUMMARY|EXECUTIVE SUMMARY|SUMMARY|PROFILE)\s*\n+([^#]+)', resume_text, re.I)
+            if summary_match:
+                raw_summary = summary_match.group(1).strip()
+                if len(raw_summary) > 20:
+                    try:
+                        print(f"🤖 [AGENT TRACE] Synthesizing Executive Summary via {self.llm.provider.upper()} aligned with target JD...")
+                        sum_prompt = (
+                            f"Candidate Background: \"{raw_summary[:600]}\"\n"
+                            f"Target Job Description Context: \"{jd_text[:400] if jd_text else 'Software / Project Leadership'}\"\n\n"
+                            "Synthesize an executive positioning statement for the top of the resume in exactly 2-3 sentences (under 55 words).\n"
+                            "STRICT FACT-PRESERVATION RULES:\n"
+                            "1. ZERO HALLUCINATIONS: Never invent fake companies, fake degrees, or fake metrics. Only use the candidate's authentic facts.\n"
+                            "2. Eliminate all lazy AI cliches (NO 'results-driven', NO 'proven track record of success', NO 'dynamic self-starter').\n"
+                            "3. Focus on technical scope, domain expertise, and execution predictability.\n"
+                            "4. Output ONLY the 2-3 sentences without quotation marks or extra commentary."
+                        )
+                        llm_summary = self.llm.generate(sum_prompt)
+                        if llm_summary and 20 <= len(llm_summary.split()) <= 65:
+                            clean_sum = llm_summary.strip().strip('"\'')
+                            if user_metrics is None:
+                                user_metrics = {}
+                            user_metrics["llm_executive_summary"] = clean_sum
+                            print(f"✓ [AGENT TRACE] Executive summary refined successfully ({len(clean_sum.split())} words).")
+                    except Exception as e:
+                        print(f"⚠️  [AGENT TRACE] Summary synthesis notice: {e}")
+
         optimized_markdown, transform_meta = format_to_standard_template(resume_text, jd_text, user_metrics=user_metrics)
+
+        # If LLM generated a valid summary, substitute it cleanly
+        if user_metrics and user_metrics.get("llm_executive_summary"):
+            optimized_markdown = re.sub(
+                r'(## PROFESSIONAL SUMMARY\n\n)[^\n]+(\n\n##)',
+                rf'\g<1>{user_metrics["llm_executive_summary"]}\g<2>',
+                optimized_markdown
+            )
+            transform_meta["llm_summary_applied"] = True
+            transform_meta["llm_provider"] = self.llm.provider
+
         post_audit = self.run_comprehensive_audit(optimized_markdown, jd_text)
 
         pdf_bytes = generate_pdf_from_markdown(optimized_markdown, style_meta=style_meta)

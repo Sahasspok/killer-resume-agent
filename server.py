@@ -133,16 +133,20 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_json_response({"error": f"Failed to parse PDF: {str(e)}"}, status=500)
                     return
 
-            llm = LLMClient(provider=provider, api_key=api_key)
-            t_agent = KillerResumeAgent(llm_client=llm)
+            try:
+                llm = LLMClient(provider=provider, api_key=api_key)
+                t_agent = KillerResumeAgent(llm_client=llm)
 
-            result = t_agent.transform_resume(resume_text, jd_text, style_meta=style_meta, user_metrics=user_metrics)
-            if pdf_diag:
-                result["pdf_metadata"] = pdf_diag
-            if style_meta:
-                result["style_meta"] = style_meta
-            result.pop("pdf_bytes", None)
-            self.send_json_response(result)
+                result = t_agent.transform_resume(resume_text, jd_text, style_meta=style_meta, user_metrics=user_metrics)
+                if pdf_diag:
+                    result["pdf_metadata"] = pdf_diag
+                if style_meta:
+                    result["style_meta"] = style_meta
+                result.pop("pdf_bytes", None)
+                self.send_json_response(result)
+            except Exception as e:
+                print(f"❌ [AGENT SERVER ERROR] /api/transform error: {e}")
+                self.send_json_response({"error": f"Transformation error: {str(e)}"}, status=500)
 
         elif parsed.path == "/api/qa-report":
             source_text = data.get("source_resume", "")
@@ -196,14 +200,27 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             role = data.get("role", "")
             jd = data.get("jd", "")
 
-            llm = LLMClient(provider=provider, api_key=api_key)
-            rewritten = llm.rewrite_bullet_xyz(raw_bullet=bullet, user_notes=notes, role_title=role, jd_context=jd)
-            self.send_json_response({
-                "original": bullet,
-                "notes": notes,
-                "rewritten": rewritten,
-                "provider": llm.provider
-            })
+            try:
+                llm = LLMClient(provider=provider, api_key=api_key)
+                rewritten = llm.rewrite_bullet_xyz(raw_bullet=bullet, user_notes=notes, role_title=role, jd_context=jd)
+                self.send_json_response({
+                    "original": bullet,
+                    "notes": notes,
+                    "rewritten": rewritten,
+                    "provider": llm.provider
+                })
+            except Exception as e:
+                print(f"❌ [AGENT SERVER ERROR] /api/xyz failed: {e}")
+                # Fallback to heuristic rewrite so user is never blocked
+                heuristic_llm = LLMClient(provider="heuristic")
+                fallback = heuristic_llm.rewrite_bullet_xyz(raw_bullet=bullet, user_notes=notes, role_title=role, jd_context=jd)
+                self.send_json_response({
+                    "original": bullet,
+                    "notes": notes,
+                    "rewritten": fallback,
+                    "provider": "heuristic (fallback)",
+                    "error": str(e)
+                })
 
         elif parsed.path == "/api/clarify":
             bullet = data.get("bullet", "")

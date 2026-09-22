@@ -128,8 +128,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const aiInterviewPreviewText = document.getElementById("ai-interview-preview-text");
 
   // Extra Context State
-  let currentProvider = "gemini";
-  let currentApiKey = "";
+  let currentProvider = localStorage.getItem("killer_resume_provider") || "gemini";
+  let currentApiKey = localStorage.getItem("killer_resume_api_key_" + currentProvider) || "";
   let detectedKeys = {};
   let customAchievements = [];
   let customAiTools = ["Claude", "ChatGPT"];
@@ -612,6 +612,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (res.ok) {
         const data = await res.json();
         detectedKeys = data.detected_keys || {};
+        if (selectAiEngine) {
+          selectAiEngine.value = currentProvider;
+        }
         updateApiKeyBadge();
       }
     } catch (e) {
@@ -639,6 +642,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (selectAiEngine) {
     selectAiEngine.addEventListener("change", () => {
       currentProvider = selectAiEngine.value;
+      currentApiKey = localStorage.getItem("killer_resume_api_key_" + currentProvider) || "";
+      localStorage.setItem("killer_resume_provider", currentProvider);
       updateApiKeyBadge();
       if (modalKeyLabel) {
         modalKeyLabel.textContent = `${currentProvider.toUpperCase()} API Key:`;
@@ -654,7 +659,22 @@ document.addEventListener("DOMContentLoaded", () => {
           modalKeyHelp.textContent = `No API key needed for ${currentProvider}.`;
         }
       }
-      showToast(`Switched to ${currentProvider.toUpperCase()} Engine`, "info");
+
+      // If user selected an external provider and no key is saved or detected, automatically open modal
+      if (["openai", "gemini", "anthropic"].includes(currentProvider) && !currentApiKey && !detectedKeys[currentProvider]) {
+        if (modalApiKey) {
+          modalApiKey.classList.remove("hidden");
+          modalApiKey.style.display = "flex";
+          if (inputApiKey) {
+            inputApiKey.value = "";
+            inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
+            inputApiKey.focus();
+          }
+        }
+        showToast(`Please enter your ${currentProvider.toUpperCase()} API Key to connect`, "info");
+      } else {
+        showToast(`Switched to ${currentProvider.toUpperCase()} Engine`, "info");
+      }
     });
   }
 
@@ -664,6 +684,7 @@ document.addEventListener("DOMContentLoaded", () => {
       modalApiKey.style.display = "flex";
       if (inputApiKey) {
         inputApiKey.value = currentApiKey;
+        inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
         inputApiKey.focus();
       }
     });
@@ -680,8 +701,14 @@ document.addEventListener("DOMContentLoaded", () => {
     btnSaveApiKey.addEventListener("click", () => {
       if (inputApiKey) {
         currentApiKey = inputApiKey.value.trim();
+        if (currentApiKey) {
+          localStorage.setItem("killer_resume_api_key_" + currentProvider, currentApiKey);
+          showToast(`${currentProvider.toUpperCase()} API key saved for this browser!`, "success");
+        } else {
+          localStorage.removeItem("killer_resume_api_key_" + currentProvider);
+          showToast("API Key cleared", "info");
+        }
         updateApiKeyBadge();
-        showToast("API Key updated for session!", "success");
       }
       modalApiKey.classList.add("hidden");
       modalApiKey.style.display = "none";
@@ -690,9 +717,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnClearApiKey && modalApiKey) {
     btnClearApiKey.addEventListener("click", () => {
+      localStorage.removeItem("killer_resume_api_key_" + currentProvider);
       currentApiKey = "";
-      if (selectAiEngine) selectAiEngine.value = "heuristic";
       currentProvider = "heuristic";
+      if (selectAiEngine) selectAiEngine.value = "heuristic";
+      localStorage.setItem("killer_resume_provider", "heuristic");
       updateApiKeyBadge();
       modalApiKey.classList.add("hidden");
       modalApiKey.style.display = "none";
@@ -824,8 +853,25 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
+        // If provider requires key and has none, prompt user
+        if (["openai", "gemini", "anthropic"].includes(currentProvider) && !currentApiKey && !detectedKeys[currentProvider]) {
+          showToast(`Please enter your ${currentProvider.toUpperCase()} API key to connect`, "warning");
+          if (modalApiKey) {
+            modalApiKey.classList.remove("hidden");
+            modalApiKey.style.display = "flex";
+            if (inputApiKey) {
+              inputApiKey.value = "";
+              inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
+              inputApiKey.focus();
+            }
+          }
+          return;
+        }
+
         btnReframe.disabled = true;
-        btnReframe.textContent = "Synthesizing...";
+        btnReframe.textContent = `Connecting to ${currentProvider.toUpperCase()}...`;
+        showToast(`🤖 [AGENT] Calling ${currentProvider.toUpperCase()} to reframe bullet...`, "info");
+
         try {
           const jd = jdInput ? jdInput.value.trim() : "";
           const res = await fetch("/api/xyz", {
@@ -840,11 +886,15 @@ document.addEventListener("DOMContentLoaded", () => {
             })
           });
           const data = await res.json();
+          if (data.error) {
+            showToast(`API Notice: ${data.error}`, "warning");
+          }
           if (data.rewritten) {
             suggestedText.innerHTML = escapeHtml(data.rewritten).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
             previewBox.style.display = "block";
             previewBox.classList.remove("hidden");
-            showToast("Reframed with Google XYZ!", "success");
+            const provName = data.provider ? data.provider.toUpperCase() : currentProvider.toUpperCase();
+            showToast(`Reframed with Google XYZ via ${provName}!`, "success");
           }
         } catch (err) {
           showToast("Error reframing bullet: " + err.message, "error");
@@ -1444,10 +1494,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function triggerTransformFlow() {
-    showLoading(
-      "Generating Your Upgraded Killer Résumé...",
-      "Enforcing Google XYZ formula, single-column hierarchy & ATS vector PDF"
-    );
+    const isUsingActiveAi = ["openai", "gemini", "anthropic"].includes(currentProvider) && (currentApiKey || detectedKeys[currentProvider]);
+    if (isUsingActiveAi) {
+      showLoading(
+        `🤖 Agentic Synthesis via ${currentProvider.toUpperCase()}...`,
+        "Applying Jeff Su's 5 rules, Google XYZ formula & ATS vector PDF"
+      );
+    } else {
+      showLoading(
+        "Generating Your Upgraded Killer Résumé...",
+        "Enforcing Google XYZ formula, single-column hierarchy & ATS vector PDF"
+      );
+    }
 
     const resume = resumeInput ? resumeInput.value.trim() : "";
     const jd = jdInput ? jdInput.value.trim() : "";
