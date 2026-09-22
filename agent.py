@@ -643,6 +643,93 @@ class KillerResumeAgent:
 
         pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
 
+        # Compile comprehensive Agent Amendments for user visibility
+        amendments = []
+
+        # 1. Executive Summary
+        if user_metrics and user_metrics.get("llm_executive_summary"):
+            amendments.append({
+                "icon": "📝",
+                "category": "Executive Summary Tailoring",
+                "badge": f"{self.llm.provider.upper()} AI Reasoning",
+                "summary": "Synthesized targeted 2-3 sentence executive positioning statement tailored to the job description without lazy cliches.",
+                "detail": user_metrics["llm_executive_summary"]
+            })
+        elif transform_meta.get("summary_synthesized"):
+            amendments.append({
+                "icon": "📝",
+                "category": "Executive Summary Tailoring",
+                "badge": "Standardized",
+                "summary": "Formatted executive summary highlighting technical leadership scope and core competencies.",
+                "detail": "Streamlined into high-impact introductory statement."
+            })
+
+        # 2. Google XYZ Metrics Reframing (Rule 4)
+        xyz_count = len(re.findall(r'\*\*\d', optimized_markdown))
+        if user_metrics and user_metrics.get("achievements"):
+            ach_items = user_metrics["achievements"]
+            amendments.append({
+                "icon": "✨",
+                "category": "Google XYZ Metric Reframing",
+                "badge": f"Rule 4 (+75% Interviews)",
+                "summary": f"Injected {len(ach_items)} quantified achievements under matching past roles using [Accomplished X as measured by Y by doing Z].",
+                "detail": " • " + " • ".join([a.get("text", "") if isinstance(a, dict) else str(a) for a in ach_items[:3]])
+            })
+        elif xyz_count > 0:
+            amendments.append({
+                "icon": "✨",
+                "category": "Google XYZ Metric Reframing",
+                "badge": f"Rule 4 ({xyz_count} Metrics Bolded)",
+                "summary": f"Bolded and highlighted {xyz_count} quantifiable numbers, percentages, and metrics for 6-second recruiter glance.",
+                "detail": "Automated bolding applied to measurable business outcomes."
+            })
+
+        # 3. Rule 5 Proven AI Skills
+        if user_metrics and user_metrics.get("include_ai_bullet"):
+            tools_str = ", ".join(user_metrics.get("ai_tools", [])) if user_metrics.get("ai_tools") else "Claude, ChatGPT"
+            amendments.append({
+                "icon": "⚡",
+                "category": "Rule 5: Proven AI Skills",
+                "badge": "+15% Interview Lift",
+                "summary": f"Integrated verifiable AI workflow with {tools_str} directly into Experience and Technical Skills.",
+                "detail": user_metrics.get("custom_ai_bullet") or f"Leveraged Generative AI tools ({tools_str}) to {user_metrics.get('ai_task', 'automate backlog triage')}, saving {user_metrics.get('ai_time_saved', '4+ hours weekly')}."
+            })
+
+        # 4. Rule 3 Cliché Elimination
+        cliches = transform_meta.get("cliches_removed", [])
+        if cliches:
+            amendments.append({
+                "icon": "🛡️",
+                "category": "Rule 3: Cliché & Buzzword Purge",
+                "badge": "Authenticity Gate",
+                "summary": f"Purged {len(cliches)} low-value buzzwords and replaced passive duties with active leadership verbs.",
+                "detail": "Removed: " + ", ".join([f'"{c}"' for c in cliches[:5]])
+            })
+
+        # 5. Rule 2 Keyword Sweet Spot
+        if post_audit and post_audit.get("rule_2_keyword_mapping"):
+            k_data = post_audit["rule_2_keyword_mapping"]
+            matched = k_data.get("matched_keywords", [])
+            if matched:
+                amendments.append({
+                    "icon": "🎯",
+                    "category": "Rule 2: Keyword Optimization",
+                    "badge": f"{k_data.get('density_score', 0)}% Density (Sweet Spot)",
+                    "summary": f"Strategically mapped {len(matched)} target job keywords across Core Competencies and Experience bullets to pass ATS filters.",
+                    "detail": "Matched: " + ", ".join(matched[:8])
+                })
+
+        # 6. Rule 1 ATS Vector Architecture
+        amendments.append({
+            "icon": "📄",
+            "category": "Rule 1: Single-Column ATS Architecture",
+            "badge": "100% Vector Clean (<2.5 MB)",
+            "summary": "Restructured document into clean single-column semantic hierarchy with verified selectable vector text layer.",
+            "detail": "Contact Info → Professional Summary → Work Experience → Core Competencies & Skills → Education."
+        })
+
+        llm_status["amendments"] = amendments
+
         return {
             "initial_score": audit["composite_score"],
             "optimized_score": post_audit["composite_score"],

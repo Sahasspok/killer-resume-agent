@@ -2710,6 +2710,152 @@ body[data-theme="light"] .banner-badge {
 }
 
 /* ===================================================================
+   AI Agent Amendments Quick Summary Card
+   =================================================================== */
+.ai-amendments-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--accent-green);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 16px 0 20px 0;
+  box-shadow: var(--shadow-card);
+  animation: fadeIn 0.35s ease;
+}
+
+.ai-amendments-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ai-amendments-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-amendments-icon {
+  font-size: 24px;
+  background: rgba(16, 185, 129, 0.15);
+  border-radius: 8px;
+  padding: 6px 10px;
+  line-height: 1;
+}
+
+.ai-amendments-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ai-amendments-heading {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.ai-amendments-provider-badge {
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-amendments-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 2px 0 0 0;
+}
+
+.ai-amendments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.ai-amendment-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.ai-amendment-item:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+.amendment-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.amendment-item-icon {
+  font-size: 16px;
+}
+
+.amendment-item-title-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  gap: 6px;
+}
+
+.amendment-item-category {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.amendment-item-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  background: rgba(56, 189, 248, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.amendment-item-summary {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.amendment-item-detail {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  max-height: 65px;
+  overflow-y: auto;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+/* ===================================================================
    CV Health Check Two-Option Choice Card
    =================================================================== */
 .health-check-choices-card {

@@ -1472,6 +1472,11 @@ document.addEventListener("DOMContentLoaded", () => {
       renderAiTools();
       lastAuditData = null;
       lastTransformData = null;
+      const aiAmendmentsCard = document.getElementById("ai-agent-amendments-card");
+      if (aiAmendmentsCard) {
+        aiAmendmentsCard.classList.add("hidden");
+        aiAmendmentsCard.style.display = "none";
+      }
       goToStep(1);
       showToast("Started fresh CV upgrade journey", "success");
     };
@@ -1702,6 +1707,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      // Render AI Agent Amendments Quick Summary Card
+      renderAiAmendmentsCard(data.llm_status || {}, data);
+
       // Store PDF
       if (data.pdf_base64) {
         latestGeneratedPdfBase64 = data.pdf_base64;
@@ -1816,6 +1824,72 @@ document.addEventListener("DOMContentLoaded", () => {
     if (chipRule3) chipRule3.textContent = "0 AI Bot Clichés";
     if (chipRule4) chipRule4.textContent = "85%+ Quantified Bolded";
     if (chipRule5) chipRule5.textContent = "Workflow Project Verified";
+  }
+
+  // --- AI Agent Amendments Card Renderer ---
+  function renderAiAmendmentsCard(status, data) {
+    const card = document.getElementById("ai-agent-amendments-card");
+    const grid = document.getElementById("ai-amendments-grid");
+    const heading = document.getElementById("ai-amendments-heading");
+    const badge = document.getElementById("ai-amendments-provider-badge");
+    const btnToggle = document.getElementById("btn-toggle-amendments");
+    const toggleText = document.getElementById("toggle-amendments-text");
+    const body = document.getElementById("ai-amendments-body");
+
+    if (!card || !grid) return;
+
+    const amendments = (status && status.amendments) || [];
+    if (amendments.length === 0) {
+      card.classList.add("hidden");
+      card.style.display = "none";
+      return;
+    }
+
+    card.classList.remove("hidden");
+    card.style.display = "block";
+
+    const isLiveAi = Boolean(status && status.applied);
+    const providerName = (status && status.provider) ? status.provider.toUpperCase() : "AGENT";
+    const modelName = (status && status.model) ? `(${status.model})` : "";
+
+    if (heading) {
+      heading.textContent = isLiveAi
+        ? `AI Agent Amendments (${providerName} ${modelName})`
+        : "Agentic CV Amendments & Enhancements";
+    }
+
+    if (badge) {
+      badge.textContent = isLiveAi ? `LIVE AI: ${providerName}` : "RULE ENGINE OPTIMIZED";
+      badge.style.background = isLiveAi ? "rgba(16, 185, 129, 0.15)" : "rgba(56, 189, 248, 0.15)";
+      badge.style.color = isLiveAi ? "var(--accent-green)" : "var(--accent-blue)";
+      badge.style.borderColor = isLiveAi ? "rgba(16, 185, 129, 0.4)" : "rgba(56, 189, 248, 0.4)";
+    }
+
+    grid.innerHTML = amendments.map(item => `
+      <div class="ai-amendment-item">
+        <div class="amendment-item-header">
+          <span class="amendment-item-icon">${item.icon || "✓"}</span>
+          <div class="amendment-item-title-group">
+            <strong class="amendment-item-category">${escapeHtml(item.category || "")}</strong>
+            <span class="amendment-item-badge">${escapeHtml(item.badge || "")}</span>
+          </div>
+        </div>
+        <p class="amendment-item-summary">${escapeHtml(item.summary || "")}</p>
+        ${item.detail ? `<div class="amendment-item-detail"><code>${escapeHtml(item.detail)}</code></div>` : ""}
+      </div>
+    `).join("");
+
+    if (btnToggle && !btnToggle.dataset.initialized) {
+      btnToggle.dataset.initialized = "true";
+      btnToggle.addEventListener("click", () => {
+        if (!body) return;
+        const isHidden = body.style.display === "none";
+        body.style.display = isHidden ? "block" : "none";
+        if (toggleText) {
+          toggleText.textContent = isHidden ? "Hide Details ▴" : "Show Details ▾";
+        }
+      });
+    }
   }
 
   // --- Slow Smooth Scroll to Output Document Frame ---

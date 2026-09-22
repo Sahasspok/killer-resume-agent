@@ -899,8 +899,36 @@
             <span class="banner-badge">✓ Google XYZ Bolded</span>
             <span class="banner-badge">✓ 0 Bot Clichés</span>
           </div>
+        </div>
+
         <!-- AI Engine Status Banner (Transparent Live LLM & Quota Diagnostic) -->
         <div id="ai-engine-status-banner" class="ai-status-banner hidden" style="display: none; margin: 14px 0; padding: 12px 16px; border-radius: 8px; font-size: 13px;">
+        </div>
+
+        <!-- AI Agent Amendments Quick Summary Card -->
+        <div id="ai-agent-amendments-card" class="ai-amendments-card hidden" style="display: none;">
+          <div class="ai-amendments-header">
+            <div class="ai-amendments-title-group">
+              <span class="ai-amendments-icon">🤖</span>
+              <div>
+                <div class="ai-amendments-heading-row">
+                  <h3 class="ai-amendments-heading" id="ai-amendments-heading">AI Agent Amendments & Enhancements</h3>
+                  <span class="ai-amendments-provider-badge" id="ai-amendments-provider-badge">ACTIVE AGENT</span>
+                </div>
+                <p class="ai-amendments-sub">
+                  Here is a glance at the specific improvements and amendments made to your CV:
+                </p>
+              </div>
+            </div>
+            <button type="button" id="btn-toggle-amendments" class="btn btn-ghost btn-xs" title="Toggle summary details">
+              <span id="toggle-amendments-text">Hide Details ▴</span>
+            </button>
+          </div>
+          <div id="ai-amendments-body" class="ai-amendments-body">
+            <div class="ai-amendments-grid" id="ai-amendments-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
         </div>
 
         <!-- Document Visual Paper Preview -->
