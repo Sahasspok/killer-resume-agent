@@ -14,13 +14,11 @@
   <div id="toast-container" class="toast-container"></div>
 
   <div class="app-container wizard-layout">
-    <!-- Header: TPM Curriculum · AI-Native Track Brand Architecture -->
+    <!-- Header -->
     <header class="header">
       <div class="header-left">
         <div class="brand-eyebrow">
-          <span class="badge-series">TPM CURRICULUM</span>
-          <span class="badge-track">AI-NATIVE TRACK</span>
-          <span class="badge-tag-gold">⚡ 5-RULE SPECIFICATION</span>
+          <span class="badge-tag-gold">⚡ 5-RULE RESUME SPECIFICATION</span>
         </div>
         <h1 class="brand-title">Killer Résumé Agent</h1>
         <p class="subtitle">
@@ -83,60 +81,60 @@
       </div>
     </div>
 
-    <!-- Apple-Style Segmented Stepper Bar with TPM Module Coding -->
+    <!-- Apple-Style Segmented Stepper Bar -->
     <div class="stepper-container">
       <div class="stepper-track">
-        <!-- Step 1 Node: Red #c8440a -->
-        <div class="step-node active" id="step-node-1" data-step="1" data-module="1.1">
+        <!-- Step 1 Node -->
+        <div class="step-node active" id="step-node-1" data-step="1">
           <div class="step-badge">01</div>
           <div class="step-text">
-            <span class="step-module-kicker">MODULE 1.1</span>
+            <span class="step-kicker">STEP 1</span>
             <span class="step-title">Target Job</span>
             <span class="step-tag optional">Optional</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-1"></div>
 
-        <!-- Step 2 Node: Teal #0d7377 -->
-        <div class="step-node" id="step-node-2" data-step="2" data-module="1.2">
+        <!-- Step 2 Node -->
+        <div class="step-node" id="step-node-2" data-step="2">
           <div class="step-badge">02</div>
           <div class="step-text">
-            <span class="step-module-kicker">MODULE 1.2</span>
+            <span class="step-kicker">STEP 2</span>
             <span class="step-title">Current CV</span>
             <span class="step-tag required">Required</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-2"></div>
 
-        <!-- Step 3 Node: Gold #d4a017 -->
-        <div class="step-node" id="step-node-3" data-step="3" data-module="1.3">
+        <!-- Step 3 Node -->
+        <div class="step-node" id="step-node-3" data-step="3">
           <div class="step-badge">03</div>
           <div class="step-text">
-            <span class="step-module-kicker">MODULE 1.3</span>
+            <span class="step-kicker">STEP 3</span>
             <span class="step-title">Health Check</span>
-            <span class="step-tag">Diagnostics</span>
+            <span class="step-tag">Score</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-3"></div>
 
-        <!-- Step 4 Node: Green #2d6a4f -->
-        <div class="step-node" id="step-node-4" data-step="4" data-module="1.4">
+        <!-- Step 4 Node: Experience & Achievements -->
+        <div class="step-node" id="step-node-4" data-step="4">
           <div class="step-badge">04</div>
           <div class="step-text">
-            <span class="step-module-kicker">MODULE 1.4</span>
-            <span class="step-title">Context &amp; XYZ</span>
+            <span class="step-kicker">STEP 4</span>
+            <span class="step-title">Experience &amp; Achievements</span>
             <span class="step-tag optional">Optional</span>
           </div>
         </div>
         <div class="stepper-connector" id="connector-4"></div>
 
-        <!-- Step 5 Node: Purple #6b3fa0 + Gold AI -->
-        <div class="step-node" id="step-node-5" data-step="5" data-module="1.5">
+        <!-- Step 5 Node -->
+        <div class="step-node" id="step-node-5" data-step="5">
           <div class="step-badge">05</div>
           <div class="step-text">
-            <span class="step-module-kicker">MODULE 1.5</span>
+            <span class="step-kicker">STEP 5</span>
             <span class="step-title">Killer Résumé</span>
-            <span class="step-tag ai-tag">⚡ AI-Leveraged</span>
+            <span class="step-tag ai-tag">⚡ Ready</span>
           </div>
         </div>
       </div>
@@ -157,30 +155,27 @@
       <div class="wizard-pane active" id="pane-step-1">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill module-1-1">MODULE 1.1 · TARGET JOB</span>
+            <span class="badge-step-pill step-1">STEP 1 · TARGET JOB</span>
             <span class="badge-mini">RULE 2: KEYWORD MAPPING</span>
           </div>
           <h2>Target Job Specification</h2>
           <p>
-            Paste the target job description or requirements below. We will extract critical competency signals to ensure your application clears automated screening filters in the 45%–75% sweet spot.
+            Paste the target job description or requirements below to calibrate automated keyword screening filters in the 45%–75% sweet spot.
           </p>
         </div>
 
-        <div class="form-group">
-          <div class="label-row">
-            <label for="jd-input">Target Job Description (JD) or Requirements:</label>
+        <!-- Focus Area: Input Card -->
+        <div class="focus-input-card">
+          <div class="focus-input-header">
+            <label for="jd-input" class="focus-label">🎯 Paste Target Job Description (JD) or Requirements:</label>
             <div class="actions-group">
               <button type="button" id="btn-load-sample-jd" class="btn btn-secondary btn-xs">Load Sample Job (Senior TPM)</button>
               <button type="button" id="btn-clear-jd" class="btn btn-ghost btn-xs">Clear</button>
             </div>
           </div>
-          <textarea id="jd-input" rows="8" placeholder="Paste the target job description here (responsibilities, required qualifications, technical stack)... or click 'Skip' below to use our high-paying tech standard."></textarea>
-        </div>
-
-        <div class="callout-box">
-          <span class="callout-icon">💡</span>
-          <div>
-            <strong>Why this matters:</strong> Jeff Su's research found that tailored resumes achieve an <strong>84% higher interview callback rate</strong>. If you don't have a specific job description right now, you can skip this step without penalty!
+          <textarea id="jd-input" rows="7" placeholder="Paste the target job description here (responsibilities, required qualifications, technical stack)... or click 'Skip' below to use our general tech standard."></textarea>
+          <div class="focus-input-helper">
+            <span>💡 <strong>Tip:</strong> Tailored resumes achieve an 84% higher interview callback rate. If you don't have a specific job description right now, you can skip this step without penalty!</span>
           </div>
         </div>
 
@@ -203,92 +198,95 @@
       <div class="wizard-pane" id="pane-step-2">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill module-1-2">MODULE 1.2 · CURRENT CV</span>
+            <span class="badge-step-pill step-2">STEP 2 · CURRENT CV</span>
             <span class="badge-mini">RULE 1: ATS READABILITY</span>
           </div>
           <h2>Current Career Document</h2>
           <p>
-            Upload your resume as a <strong>PDF</strong> or switch to <strong>Paste Text</strong> mode. We will execute pre-flight diagnostics to verify a clean vector text layer, valid margins, and zero image traps.
+            Upload your resume as a <strong>PDF</strong> or switch to <strong>Paste Text</strong> mode. We verify selectable vector text, margins, and bot readability.
           </p>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <!-- Mode Switcher -->
-          <div class="input-mode-tabs" style="margin-bottom: 0;">
-            <button type="button" class="mode-tab active" id="tab-mode-pdf" data-mode="pdf">
-              <span class="mode-icon">📄</span> Upload PDF File
+        <!-- Focus Area: File Upload / Paste Card -->
+        <div class="focus-input-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <!-- Mode Switcher -->
+            <div class="input-mode-tabs" style="margin-bottom: 0;">
+              <button type="button" class="mode-tab active" id="tab-mode-pdf" data-mode="pdf">
+                <span class="mode-icon">📄</span> Upload PDF File
+              </button>
+              <button type="button" class="mode-tab" id="tab-mode-text" data-mode="text">
+                <span class="mode-icon">✏️</span> Paste Text / Markdown
+              </button>
+            </div>
+
+            <button type="button" id="btn-load-sample-cv" class="btn btn-secondary btn-xs">
+              ⚡ Try with Ex-Apple PM Sample
             </button>
-            <button type="button" class="mode-tab" id="tab-mode-text" data-mode="text">
-              <span class="mode-icon">✏️</span> Paste Text / Markdown
-            </button>
           </div>
 
-          <button type="button" id="btn-load-sample-cv" class="btn btn-secondary btn-xs">
-            ⚡ Try with Ex-Apple PM Sample
-          </button>
-        </div>
-
-        <!-- Tab 1: PDF Dropzone -->
-        <div id="pdf-container-section">
-          <div id="pdf-dropzone" class="pdf-dropzone">
-            <input type="file" id="pdf-file-input" accept=".pdf,.txt,.md" class="file-overlay-input" title="Click or drop file to upload">
-            
-            <div class="dropzone-content" id="dropzone-prompt">
-              <div class="dropzone-icon">📥</div>
-              <div class="dropzone-title">Drag & Drop Your Résumé PDF Here</div>
-              <div class="dropzone-subtitle">or click anywhere to browse from your computer (.pdf, .txt, .md)</div>
-              <div style="margin-top: 10px;">
-                <button type="button" id="btn-browse-trigger" class="btn btn-secondary btn-sm" style="pointer-events: none;">Browse Files</button>
+          <!-- Tab 1: PDF Dropzone -->
+          <div id="pdf-container-section">
+            <div id="pdf-dropzone" class="pdf-dropzone">
+              <input type="file" id="pdf-file-input" accept=".pdf,.txt,.md" class="file-overlay-input" title="Click or drop file to upload">
+              
+              <div class="dropzone-content" id="dropzone-prompt">
+                <div class="dropzone-icon">📥</div>
+                <div class="dropzone-title">Drag &amp; Drop Your Résumé PDF Here</div>
+                <div class="dropzone-subtitle">or click anywhere to browse from your computer (.pdf, .txt, .md)</div>
+                <div style="margin-top: 10px;">
+                  <button type="button" id="btn-browse-trigger" class="btn btn-secondary btn-sm" style="pointer-events: none;">Browse Files</button>
+                </div>
+                <div class="dropzone-meta">Rule 1 Check: Selectable text layer &amp; file &lt; 2.5 MB</div>
               </div>
-              <div class="dropzone-meta">Jeff Su Rule 1: We verify selectable text layer & check file &lt; 2.5 MB</div>
+
+              <!-- Loaded PDF Pill -->
+              <div id="loaded-pdf-pill" class="loaded-pdf-pill hidden">
+                <div class="file-icon">📄</div>
+                <div class="file-info">
+                  <span class="file-name" id="pdf-display-name">resume.pdf</span>
+                  <span class="file-stats" id="pdf-display-stats">0.2 MB • 1 Page</span>
+                </div>
+                <button type="button" id="btn-remove-pdf" class="btn-remove-file" title="Remove PDF">✕</button>
+              </div>
             </div>
 
-            <!-- Loaded PDF Pill -->
-            <div id="loaded-pdf-pill" class="loaded-pdf-pill hidden">
-              <div class="file-icon">📄</div>
-              <div class="file-info">
-                <span class="file-name" id="pdf-display-name">resume.pdf</span>
-                <span class="file-stats" id="pdf-display-stats">0.2 MB • 1 Page</span>
+            <!-- Live PDF Pre-Flight Diagnostics -->
+            <div id="pdf-diagnostic-card" class="pdf-diagnostic-card hidden">
+              <div class="diag-header">
+                <span class="diag-title">ATS BOT PRE-FLIGHT CHECK</span>
+                <span class="diag-status" id="pdf-ats-badge">VERIFIED</span>
               </div>
-              <button type="button" id="btn-remove-pdf" class="btn-remove-file" title="Remove PDF">✕</button>
+              <div class="diag-grid">
+                <div class="diag-item">
+                  <span class="diag-label">Selectable Text Layer</span>
+                  <span class="diag-val" id="pdf-diag-selectable">Checking...</span>
+                </div>
+                <div class="diag-item">
+                  <span class="diag-label">File Size</span>
+                  <span class="diag-val" id="pdf-diag-size">Checking...</span>
+                </div>
+                <div class="diag-item">
+                  <span class="diag-label">Page Count</span>
+                  <span class="diag-val" id="pdf-diag-pages">Checking...</span>
+                </div>
+                <div class="diag-item">
+                  <span class="diag-label">Embedded Images</span>
+                  <span class="diag-val" id="pdf-diag-images">0 (Safe)</span>
+                </div>
+              </div>
+              <div id="pdf-warning-banner" class="pdf-warning-banner hidden"></div>
             </div>
           </div>
 
-          <!-- Live PDF Pre-Flight Diagnostics -->
-          <div id="pdf-diagnostic-card" class="pdf-diagnostic-card hidden">
-            <div class="diag-header">
-              <span class="diag-title">ATS BOT PRE-FLIGHT CHECK</span>
-              <span class="diag-status" id="pdf-ats-badge">VERIFIED</span>
+          <!-- Tab 2: Text Mode (Hidden by default until toggled) -->
+          <div class="form-group hidden" id="resume-text-group">
+            <div class="label-row">
+              <label for="resume-input">Paste Your CV Text or Raw Bullet Points:</label>
+              <span class="hint" id="resume-input-hint">Paste your text directly</span>
             </div>
-            <div class="diag-grid">
-              <div class="diag-item">
-                <span class="diag-label">Selectable Text Layer</span>
-                <span class="diag-val" id="pdf-diag-selectable">Checking...</span>
-              </div>
-              <div class="diag-item">
-                <span class="diag-label">File Size</span>
-                <span class="diag-val" id="pdf-diag-size">Checking...</span>
-              </div>
-              <div class="diag-item">
-                <span class="diag-label">Page Count</span>
-                <span class="diag-val" id="pdf-diag-pages">Checking...</span>
-              </div>
-              <div class="diag-item">
-                <span class="diag-label">Embedded Images</span>
-                <span class="diag-val" id="pdf-diag-images">0 (Safe)</span>
-              </div>
-            </div>
-            <div id="pdf-warning-banner" class="pdf-warning-banner hidden"></div>
+            <textarea id="resume-input" rows="8" placeholder="Paste your CV text, job history, and bullet points here..."></textarea>
           </div>
-        </div>
-
-        <!-- Tab 2: Text Mode (Hidden by default until toggled) -->
-        <div class="form-group hidden" id="resume-text-group">
-          <div class="label-row">
-            <label for="resume-input">Paste Your CV Text or Raw Bullet Points:</label>
-            <span class="hint" id="resume-input-hint">Paste your text directly</span>
-          </div>
-          <textarea id="resume-input" rows="8" placeholder="Paste your CV text, job history, and bullet points here..."></textarea>
         </div>
 
         <!-- Required Warning Alert (Hidden by default) -->
@@ -299,21 +297,13 @@
           </div>
         </div>
 
-        <div class="callout-box">
-          <span class="callout-icon">🛡️</span>
-          <div>
-            <strong>Non-Technical Check:</strong> 87% of hiring systems fail when resumes use multi-column Canva layouts or icons. We ensure your CV has a clean text layer that automated bots can parse 100% of the time.
-          </div>
-        </div>
-
         <div class="wizard-nav-bar">
           <div class="nav-left">
             <button type="button" id="btn-step2-back" class="btn btn-ghost">
-              ← Back
+              ← Back to Step 1
             </button>
           </div>
           <div class="nav-right">
-            <!-- NOTICE: User is NOT allowed to skip this step -->
             <button type="button" id="btn-step2-next" class="btn btn-primary">
               Run CV Health Check →
             </button>
@@ -322,119 +312,135 @@
       </div>
 
       <!-- ===================================================================
-           STEP 3: CV Health Check & Error Breakdown (QA Evaluation)
+           STEP 3: CV Health Check (Google PageSpeed-Style Screening Diagnostics)
            =================================================================== -->
       <div class="wizard-pane" id="pane-step-3">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill module-1-3">MODULE 1.3 · HEALTH CHECK</span>
-            <span class="badge-mini">5-RULE BOT AUDIT</span>
+            <span class="badge-step-pill step-3">STEP 3 · HEALTH CHECK</span>
+            <span class="badge-mini">EMPIRICAL ATS AUDIT</span>
           </div>
-          <h2>Empirical Screening Diagnostics</h2>
+          <h2>Screening Performance &amp; Vitals</h2>
           <p>
-            Evaluated against automated screening algorithms and empirical benchmarks from 2 million applications. Here is the diagnostic breakdown:
+            Evaluated against automated screening algorithms and empirical benchmarks from 2 million applications.
           </p>
         </div>
 
-        <!-- Score Hero Card -->
-        <div class="score-hero-card">
-          <div class="score-hero-circle" id="audit-score-circle">
-            <span class="score-hero-val" id="audit-score-val">--</span>
-            <span class="score-hero-denom">/ 100</span>
+        <!-- Google PageSpeed-Style Score Hero (Prominent Visual Focus) -->
+        <div class="pagespeed-score-hero" id="pagespeed-score-hero">
+          <div class="pagespeed-gauge-wrapper">
+            <div class="pagespeed-gauge-circle" id="audit-score-circle">
+              <span class="pagespeed-score-num" id="audit-score-val">--</span>
+              <span class="pagespeed-score-denom">/ 100</span>
+            </div>
+            <!-- Google PageSpeed Legend Scale -->
+            <div class="pagespeed-scale-legend">
+              <span class="legend-item poor"><span class="legend-dot red">●</span> 0–49 Poor</span>
+              <span class="legend-item medium"><span class="legend-dot amber">■</span> 50–89 Needs Work</span>
+              <span class="legend-item good"><span class="legend-dot green">▲</span> 90–100 Good</span>
+            </div>
           </div>
-          <div class="score-hero-info">
-            <h3 id="audit-score-status">Calculating Score...</h3>
-            <p id="audit-score-summary">
-              Scanning your layout, keyword match, bullet metrics, and readability...
+          <div class="pagespeed-summary-info">
+            <div class="pagespeed-status-pill" id="audit-score-status">Calculating Performance...</div>
+            <h3 class="pagespeed-headline">Overall Screening Health Score</h3>
+            <p class="pagespeed-summary-text" id="audit-score-summary">
+              Scanning your layout, keyword match, bullet metrics, and readability against 4,000+ hiring manager benchmarks...
             </p>
           </div>
         </div>
 
-        <!-- 5 Non-Technical Error Breakdown Cards -->
-        <div class="error-cards-grid" id="error-cards-container">
-          <!-- Card 1: Layout & Bot Readability -->
-          <div class="error-card" id="card-err-rule-1">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">📄</span>
-                <span class="error-card-title">1. Bot Readability & Layout (Rule 1)</span>
-              </div>
-              <span class="error-card-badge" id="badge-err-rule-1">Checking...</span>
-            </div>
-            <div class="error-card-body" id="body-err-rule-1">
-              Automated hiring software fails on 87% of multi-column Canva resumes. We check that your CV is clean single-column text that bots can read.
-            </div>
-            <div class="error-card-fix" id="fix-err-rule-1"></div>
+        <!-- Metrics Dashboard: Core Screening Vitals (At Focus) -->
+        <div class="screening-vitals-section">
+          <div class="screening-vitals-header">
+            <span class="vitals-title">📊 Core Screening Vitals</span>
+            <span class="vitals-sub">Key metrics automated hiring software scans in the first 6 seconds</span>
           </div>
 
-          <!-- Card 2: Job Match & Keywords -->
-          <div class="error-card" id="card-err-rule-2">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">🎯</span>
-                <span class="error-card-title">2. Job Match & Keywords (Rule 2)</span>
+          <div class="error-cards-grid" id="error-cards-container">
+            <!-- Vital 1: Layout & Bot Readability -->
+            <div class="error-card" id="card-err-rule-1">
+              <div class="error-card-header">
+                <div class="error-card-title-group">
+                  <span class="error-card-icon">📄</span>
+                  <span class="error-card-title">1. ATS Bot Readability</span>
+                </div>
+                <span class="error-card-badge" id="badge-err-rule-1">Checking...</span>
               </div>
-              <span class="error-card-badge" id="badge-err-rule-2">Checking...</span>
+              <div class="error-card-body" id="body-err-rule-1">
+                Automated hiring software fails on 87% of multi-column Canva resumes. Single-column vector layout check.
+              </div>
+              <div class="error-card-fix" id="fix-err-rule-1"></div>
             </div>
-            <div class="error-card-body" id="body-err-rule-2">
-              Tailoring keywords gives an 84% higher interview rate, but stuffing too many words drops interviews by 21%. We aim for the 45–75% sweet spot.
-            </div>
-            <div class="error-card-fix" id="fix-err-rule-2"></div>
-          </div>
 
-          <!-- Card 3: Measurable Numbers -->
-          <div class="error-card" id="card-err-rule-4">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">🔢</span>
-                <span class="error-card-title">3. Measurable Results & Numbers (Rule 4)</span>
+            <!-- Vital 2: Job Match & Keywords -->
+            <div class="error-card" id="card-err-rule-2">
+              <div class="error-card-header">
+                <div class="error-card-title-group">
+                  <span class="error-card-icon">🎯</span>
+                  <span class="error-card-title">2. Target Keyword Match (45%–75% Sweet Spot)</span>
+                </div>
+                <span class="error-card-badge" id="badge-err-rule-2">Checking...</span>
               </div>
-              <span class="error-card-badge" id="badge-err-rule-4">Checking...</span>
+              <div class="error-card-body" id="body-err-rule-2">
+                Target job keyword calibration to pass screening filters without trigger penalties.
+              </div>
+              <div class="error-card-fix" id="fix-err-rule-2"></div>
             </div>
-            <div class="error-card-body" id="body-err-rule-4">
-              Resumes that quantify results get 75% more interview callbacks. We format your bullet points into Google's XYZ formula.
-            </div>
-            <div class="error-card-fix" id="fix-err-rule-4"></div>
-          </div>
 
-          <!-- Card 4: Generic AI Buzzwords -->
-          <div class="error-card" id="card-err-rule-3">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">🛡️</span>
-                <span class="error-card-title">4. Generic Buzzwords & Cliches (Rule 3)</span>
+            <!-- Vital 3: Measurable Numbers -->
+            <div class="error-card" id="card-err-rule-4">
+              <div class="error-card-header">
+                <div class="error-card-title-group">
+                  <span class="error-card-icon">🔢</span>
+                  <span class="error-card-title">3. Quantified Impact (Google XYZ Rate)</span>
+                </div>
+                <span class="error-card-badge" id="badge-err-rule-4">Checking...</span>
               </div>
-              <span class="error-card-badge" id="badge-err-rule-3">Checking...</span>
+              <div class="error-card-body" id="body-err-rule-4">
+                Bullets formatted into Accomplished [X], as measured by [Y], by doing [Z].
+              </div>
+              <div class="error-card-fix" id="fix-err-rule-4"></div>
             </div>
-            <div class="error-card-body" id="body-err-rule-3">
-              28% of hiring managers instantly reject resumes full of generic AI fluff ("results-driven professional"). We replace clichés with authentic action verbs.
-            </div>
-            <div class="error-card-fix" id="fix-err-rule-3"></div>
-          </div>
 
-          <!-- Card 5: Proof of AI Skills -->
-          <div class="error-card" id="card-err-rule-5">
-            <div class="error-card-header">
-              <div class="error-card-title-group">
-                <span class="error-card-icon">⚡</span>
-                <span class="error-card-title">5. Proof of AI Skills (Rule 5)</span>
+            <!-- Vital 4: Generic AI Buzzwords -->
+            <div class="error-card" id="card-err-rule-3">
+              <div class="error-card-header">
+                <div class="error-card-title-group">
+                  <span class="error-card-icon">🛡️</span>
+                  <span class="error-card-title">4. Human Gate (Action Verbs vs Fluff)</span>
+                </div>
+                <span class="error-card-badge" id="badge-err-rule-3">Checking...</span>
               </div>
-              <span class="error-card-badge" id="badge-err-rule-5">Checking...</span>
+              <div class="error-card-body" id="body-err-rule-3">
+                Replacing generic clichés ("results-driven professional") with high-impact action verbs.
+              </div>
+              <div class="error-card-fix" id="fix-err-rule-3"></div>
             </div>
-            <div class="error-card-body" id="body-err-rule-5">
-              60% of hiring managers want proof of how you used AI, not just 'ChatGPT' in a list. Oxford found proven AI experience gives a +15% interview lift.
+
+            <!-- Vital 5: Proof of AI Skills -->
+            <div class="error-card" id="card-err-rule-5">
+              <div class="error-card-header">
+                <div class="error-card-title-group">
+                  <span class="error-card-icon">⚡</span>
+                  <span class="error-card-title">5. Proven AI Skills (+15% Interview Lift)</span>
+                </div>
+                <span class="error-card-badge" id="badge-err-rule-5">Checking...</span>
+              </div>
+              <div class="error-card-body" id="body-err-rule-5">
+                Demonstrating active AI workflow utilization rather than a passive keyword listing.
+              </div>
+              <div class="error-card-fix" id="fix-err-rule-5"></div>
             </div>
-            <div class="error-card-fix" id="fix-err-rule-5"></div>
           </div>
         </div>
 
-        <!-- Prominent Next Action Choices Card -->
+        <!-- Prominent Next Action Choices Focus Card -->
         <div class="health-check-choices-card" id="health-check-choices-card">
           <div class="choice-card-header">
             <span class="choice-icon">⚡</span>
             <div>
-              <h3 class="choice-heading">Ready to Upgrade? Choose How to Proceed:</h3>
-              <p class="choice-sub">You can add numbers and AI tools to your past jobs to maximize your score, or generate your killer résumé right away.</p>
+              <h3 class="choice-heading">Choose How to Proceed:</h3>
+              <p class="choice-sub">Add numbers and AI tools to your past jobs to maximize your score, or generate your killer résumé immediately.</p>
             </div>
           </div>
           <div class="choice-options-grid">
@@ -442,7 +448,7 @@
             <div class="choice-option-box">
               <div class="choice-option-header">
                 <span class="choice-box-badge">OPTION 1 • RECOMMENDED (+75% INTERVIEWS)</span>
-                <h4 class="choice-title">🎯 Add Missing Numbers & AI Tools</h4>
+                <h4 class="choice-title">🎯 Add Missing Numbers &amp; AI Tools</h4>
               </div>
               <p class="choice-desc">
                 Associate specific metrics (hours saved, % speedup, budgets) with your detected past jobs and tag modern AI tools.
@@ -475,10 +481,10 @@
             </button>
           </div>
           <div class="nav-right">
-            <button type="button" id="btn-step3-add-data" class="btn btn-secondary">
+            <button type="button" id="btn-step3-add-data" class="btn btn-secondary btn-sm">
               <span class="btn-icon">🎯</span> Add Missing Numbers (Step 4) →
             </button>
-            <button type="button" id="btn-step3-generate-anyway" class="btn btn-primary btn-pulse">
+            <button type="button" id="btn-step3-generate-anyway" class="btn btn-primary btn-sm btn-pulse">
               <span class="btn-icon">🚀</span> Generate Killer Résumé Anyway →
             </button>
           </div>
@@ -486,50 +492,107 @@
       </div>
 
       <!-- ===================================================================
-           STEP 4: Extra Context & Numbers (Optional / Skippable)
+           STEP 4: Experience & Achievements (Quantified Impact)
            =================================================================== -->
       <div class="wizard-pane" id="pane-step-4">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill module-1-4">MODULE 1.4 · CONTEXT &amp; XYZ</span>
+            <span class="badge-step-pill step-4">STEP 4 · EXPERIENCE &amp; ACHIEVEMENTS</span>
             <span class="badge-mini">RULE 4 &amp; 5: QUANTIFIED IMPACT</span>
           </div>
-          <h2>The Agent Interview: Turning Duties into Measurable Wins</h2>
+          <h2>Experience &amp; Quantified Achievements</h2>
           <p>
-            Jeff Su's research shows resumes with quantified impact receive <strong>+75% higher interview rates</strong>. Share your authentic outcomes below, and the agent will synthesize them into <strong>Google's XYZ formula</strong>.
+            Resumes with quantified metrics achieve <strong>+75% higher interview callbacks</strong>. Associate numbers with your past roles and tag proven AI workflows below.
           </p>
         </div>
 
-        <!-- Section 0: Active Agent Interview (Unquantified Bullets from your CV) -->
-        <div class="agent-interview-card" id="agent-interview-card">
-          <div class="agent-interview-header">
-            <div class="agent-avatar-badge">🤖</div>
-            <div class="agent-header-text">
-              <span class="badge-mini-green">ACTIVE AGENT INTERVIEW • GOOGLE XYZ</span>
-              <h3 class="agent-interview-title">Unquantified Duties from Your CV</h3>
-              <p class="agent-interview-subtitle">
-                Enter your real outcome (time saved, % increase, number of users, dollars saved). Click <strong>"✨ Reframe with Google XYZ"</strong> to generate an interview-defensible bullet.
-              </p>
+        <!-- FOCUS AREA 1: Quantify Past Roles & Achievements (Google XYZ Formula) -->
+        <div class="focus-area-card" id="focus-area-achievements">
+          <div class="focus-area-header">
+            <div class="focus-area-title-group">
+              <span class="focus-area-badge">FOCUS AREA 1</span>
+              <h3 class="focus-area-title">🎯 Quantify Past Job Achievements (Google XYZ)</h3>
+            </div>
+            <span class="badge-mini-green">+75% INTERVIEW RATE</span>
+          </div>
+          <p class="focus-area-desc">
+            Select which past job your achievement belongs to, then type your outcome. We format it into Google's XYZ formula: <em>Accomplished [X], measured by [Y], by doing [Z]</em>.
+          </p>
+
+          <!-- Role Association + Add Input Area (High-Contrast Focus Zone) -->
+          <div class="crud-input-container">
+            <div class="role-selector-row">
+              <label for="achievement-role-select" class="role-selector-label">
+                <span>🏢 Associated Job / Company:</span>
+              </label>
+              <div class="role-select-controls">
+                <select id="achievement-role-select" class="achievement-role-select">
+                  <option value="primary">Current / Most Recent Role (Primary)</option>
+                  <!-- Populated dynamically with detected roles from CV -->
+                  <option value="__custom__">+ Specific / Other Job...</option>
+                </select>
+                <input type="text" id="achievement-role-custom" class="achievement-role-custom hidden" placeholder="Type Company or Job Title (e.g. Veel, TechSaintIT, Acme Corp)...">
+              </div>
+            </div>
+
+            <!-- Quick Presets -->
+            <div class="preset-pills-row">
+              <span class="preset-label">Quick Presets:</span>
+              <button type="button" class="preset-pill" data-preset="Saved 4+ hours weekly on sprint planning by automating Jira workflows and backlog triage">+ Saved 4 hrs/wk</button>
+              <button type="button" class="preset-pill" data-preset="Led cross-functional team of 8 engineers delivering enterprise releases with 99.9% uptime">+ Led 8 engineers</button>
+              <button type="button" class="preset-pill" data-preset="Reduced defect escape rate by 35% through automated CI/CD quality gates">+ Cut defects 35%</button>
+              <button type="button" class="preset-pill" data-preset="Accelerated release cycle from 14 days to 4 days across 3 product squads">+ 3.5x release velocity</button>
+              <button type="button" class="preset-pill" data-preset="Managed $150K annual infrastructure budget, cutting cloud compute costs by 18%">+ $150K budget / -18% cost</button>
+            </div>
+
+            <!-- Main Input Field (Visual Center) -->
+            <div class="crud-input-row" style="margin-top: 10px;">
+              <input type="text" id="achievement-input" class="focus-text-input" placeholder="Type an achievement (e.g. Saved 4 hours weekly by automating Jira reports, led 8 developers...)">
+              <button type="button" id="btn-add-achievement" class="btn btn-primary btn-sm">
+                <span class="btn-icon">➕</span> Add Achievement
+              </button>
             </div>
           </div>
-          <div id="agent-interview-bullets-list" class="agent-interview-bullets-list">
-            <div class="interview-loading-state">
-              <span>🔍 Analyzing your CV bullets...</span>
+
+          <!-- Interactive Achievements List with Job Badges -->
+          <div id="achievements-list" class="achievements-list">
+            <!-- Rendered dynamically by JS -->
+          </div>
+
+          <!-- Active Agent Interview (Unquantified Bullets from your CV) -->
+          <div class="agent-interview-card" id="agent-interview-card" style="margin-top: 18px;">
+            <div class="agent-interview-header">
+              <div class="agent-avatar-badge">🤖</div>
+              <div class="agent-header-text">
+                <span class="badge-mini-green">AGENT SUGGESTIONS • UNQUANTIFIED CV BULLETS</span>
+                <h4 class="agent-interview-title" style="margin: 4px 0;">Need Ideas? Reframe Unquantified Bullets from Your CV</h4>
+                <p class="agent-interview-subtitle">
+                  Enter your real outcome below and click <strong>"✨ Reframe with Google XYZ"</strong>.
+                </p>
+              </div>
+            </div>
+            <div id="agent-interview-bullets-list" class="agent-interview-bullets-list">
+              <div class="interview-loading-state">
+                <span>🔍 Analyzing your CV bullets...</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Section 1: Rule 5 Proven AI Skills Interview -->
-        <div class="agent-ai-interview-card" id="agent-ai-interview-card">
-          <div class="agent-ai-header">
-            <span class="crud-icon">⚡</span>
-            <div>
-              <label class="crud-label">Rule 5: Prove Your AI Skills (Demonstration over Listing)</label>
-              <div class="crud-subtitle">
-                60% of hiring managers want proof, not just "ChatGPT" in a skills list. Adding role-relevant AI skills boosts interview selection by up to <strong>+15%</strong>.
-              </div>
+        <!-- FOCUS AREA 2: Proven AI Tools & Workflows -->
+        <div class="focus-area-card" id="focus-area-ai" style="margin-top: 24px;">
+          <div class="focus-area-header">
+            <div class="focus-area-title-group">
+              <span class="focus-area-badge">FOCUS AREA 2</span>
+              <h3 class="focus-area-title">⚡ Proven AI Workflows &amp; Tools (Rule 5)</h3>
             </div>
+            <span class="badge-mini">+15% INTERVIEW LIFT</span>
           </div>
+          <p class="focus-area-desc">
+            Oxford research proves demonstrating AI workflows provides up to a +15% interview lift over passive keyword lists.
+          </p>
+
+          <!-- Toggle: Do you use AI? -->
           <div class="ai-interview-toggle-row">
             <span class="ai-toggle-prompt">Do you use AI tools (ChatGPT, Claude, Copilot, Cursor, etc.) in your daily work?</span>
             <div class="btn-group-toggle">
@@ -537,6 +600,7 @@
               <button type="button" id="btn-ai-toggle-no" class="btn btn-sm btn-outline">No AI used</button>
             </div>
           </div>
+
           <div id="ai-interview-details" class="ai-interview-details">
             <div class="ai-inputs-grid">
               <div class="ai-input-group">
@@ -559,101 +623,31 @@
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Section 2: Key Quantified Achievements by Past Job (CRUD with ➕, ✏️, 🗑️) -->
-        <div class="crud-card" id="achievements-crud-card">
-          <div class="crud-header">
-            <div class="crud-title-group">
-              <span class="crud-icon">🎯</span>
-              <div>
-                <label class="crud-label">Key Achievements & Numbers (Associated by Job / Role)</label>
-                <div class="crud-subtitle">
-                  Jeff Su Rule 4: Quantified results get 75% more interviews. Select which past job your achievement belongs to, then type your accomplishment. Use the icons to <strong>Add (➕)</strong>, <strong>Edit (✏️)</strong>, or <strong>Delete (🗑️)</strong>.
-                </div>
-              </div>
-            </div>
-            <span class="badge-mini-green">RULE 4: +75% INTERVIEW RATE</span>
-          </div>
-
-          <!-- Quick Presets -->
-          <div class="preset-pills-row">
-            <span class="preset-label">Quick Presets:</span>
-            <button type="button" class="preset-pill" data-preset="Saved 4+ hours weekly on sprint planning by automating Jira workflows and backlog triage">+ Saved 4 hrs/wk</button>
-            <button type="button" class="preset-pill" data-preset="Led cross-functional team of 8 engineers delivering enterprise releases with 99.9% uptime">+ Led 8 engineers</button>
-            <button type="button" class="preset-pill" data-preset="Reduced defect escape rate by 35% through automated CI/CD quality gates">+ Cut defects 35%</button>
-            <button type="button" class="preset-pill" data-preset="Accelerated release cycle from 14 days to 4 days across 3 product squads">+ 3.5x release velocity</button>
-            <button type="button" class="preset-pill" data-preset="Managed $150K annual infrastructure budget, cutting cloud compute costs by 18%">+ $150K budget / -18% cost</button>
-          </div>
-
-          <!-- Role Association + Add Input Area -->
-          <div class="crud-input-container">
-            <div class="role-selector-row">
-              <label for="achievement-role-select" class="role-selector-label">
-                <span>🏢 Associated Job / Company:</span>
-              </label>
-              <div class="role-select-controls">
-                <select id="achievement-role-select" class="achievement-role-select">
-                  <option value="primary">Current / Most Recent Role (Primary)</option>
-                  <!-- Populated dynamically with detected roles from CV -->
-                  <option value="__custom__">+ Specific / Other Job...</option>
-                </select>
-                <input type="text" id="achievement-role-custom" class="achievement-role-custom hidden" placeholder="Type Company or Job Title (e.g. Veel, TechSaintIT, Acme Corp)...">
-              </div>
+          <!-- Quick AI Presets & Input -->
+          <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+            <div class="preset-pills-row">
+              <span class="preset-label">Click to Add AI Tools:</span>
+              <button type="button" class="preset-pill-ai" data-tool="Claude Code">+ Claude Code</button>
+              <button type="button" class="preset-pill-ai" data-tool="ChatGPT">+ ChatGPT</button>
+              <button type="button" class="preset-pill-ai" data-tool="Cursor">+ Cursor</button>
+              <button type="button" class="preset-pill-ai" data-tool="GitHub Copilot">+ GitHub Copilot</button>
+              <button type="button" class="preset-pill-ai" data-tool="Perplexity">+ Perplexity</button>
+              <button type="button" class="preset-pill-ai" data-tool="Prompt Engineering">+ Prompt Engineering</button>
+              <button type="button" class="preset-pill-ai" data-tool="v0">+ v0</button>
             </div>
 
-            <div class="crud-input-row" style="margin-top: 8px;">
-              <input type="text" id="achievement-input" placeholder="Type an achievement (e.g. Saved 4 hours weekly by automating Jira reports, led 8 developers...)">
-              <button type="button" id="btn-add-achievement" class="btn btn-primary btn-sm">
-                <span class="btn-icon">➕</span> Add Achievement
+            <div class="crud-input-row" style="margin-top: 10px;">
+              <input type="text" id="ai-tool-input" class="focus-text-input" placeholder="Type an AI tool or workflow (e.g. Claude Code, Cursor, ChatGPT for backlog triage...)">
+              <button type="button" id="btn-add-ai-tool" class="btn btn-secondary btn-sm">
+                <span class="btn-icon">➕</span> Add AI Tool
               </button>
             </div>
-          </div>
 
-          <!-- Interactive Achievements List with Job Badges -->
-          <div id="achievements-list" class="achievements-list">
-            <!-- Rendered dynamically by JS -->
-          </div>
-        </div>
-
-        <!-- Section 2: AI Tools & Workflows (Interactive Tags) -->
-        <div class="crud-card" id="ai-tools-crud-card" style="margin-top: 16px;">
-          <div class="crud-header">
-            <div class="crud-title-group">
-              <span class="crud-icon">⚡</span>
-              <div>
-                <label class="crud-label">AI Tools & Workflows You Use (Placed in Skills & Primary Role)</label>
-                <div class="crud-subtitle">
-                  Jeff Su Rule 5: Oxford research proves demonstrating AI workflows provides up to a +15% interview lift.
-                </div>
-              </div>
+            <!-- Interactive Tags Container -->
+            <div id="ai-tools-list" class="ai-tools-tags-container">
+              <!-- Rendered dynamically by JS -->
             </div>
-            <span class="badge-mini">RULE 5: +15% INTERVIEW LIFT</span>
-          </div>
-
-          <!-- Quick AI Presets -->
-          <div class="preset-pills-row">
-            <span class="preset-label">Click to Add:</span>
-            <button type="button" class="preset-pill-ai" data-tool="Claude Code">+ Claude Code</button>
-            <button type="button" class="preset-pill-ai" data-tool="ChatGPT">+ ChatGPT</button>
-            <button type="button" class="preset-pill-ai" data-tool="Cursor">+ Cursor</button>
-            <button type="button" class="preset-pill-ai" data-tool="GitHub Copilot">+ GitHub Copilot</button>
-            <button type="button" class="preset-pill-ai" data-tool="Perplexity">+ Perplexity</button>
-            <button type="button" class="preset-pill-ai" data-tool="Prompt Engineering">+ Prompt Engineering</button>
-            <button type="button" class="preset-pill-ai" data-tool="v0">+ v0</button>
-          </div>
-
-          <!-- Add AI Tool Row -->
-          <div class="crud-input-row">
-            <input type="text" id="ai-tool-input" placeholder="Type an AI tool or workflow (e.g. Claude Code, Cursor, ChatGPT for backlog triage...)">
-            <button type="button" id="btn-add-ai-tool" class="btn btn-secondary btn-sm">
-              <span class="btn-icon">➕</span> Add AI Tool
-            </button>
-          </div>
-
-          <!-- Interactive Tags Container -->
-          <div id="ai-tools-list" class="ai-tools-tags-container">
-            <!-- Rendered dynamically by JS -->
           </div>
         </div>
 
@@ -665,7 +659,7 @@
           </div>
           <div class="nav-right">
             <button type="button" id="btn-step4-skip" class="btn-skip">
-              Skip & Generate Résumé →
+              Skip &amp; Generate Résumé →
             </button>
             <button type="button" id="btn-step4-generate" class="btn btn-primary btn-pulse">
               <span class="btn-icon">🚀</span> Generate My Upgraded Killer Résumé →
@@ -680,7 +674,7 @@
       <div class="wizard-pane" id="pane-step-5">
         <div class="pane-intro">
           <div class="pane-badge-row">
-            <span class="badge-step-pill module-1-5">MODULE 1.5 · EXECUTIVE CAREER ARTIFACT</span>
+            <span class="badge-step-pill step-5">STEP 5 · FINAL RÉSUMÉ</span>
             <span class="badge-tag-gold" id="final-score-delta-badge">Score: 74 → 95 / 100 (+21 pts)</span>
           </div>
           <h2>Your Upgraded Killer Résumé is Ready</h2>

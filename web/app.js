@@ -1335,18 +1335,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const score = audit.composite_score || 70;
     if (auditScoreVal) auditScoreVal.textContent = score;
 
-    // Overall Score Circle Style
+    // Overall Score Circle Style (Google PageSpeed Insights Rating)
     if (auditScoreCircle) {
-      auditScoreCircle.className = "score-hero-circle";
-      if (score >= 85) {
+      auditScoreCircle.className = "pagespeed-gauge-circle score-hero-circle";
+      if (score >= 90) {
         auditScoreCircle.classList.add("pass");
-        if (auditScoreStatus) auditScoreStatus.textContent = "🟢 Strong CV — High Interview Likelihood";
-      } else if (score >= 60) {
-        auditScoreCircle.style.borderColor = "var(--accent-amber)";
-        if (auditScoreStatus) auditScoreStatus.textContent = "⚠️ Needs Quick Fixes — High Risk of Silent Bot Rejection";
+        if (auditScoreStatus) auditScoreStatus.textContent = `🟢 Good • High Interview Likelihood (${score}/100)`;
+      } else if (score >= 50) {
+        auditScoreCircle.style.borderColor = "var(--color-gold)";
+        if (auditScoreStatus) auditScoreStatus.textContent = `⚠️ Needs Work • Screening Filter Risk (${score}/100)`;
       } else {
         auditScoreCircle.classList.add("fail");
-        if (auditScoreStatus) auditScoreStatus.textContent = "🛑 Critical Errors Detected — Likely Auto-Filtered";
+        if (auditScoreStatus) auditScoreStatus.textContent = `🛑 Poor • Critical Screening Traps (${score}/100)`;
       }
     }
 
