@@ -407,6 +407,14 @@ class KillerResumeAgent:
         """Transforms input resume into the pristine Executive ATS Standard Template."""
         audit = self.run_comprehensive_audit(resume_text, jd_text)
 
+        llm_status = {
+            "provider": self.llm.provider,
+            "model": getattr(self.llm, "model", ""),
+            "configured": self.llm.is_configured(),
+            "applied": False,
+            "error": None
+        }
+
         # Agentic Enhancement Pass if an active LLM provider (OpenAI, Gemini, Anthropic, Ollama) is configured
         if self.llm.is_configured() and self.llm.provider != "heuristic":
             print(f"\n{'='*70}")
@@ -425,8 +433,10 @@ class KillerResumeAgent:
                                 polished = self.llm.rewrite_bullet_xyz(orig_text, orig_text, role_title=ach.get("role", ""), jd_context=jd_text)
                                 if polished:
                                     ach["text"] = polished
+                                    llm_status["applied"] = True
                             except Exception as e:
                                 print(f"⚠️  [AGENT TRACE] Bullet polish notice: {e}")
+                                llm_status["error"] = str(e)
 
             # 2. Fact-Preserving Executive Summary Polish with Target JD Context
             summary_match = re.search(r'(?:##\s*)?(?:PROFESSIONAL SUMMARY|EXECUTIVE SUMMARY|SUMMARY|PROFILE)\s*\n+([^#]+)', resume_text, re.I)
@@ -451,9 +461,11 @@ class KillerResumeAgent:
                             if user_metrics is None:
                                 user_metrics = {}
                             user_metrics["llm_executive_summary"] = clean_sum
+                            llm_status["applied"] = True
                             print(f"✓ [AGENT TRACE] Executive summary refined successfully ({len(clean_sum.split())} words).")
                     except Exception as e:
                         print(f"⚠️  [AGENT TRACE] Summary synthesis notice: {e}")
+                        llm_status["error"] = str(e)
 
         optimized_markdown, transform_meta = format_to_standard_template(resume_text, jd_text, user_metrics=user_metrics)
 
@@ -492,7 +504,8 @@ class KillerResumeAgent:
             "pdf_size_kb": round(len(pdf_bytes) / 1024, 1),
             "transform_meta": transform_meta,
             "audit_details": audit,
-            "post_audit_details": post_audit
+            "post_audit_details": post_audit,
+            "llm_status": llm_status
         }
 
     def interactive_interview(self, resume_text: str, jd_text: str = "") -> dict:

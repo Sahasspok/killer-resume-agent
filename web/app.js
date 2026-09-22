@@ -1551,6 +1551,94 @@ document.addEventListener("DOMContentLoaded", () => {
       // Render Visual Document Paper
       renderVisualResume(md);
 
+      // Render AI Engine Status & Diagnostics Banner
+      const aiStatusBanner = document.getElementById("ai-engine-status-banner");
+      if (aiStatusBanner) {
+        const status = data.llm_status || {};
+        if (status.error) {
+          const is429 = status.error.includes("429") || status.error.includes("credit_balance_exhausted");
+          const is401 = status.error.includes("401") || status.error.includes("invalid_api_key");
+          aiStatusBanner.classList.remove("hidden");
+          aiStatusBanner.style.display = "block";
+          aiStatusBanner.style.background = "rgba(239, 68, 68, 0.1)";
+          aiStatusBanner.style.border = "1px solid var(--accent-rose)";
+          aiStatusBanner.style.color = "var(--text-primary)";
+
+          if (is429) {
+            aiStatusBanner.innerHTML = `
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-size: 18px;">⚠️</span>
+                <div style="flex: 1;">
+                  <strong style="color: var(--accent-rose);">OpenAI Account Notice: 0 Tokens Billed (HTTP 429 Quota Exhausted)</strong>
+                  <p style="margin: 4px 0 8px 0; font-size: 12px; color: var(--text-secondary);">
+                    Your OpenAI account has <strong>$0.00 credit balance remaining</strong>. OpenAI rejected the request before processing tokens. The agent successfully generated your ATS résumé using our built-in offline rule engine.
+                  </p>
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <a href="https://platform.openai.com/settings/organization/billing" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 3px 8px;">💳 Add OpenAI Credits</a>
+                    <button type="button" id="btn-switch-to-gemini" class="btn btn-primary btn-sm" style="font-size: 11px; padding: 3px 8px;">✨ Switch to Google Gemini (Free Tier)</button>
+                  </div>
+                </div>
+              </div>
+            `;
+            const btnSwGemini = document.getElementById("btn-switch-to-gemini");
+            if (btnSwGemini) {
+              btnSwGemini.addEventListener("click", () => {
+                if (selectAiEngine) selectAiEngine.value = "gemini";
+                currentProvider = "gemini";
+                localStorage.setItem("killer_resume_provider", "gemini");
+                updateApiKeyBadge();
+                if (modalApiKey) {
+                  modalApiKey.classList.remove("hidden");
+                  modalApiKey.style.display = "flex";
+                  if (inputApiKey) {
+                    inputApiKey.value = localStorage.getItem("killer_resume_api_key_gemini") || "";
+                    inputApiKey.placeholder = "Enter free Gemini API key from aistudio.google.com";
+                    inputApiKey.focus();
+                  }
+                }
+              });
+            }
+            showToast("OpenAI Notice: Credit balance exhausted (0 tokens used). Offline rule engine applied.", "warning");
+          } else if (is401) {
+            aiStatusBanner.innerHTML = `
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-size: 18px;">🔑</span>
+                <div style="flex: 1;">
+                  <strong style="color: var(--accent-rose);">${(status.provider || 'API').toUpperCase()} Key Invalid (HTTP 401)</strong>
+                  <p style="margin: 4px 0; font-size: 12px; color: var(--text-secondary);">The provided API key was rejected by ${status.provider}. The résumé was formatted using the offline rule engine.</p>
+                </div>
+              </div>
+            `;
+          } else {
+            aiStatusBanner.innerHTML = `
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <span style="font-size: 18px;">⚠️</span>
+                <div style="flex: 1;">
+                  <strong style="color: var(--accent-amber);">${(status.provider || 'AI').toUpperCase()} Engine Notice</strong>
+                  <p style="margin: 4px 0; font-size: 12px; color: var(--text-secondary);">${escapeHtml(status.error)}</p>
+                </div>
+              </div>
+            `;
+          }
+        } else if (status.applied) {
+          aiStatusBanner.classList.remove("hidden");
+          aiStatusBanner.style.display = "block";
+          aiStatusBanner.style.background = "rgba(16, 185, 129, 0.08)";
+          aiStatusBanner.style.border = "1px solid var(--accent-green)";
+          aiStatusBanner.style.color = "var(--text-primary)";
+          aiStatusBanner.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>🟢</span>
+              <strong style="color: var(--accent-green);">Live AI Agent Active:</strong>
+              <span style="font-size: 12px; color: var(--text-secondary);">Enhanced via ${status.provider.toUpperCase()} (${status.model}) with Google XYZ & Jeff Su 5-Rule optimization.</span>
+            </div>
+          `;
+        } else {
+          aiStatusBanner.classList.add("hidden");
+          aiStatusBanner.style.display = "none";
+        }
+      }
+
       // Store PDF
       if (data.pdf_base64) {
         latestGeneratedPdfBase64 = data.pdf_base64;
