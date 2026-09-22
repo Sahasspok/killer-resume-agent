@@ -28,11 +28,14 @@
         <div class="ai-engine-selector-group">
           <span class="ai-engine-icon">🤖</span>
           <select id="select-ai-engine" class="select-ai-engine" title="Select AI Engine for Google XYZ Rewriting">
-            <option value="gemini">Gemini (Free / Rec.)</option>
+            <option value="gemini">Google Gemini (Free Tier)</option>
+            <option value="groq">Groq (Free & Fast)</option>
+            <option value="openrouter">OpenRouter (Free Models)</option>
+            <option value="mistral">Mistral AI (Free Tier)</option>
             <option value="openai">OpenAI (GPT-4o-mini)</option>
             <option value="anthropic">Claude (3.5 Sonnet)</option>
-            <option value="ollama">Ollama (Local)</option>
-            <option value="heuristic" selected>Offline Engine</option>
+            <option value="ollama">Ollama (Local / Free)</option>
+            <option value="heuristic" selected>Offline Rule Engine</option>
           </select>
           <button type="button" id="btn-configure-api-key" class="btn btn-ghost btn-xs" title="Configure API Key">
             🔑 <span id="api-key-badge">Key</span>
@@ -66,7 +69,7 @@
           <label id="modal-key-label" for="input-api-key">API Key:</label>
           <input type="password" id="input-api-key" placeholder="Paste your API key here..." class="form-input" />
           <div class="modal-key-help" id="modal-key-help">
-            Get a free Google Gemini key at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a>
+            Get a free Google Gemini key at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a>, or switch to <strong>Groq</strong> (100% free at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a>) or <strong>OpenRouter</strong> (<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a>).
           </div>
         </div>
         <div class="modal-footer">

@@ -643,8 +643,47 @@ Product Manager with 6+ years of experience delivering cloud and fintech platfor
         self.assertIn("50 brokers", scalecloud_part)
         self.assertNotIn("disaster recovery failover", scalecloud_part)
 
+    def test_llm_providers_and_fallback(self):
+        """Verify LLMClient supports free-tier providers (Groq, OpenRouter, Mistral, Gemini) and falls back cleanly."""
+        from agent import LLMClient
+
+        # 1. Test provider default models
+        groq_client = LLMClient(provider="groq")
+        self.assertEqual(groq_client.model, "llama-3.3-70b-versatile")
+
+        openrouter_client = LLMClient(provider="openrouter")
+        self.assertEqual(openrouter_client.model, "google/gemini-2.0-flash-exp:free")
+
+        mistral_client = LLMClient(provider="mistral")
+        self.assertEqual(mistral_client.model, "mistral-small-latest")
+
+        gemini_client = LLMClient(provider="gemini")
+        self.assertEqual(gemini_client.model, "gemini-2.0-flash")
+
+        # 2. Test is_configured check
+        self.assertFalse(groq_client.is_configured())
+        self.assertFalse(openrouter_client.is_configured())
+        self.assertFalse(mistral_client.is_configured())
+
+        # With mock key
+        configured_groq = LLMClient(provider="groq", api_key="gsk_test_123")
+        self.assertTrue(configured_groq.is_configured())
+
+        # 3. Test generate fallback when unconfigured or error occurs
+        res = groq_client.generate("Test prompt")
+        self.assertFalse(res)
+
+        # 4. Verify agent transform runs smoothly with any provider without breaking
+        t_result = self.agent.transform_resume(
+            SAMPLE_RESUME,
+            jd_text=SAMPLE_JD
+        )
+        self.assertIn("optimized_markdown", t_result)
+        self.assertIn("qa_report", t_result)
+
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

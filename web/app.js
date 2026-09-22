@@ -650,7 +650,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (modalKeyHelp) {
         if (currentProvider === "gemini") {
-          modalKeyHelp.innerHTML = `Get a free Google Gemini key at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a>`;
+          modalKeyHelp.innerHTML = `Get a free Google Gemini key at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a> (1,500 req/day free, gemini-2.0-flash)`;
+        } else if (currentProvider === "groq") {
+          modalKeyHelp.innerHTML = `Get a 100% free Groq key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> (No credit card, 14,400 req/day, blazing fast Llama 3.3)`;
+        } else if (currentProvider === "openrouter") {
+          modalKeyHelp.innerHTML = `Get an OpenRouter key at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> (Free access to DeepSeek R1 & Llama 3.3 :free models)`;
+        } else if (currentProvider === "mistral") {
+          modalKeyHelp.innerHTML = `Get a free Mistral key at <a href="https://console.mistral.ai/api-keys/" target="_blank" rel="noopener">console.mistral.ai</a> (Free experimentation tier)`;
         } else if (currentProvider === "openai") {
           modalKeyHelp.innerHTML = `Get an OpenAI key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>`;
         } else if (currentProvider === "anthropic") {
@@ -661,13 +667,23 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // If user selected an external provider and no key is saved or detected, automatically open modal
-      if (["openai", "gemini", "anthropic"].includes(currentProvider) && !currentApiKey && !detectedKeys[currentProvider]) {
+      if (["openai", "gemini", "anthropic", "groq", "openrouter", "mistral"].includes(currentProvider) && !currentApiKey && !detectedKeys[currentProvider]) {
         if (modalApiKey) {
           modalApiKey.classList.remove("hidden");
           modalApiKey.style.display = "flex";
           if (inputApiKey) {
             inputApiKey.value = "";
-            inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
+            if (currentProvider === "groq") {
+              inputApiKey.placeholder = "gsk_... (from console.groq.com/keys)";
+            } else if (currentProvider === "openrouter") {
+              inputApiKey.placeholder = "sk-or-v1-... (from openrouter.ai/keys)";
+            } else if (currentProvider === "mistral") {
+              inputApiKey.placeholder = "Enter Mistral API key (from console.mistral.ai)";
+            } else if (currentProvider === "gemini") {
+              inputApiKey.placeholder = "AIzaSy... (from aistudio.google.com)";
+            } else {
+              inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
+            }
             inputApiKey.focus();
           }
         }
@@ -682,9 +698,39 @@ document.addEventListener("DOMContentLoaded", () => {
     btnConfigureApiKey.addEventListener("click", () => {
       modalApiKey.classList.remove("hidden");
       modalApiKey.style.display = "flex";
+      if (modalKeyLabel) {
+        modalKeyLabel.textContent = `${currentProvider.toUpperCase()} API Key:`;
+      }
+      if (modalKeyHelp) {
+        if (currentProvider === "gemini") {
+          modalKeyHelp.innerHTML = `Get a free Google Gemini key at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a> (1,500 req/day free, gemini-2.0-flash)`;
+        } else if (currentProvider === "groq") {
+          modalKeyHelp.innerHTML = `Get a 100% free Groq key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> (No credit card, 14,400 req/day, blazing fast Llama 3.3)`;
+        } else if (currentProvider === "openrouter") {
+          modalKeyHelp.innerHTML = `Get an OpenRouter key at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> (Free access to DeepSeek R1 & Llama 3.3 :free models)`;
+        } else if (currentProvider === "mistral") {
+          modalKeyHelp.innerHTML = `Get a free Mistral key at <a href="https://console.mistral.ai/api-keys/" target="_blank" rel="noopener">console.mistral.ai</a> (Free experimentation tier)`;
+        } else if (currentProvider === "openai") {
+          modalKeyHelp.innerHTML = `Get an OpenAI key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>`;
+        } else if (currentProvider === "anthropic") {
+          modalKeyHelp.innerHTML = `Get an Anthropic key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>`;
+        } else {
+          modalKeyHelp.textContent = `No API key needed for ${currentProvider}.`;
+        }
+      }
       if (inputApiKey) {
         inputApiKey.value = currentApiKey;
-        inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
+        if (currentProvider === "groq") {
+          inputApiKey.placeholder = "gsk_... (from console.groq.com/keys)";
+        } else if (currentProvider === "openrouter") {
+          inputApiKey.placeholder = "sk-or-v1-... (from openrouter.ai/keys)";
+        } else if (currentProvider === "mistral") {
+          inputApiKey.placeholder = "Enter Mistral API key (from console.mistral.ai)";
+        } else if (currentProvider === "gemini") {
+          inputApiKey.placeholder = "AIzaSy... (from aistudio.google.com)";
+        } else {
+          inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
+        }
         inputApiKey.focus();
       }
     });
@@ -854,14 +900,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // If provider requires key and has none, prompt user
-        if (["openai", "gemini", "anthropic"].includes(currentProvider) && !currentApiKey && !detectedKeys[currentProvider]) {
+        if (["openai", "gemini", "anthropic", "groq", "openrouter", "mistral"].includes(currentProvider) && !currentApiKey && !detectedKeys[currentProvider]) {
           showToast(`Please enter your ${currentProvider.toUpperCase()} API key to connect`, "warning");
           if (modalApiKey) {
             modalApiKey.classList.remove("hidden");
             modalApiKey.style.display = "flex";
             if (inputApiKey) {
               inputApiKey.value = "";
-              inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
+              if (currentProvider === "groq") {
+                inputApiKey.placeholder = "gsk_... (from console.groq.com/keys)";
+              } else if (currentProvider === "openrouter") {
+                inputApiKey.placeholder = "sk-or-v1-... (from openrouter.ai/keys)";
+              } else if (currentProvider === "mistral") {
+                inputApiKey.placeholder = "Enter Mistral API key (from console.mistral.ai)";
+              } else if (currentProvider === "gemini") {
+                inputApiKey.placeholder = "AIzaSy... (from aistudio.google.com)";
+              } else {
+                inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
+              }
               inputApiKey.focus();
             }
           }
@@ -1575,29 +1631,36 @@ document.addEventListener("DOMContentLoaded", () => {
                   </p>
                   <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <a href="https://platform.openai.com/settings/organization/billing" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 3px 8px;">💳 Add OpenAI Credits</a>
-                    <button type="button" id="btn-switch-to-gemini" class="btn btn-primary btn-sm" style="font-size: 11px; padding: 3px 8px;">✨ Switch to Google Gemini (Free Tier)</button>
+                    <button type="button" id="btn-switch-to-groq" class="btn btn-primary btn-sm" style="font-size: 11px; padding: 3px 8px;">⚡ Switch to Groq (Free & Fast)</button>
+                    <button type="button" id="btn-switch-to-gemini" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 3px 8px;">✨ Switch to Gemini (Free Tier)</button>
+                    <button type="button" id="btn-switch-to-openrouter" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 3px 8px;">🌐 Switch to OpenRouter (Free)</button>
                   </div>
                 </div>
               </div>
             `;
-            const btnSwGemini = document.getElementById("btn-switch-to-gemini");
-            if (btnSwGemini) {
-              btnSwGemini.addEventListener("click", () => {
-                if (selectAiEngine) selectAiEngine.value = "gemini";
-                currentProvider = "gemini";
-                localStorage.setItem("killer_resume_provider", "gemini");
-                updateApiKeyBadge();
-                if (modalApiKey) {
-                  modalApiKey.classList.remove("hidden");
-                  modalApiKey.style.display = "flex";
-                  if (inputApiKey) {
-                    inputApiKey.value = localStorage.getItem("killer_resume_api_key_gemini") || "";
-                    inputApiKey.placeholder = "Enter free Gemini API key from aistudio.google.com";
-                    inputApiKey.focus();
+            const setupSwitchBtn = (btnId, provider, placeholder) => {
+              const btn = document.getElementById(btnId);
+              if (btn) {
+                btn.addEventListener("click", () => {
+                  if (selectAiEngine) selectAiEngine.value = provider;
+                  currentProvider = provider;
+                  localStorage.setItem("killer_resume_provider", provider);
+                  updateApiKeyBadge();
+                  if (modalApiKey) {
+                    modalApiKey.classList.remove("hidden");
+                    modalApiKey.style.display = "flex";
+                    if (inputApiKey) {
+                      inputApiKey.value = localStorage.getItem("killer_resume_api_key_" + provider) || "";
+                      inputApiKey.placeholder = placeholder;
+                      inputApiKey.focus();
+                    }
                   }
-                }
-              });
-            }
+                });
+              }
+            };
+            setupSwitchBtn("btn-switch-to-groq", "groq", "Enter free Groq API key (console.groq.com/keys)");
+            setupSwitchBtn("btn-switch-to-gemini", "gemini", "Enter free Gemini API key (aistudio.google.com)");
+            setupSwitchBtn("btn-switch-to-openrouter", "openrouter", "Enter free OpenRouter API key (openrouter.ai/keys)");
             showToast("OpenAI Notice: Credit balance exhausted (0 tokens used). Offline rule engine applied.", "warning");
           } else if (is401) {
             aiStatusBanner.innerHTML = `

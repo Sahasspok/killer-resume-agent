@@ -52,6 +52,9 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
     def handle_config(self):
         detected = {
             "gemini": bool(os.environ.get("GEMINI_API_KEY")),
+            "groq": bool(os.environ.get("GROQ_API_KEY")),
+            "openrouter": bool(os.environ.get("OPENROUTER_API_KEY")),
+            "mistral": bool(os.environ.get("MISTRAL_API_KEY")),
             "openai": bool(os.environ.get("OPENAI_API_KEY")),
             "anthropic": bool(os.environ.get("ANTHROPIC_API_KEY")),
         }
@@ -119,6 +122,7 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             style_meta = data.get("style_meta", None)
             provider = data.get("provider", "heuristic")
             api_key = data.get("api_key", "")
+            model = data.get("model", "")
 
             if pdf_b64:
                 try:
@@ -134,7 +138,7 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                     return
 
             try:
-                llm = LLMClient(provider=provider, api_key=api_key)
+                llm = LLMClient(provider=provider, api_key=api_key, model=model)
                 t_agent = KillerResumeAgent(llm_client=llm)
 
                 result = t_agent.transform_resume(resume_text, jd_text, style_meta=style_meta, user_metrics=user_metrics)
@@ -197,17 +201,19 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
             notes = data.get("notes") or data.get("metric", "")
             provider = data.get("provider", "heuristic")
             api_key = data.get("api_key", "")
+            model = data.get("model", "")
             role = data.get("role", "")
             jd = data.get("jd", "")
 
             try:
-                llm = LLMClient(provider=provider, api_key=api_key)
+                llm = LLMClient(provider=provider, api_key=api_key, model=model)
                 rewritten = llm.rewrite_bullet_xyz(raw_bullet=bullet, user_notes=notes, role_title=role, jd_context=jd)
                 self.send_json_response({
                     "original": bullet,
                     "notes": notes,
                     "rewritten": rewritten,
-                    "provider": llm.provider
+                    "provider": llm.provider,
+                    "model": llm.model
                 })
             except Exception as e:
                 print(f"❌ [AGENT SERVER ERROR] /api/xyz failed: {e}")
@@ -221,6 +227,84 @@ class KillerResumeHandler(http.server.SimpleHTTPRequestHandler):
                     "provider": "heuristic (fallback)",
                     "error": str(e)
                 })
+
+        elif parsed.path == "/api/providers":
+            self.send_json_response({
+                "providers": [
+                    {
+                        "id": "gemini",
+                        "name": "Google Gemini (Free Tier)",
+                        "free": True,
+                        "limits": "15 req/min • 1,500 req/day free",
+                        "default_model": "gemini-2.0-flash",
+                        "models": ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash-latest", "gemini-1.5-flash-8b", "gemini-1.5-pro"],
+                        "key_url": "https://aistudio.google.com/"
+                    },
+                    {
+                        "id": "groq",
+                        "name": "Groq (Free & Blazing Fast)",
+                        "free": True,
+                        "limits": "30 req/min • 14,400 req/day free (No card required)",
+                        "default_model": "llama-3.3-70b-versatile",
+                        "models": ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "gemma2-9b-it"],
+                        "key_url": "https://console.groq.com/keys"
+                    },
+                    {
+                        "id": "openrouter",
+                        "name": "OpenRouter (Free Models)",
+                        "free": True,
+                        "limits": "Free tier access to DeepSeek R1, Llama 3.3, Gemini 2.0 Flash",
+                        "default_model": "google/gemini-2.0-flash-exp:free",
+                        "models": ["google/gemini-2.0-flash-exp:free", "meta-llama/llama-3.3-70b-instruct:free", "deepseek/deepseek-r1:free", "qwen/qwen-2.5-coder-32b-instruct:free"],
+                        "key_url": "https://openrouter.ai/keys"
+                    },
+                    {
+                        "id": "mistral",
+                        "name": "Mistral AI (Free Tier)",
+                        "free": True,
+                        "limits": "Free experimentation tier",
+                        "default_model": "mistral-small-latest",
+                        "models": ["mistral-small-latest", "open-mistral-7b"],
+                        "key_url": "https://console.mistral.ai/"
+                    },
+                    {
+                        "id": "openai",
+                        "name": "OpenAI (GPT-4o-mini)",
+                        "free": False,
+                        "limits": "Pay-as-you-go ($0.15/1M tokens)",
+                        "default_model": "gpt-4o-mini",
+                        "models": ["gpt-4o-mini", "gpt-4o"],
+                        "key_url": "https://platform.openai.com/api-keys"
+                    },
+                    {
+                        "id": "anthropic",
+                        "name": "Anthropic Claude (3.5 Sonnet)",
+                        "free": False,
+                        "limits": "Pay-as-you-go",
+                        "default_model": "claude-3-5-sonnet-20241022",
+                        "models": ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"],
+                        "key_url": "https://console.anthropic.com/"
+                    },
+                    {
+                        "id": "ollama",
+                        "name": "Ollama (Local / 100% Free)",
+                        "free": True,
+                        "limits": "Unlimited local compute (no API key)",
+                        "default_model": "llama3",
+                        "models": ["llama3", "mistral", "qwen2.5"],
+                        "key_url": "https://ollama.com/"
+                    },
+                    {
+                        "id": "heuristic",
+                        "name": "Offline Rule Engine (Built-in)",
+                        "free": True,
+                        "limits": "100% Free • No API key • Zero network latency",
+                        "default_model": "rule-engine",
+                        "models": ["rule-engine"],
+                        "key_url": ""
+                    }
+                ]
+            })
 
         elif parsed.path == "/api/clarify":
             bullet = data.get("bullet", "")

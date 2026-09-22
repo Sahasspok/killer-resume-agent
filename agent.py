@@ -48,7 +48,7 @@ class LLMClient:
     using Python standard library urllib.
     """
     def __init__(self, provider: str = "heuristic", api_key: str = "", model: str = ""):
-        self.provider = provider.lower()
+        self.provider = provider.lower().strip()
         self.api_key = api_key or os.environ.get(f"{self.provider.upper()}_API_KEY", "")
         self.model = model
 
@@ -56,6 +56,12 @@ class LLMClient:
         if not self.model:
             if self.provider == "gemini":
                 self.model = "gemini-2.0-flash"
+            elif self.provider == "groq":
+                self.model = "llama-3.3-70b-versatile"
+            elif self.provider == "openrouter":
+                self.model = "google/gemini-2.0-flash-exp:free"
+            elif self.provider == "mistral":
+                self.model = "mistral-small-latest"
             elif self.provider == "openai":
                 self.model = "gpt-4o-mini"
             elif self.provider == "anthropic":
@@ -64,7 +70,7 @@ class LLMClient:
                 self.model = "llama3"
 
     def is_configured(self) -> bool:
-        if self.provider in ["gemini", "openai", "anthropic"]:
+        if self.provider in ["gemini", "openai", "anthropic", "groq", "openrouter", "mistral"]:
             return bool(self.api_key)
         if self.provider == "ollama":
             return True
@@ -87,6 +93,12 @@ class LLMClient:
             res = ""
             if self.provider == "gemini":
                 res = self._call_gemini(prompt, system_prompt)
+            elif self.provider == "groq":
+                res = self._call_groq(prompt, system_prompt)
+            elif self.provider == "openrouter":
+                res = self._call_openrouter(prompt, system_prompt)
+            elif self.provider == "mistral":
+                res = self._call_mistral(prompt, system_prompt)
             elif self.provider == "openai":
                 res = self._call_openai(prompt, system_prompt)
             elif self.provider == "anthropic":
@@ -114,48 +126,185 @@ class LLMClient:
             raise
 
     def _call_gemini(self, prompt: str, system_prompt: str = "") -> str:
-        models = [self.model, "gemini-1.5-flash", "gemini-2.0-flash"]
+        """
+        Calls Google Gemini API with automatic model and API version fallbacks.
+        Handles v1 and v1beta seamlessly across 2.0 Flash, 2.0 Flash Lite, 1.5 Flash, and 1.5 Pro.
+        """
+        clean_model = (self.model or "gemini-2.0-flash").replace("models/", "").strip()
+        models_to_try = [
+            clean_model,
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-8b",
+            "gemini-1.5-pro-latest",
+            "gemini-1.5-pro",
+            "gemini-2.5-flash"
+        ]
+        api_versions = ["v1beta", "v1"]
         last_err = None
-        for m in dict.fromkeys(models):
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={self.api_key}"
-            full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
-            payload = {
-                "contents": [{"parts": [{"text": full_prompt}]}],
-                "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1024}
-            }
-            req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers={"Content-Type": "application/json"})
-            try:
-                with urllib.request.urlopen(req, timeout=15) as resp:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        parts = candidates[0].get("content", {}).get("parts", [])
-                        if parts:
-                            return parts[0].get("text", "").strip()
-            except Exception as e:
-                last_err = e
+
+        full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+        payload = {
+            "contents": [{"parts": [{"text": full_prompt}]}],
+            "generationConfig": {"temperature": 0.2, "maxOutputTokens": 1024}
+        }
+        encoded_data = json.dumps(payload).encode("utf-8")
+
+        for m in dict.fromkeys(models_to_try):
+            if not m:
                 continue
+            for ver in api_versions:
+                url = f"https://generativelanguage.googleapis.com/{ver}/models/{m}:generateContent?key={self.api_key}"
+                req = urllib.request.Request(url, data=encoded_data, headers={"Content-Type": "application/json"})
+                try:
+                    with urllib.request.urlopen(req, timeout=15) as resp:
+                        data = json.loads(resp.read().decode("utf-8"))
+                        candidates = data.get("candidates", [])
+                        if candidates:
+                            parts = candidates[0].get("content", {}).get("parts", [])
+                            if parts:
+                                return parts[0].get("text", "").strip()
+                except urllib.error.HTTPError as e:
+                    try:
+                        err_text = e.read().decode("utf-8")
+                    except Exception:
+                        err_text = str(e)
+                    last_err = RuntimeError(f"Gemini ({ver}/{m}) HTTP {e.code}: {err_text}")
+                    # If model not found (404) on this endpoint/version, try next candidate
+                    if e.code == 404:
+                        continue
+                    # If invalid API key, fail immediately
+                    if "API_KEY_INVALID" in err_text or "not valid" in err_text.lower():
+                        raise last_err
+                    continue
+                except Exception as e:
+                    last_err = e
+                    continue
+
         if last_err:
             raise last_err
         return ""
 
-    def _call_openai(self, prompt: str, system_prompt: str = "") -> str:
-        url = "https://api.openai.com/v1/chat/completions"
+    def _call_openai_compatible(self, endpoint: str, models: list, prompt: str, system_prompt: str = "", extra_headers: dict = None) -> str:
+        """Helper for OpenAI-compatible REST endpoints (Groq, OpenRouter, Mistral, OpenAI)."""
+        last_err = None
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
-        payload = {"model": self.model, "messages": messages, "temperature": 0.2}
-        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}
-        req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers)
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data["choices"][0]["message"]["content"].strip()
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
+        }
+        if extra_headers:
+            headers.update(extra_headers)
+
+        for m in dict.fromkeys(models):
+            if not m:
+                continue
+            payload = {
+                "model": m,
+                "messages": messages,
+                "temperature": 0.2
+            }
+            req = urllib.request.Request(endpoint, data=json.dumps(payload).encode("utf-8"), headers=headers)
+            try:
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    choices = data.get("choices", [])
+                    if choices:
+                        return choices[0].get("message", {}).get("content", "").strip()
+            except urllib.error.HTTPError as e:
+                try:
+                    err_text = e.read().decode("utf-8")
+                except Exception:
+                    err_text = str(e)
+                last_err = RuntimeError(f"{self.provider.upper()} ({m}) HTTP {e.code}: {err_text}")
+                if e.code == 404:
+                    continue
+                if e.code in [401, 403]:
+                    raise last_err
+                continue
+            except Exception as e:
+                last_err = e
+                continue
+
+        if last_err:
+            raise last_err
+        return ""
+
+    def _call_groq(self, prompt: str, system_prompt: str = "") -> str:
+        """Calls Groq Cloud API (Free tier: 14,400 req/day, ultra-fast Llama 3.3)."""
+        models = [
+            self.model or "llama-3.3-70b-versatile",
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it"
+        ]
+        return self._call_openai_compatible(
+            endpoint="https://api.groq.com/openai/v1/chat/completions",
+            models=models,
+            prompt=prompt,
+            system_prompt=system_prompt
+        )
+
+    def _call_openrouter(self, prompt: str, system_prompt: str = "") -> str:
+        """Calls OpenRouter API (Free models: DeepSeek R1, Llama 3.3, Gemini 2.0 Flash)."""
+        models = [
+            self.model or "google/gemini-2.0-flash-exp:free",
+            "google/gemini-2.0-flash-exp:free",
+            "meta-llama/llama-3.3-70b-instruct:free",
+            "deepseek/deepseek-r1:free",
+            "qwen/qwen-2.5-coder-32b-instruct:free",
+            "meta-llama/llama-3.2-3b-instruct:free"
+        ]
+        extra_headers = {
+            "HTTP-Referer": "https://killer-resume.local",
+            "X-Title": "Killer Resume Agent"
+        }
+        return self._call_openai_compatible(
+            endpoint="https://openrouter.ai/api/v1/chat/completions",
+            models=models,
+            prompt=prompt,
+            system_prompt=system_prompt,
+            extra_headers=extra_headers
+        )
+
+    def _call_mistral(self, prompt: str, system_prompt: str = "") -> str:
+        """Calls Mistral AI API (Free experimentation tier: mistral-small, open-mistral-7b)."""
+        models = [
+            self.model or "mistral-small-latest",
+            "mistral-small-latest",
+            "open-mistral-7b"
+        ]
+        return self._call_openai_compatible(
+            endpoint="https://api.mistral.ai/v1/chat/completions",
+            models=models,
+            prompt=prompt,
+            system_prompt=system_prompt
+        )
+
+    def _call_openai(self, prompt: str, system_prompt: str = "") -> str:
+        models = [
+            self.model or "gpt-4o-mini",
+            "gpt-4o-mini",
+            "gpt-4o"
+        ]
+        return self._call_openai_compatible(
+            endpoint="https://api.openai.com/v1/chat/completions",
+            models=models,
+            prompt=prompt,
+            system_prompt=system_prompt
+        )
 
     def _call_anthropic(self, prompt: str, system_prompt: str = "") -> str:
         url = "https://api.anthropic.com/v1/messages"
         payload = {
-            "model": self.model,
+            "model": self.model or "claude-3-5-sonnet-20241022",
             "max_tokens": 1024,
             "system": system_prompt,
             "messages": [{"role": "user", "content": prompt}],
@@ -174,7 +323,7 @@ class LLMClient:
     def _call_ollama(self, prompt: str, system_prompt: str = "") -> str:
         url = "http://localhost:11434/api/generate"
         payload = {
-            "model": self.model,
+            "model": self.model or "llama3",
             "prompt": f"{system_prompt}\n\n{prompt}" if system_prompt else prompt,
             "stream": False
         }
