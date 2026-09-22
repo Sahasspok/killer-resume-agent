@@ -189,7 +189,7 @@ def check_resume_ambiguities(resume_text: str) -> list:
         if has_hypothetical and has_actual:
             issues.append({
                 "code": "CONTRADICTORY_AMBIGUOUS_METRIC",
-                "message": "Veel experience contains contradictory DAU statements: one bullet claims 'laying foundation for a 10K DAU user base' (future/hypothetical) while another claims 'growing DAU from 0 to 5K+, tracking surges to 10K DAU' (actual). Interviewers will probe this inconsistency.",
+                "message": "Work experience contains contradictory DAU statements: one bullet claims 'laying foundation for a 10K DAU user base' (future/hypothetical) while another claims 'growing DAU from 0 to 5K+, tracking surges to 10K DAU' (actual). Interviewers will probe this inconsistency.",
                 "fix": "Unify into a single, concrete audited metric: 'Drove development of 3 core revenue features, refining UX to support 10K+ peak DAU' and keep 'growing DAU from 0 to 5K+, tracking surges to 10K DAU'."
             })
 

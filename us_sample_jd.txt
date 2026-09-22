@@ -1,20 +1,31 @@
-# Senior Technical Program Manager (Platform & AI Systems)
-**Company**: Apex Cloud Systems  
-**Location**: San Francisco, CA (Hybrid / Remote)  
+Senior Technical Program Manager (Platform & AI Systems)
+Company: Apex Cloud Systems
+Location: San Francisco, CA (Hybrid / Remote)
+Employment Type: Full-time
+Experience: 4–7 years
 
-### About The Role
+About the Role
 We are seeking an experienced Senior Technical Program Manager to lead complex technical software initiatives across our core platform and agentic AI systems. In this role, you will bridge the gap between engineering, product, and operations to deliver reliable high-throughput systems.
+This role is suited to someone who is comfortable operating between business requirements and deep technical execution across distributed systems.
 
-### Key Responsibilities
+Key Responsibilities
 - Lead end-to-end agile sprint delivery and backlog prioritization for high-velocity software engineering squads.
 - Drive cross-functional execution across distributed engineering teams, setting clear acceptance criteria and milestone deliverables.
 - Implement automated workflows and AI-assisted tools (Claude Code, LLMs, Python automation) to streamline sprint planning and reduce manual operational overhead.
 - Conduct systematic risk assessments and pre-mortem audits to eliminate delivery blockers before production releases.
 - Establish measurable engineering performance metrics (cycle time, release frequency, defect density) and communicate progress to leadership.
+- Coordinate QA, UAT, release readiness, and production launches across multi-region cloud services.
+- Maintain transparent project documentation, decision logs, RAID logs, and delivery dashboards.
 
-### Requirements
+Required Qualifications
 - 4+ years of hands-on experience in technical program or project management for cloud, platform, or distributed systems.
 - Proven experience with agile methodologies (Scrum, Kanban, Jira backlog triage).
 - Demonstrated ability to use AI automation tools (Claude, Python, API scripting) to optimize workflows.
 - Strong track record of quantifying business impact (time saved, cycle velocity, defect reduction).
+- Ability to understand technical concepts: microservices, APIs, databases, container orchestration (Kubernetes/Docker), and CI/CD.
 - Bachelor's degree in Computer Science, Engineering, or equivalent practical experience.
+
+Preferred Qualifications
+- Experience working with AI/ML products or integrating LLM workflows into software engineering operations.
+- Certified Scrum Master (CSM) or Professional Scrum Master (PSM).
+- Hands-on experience with cloud infrastructure (AWS, GCP, or Azure).

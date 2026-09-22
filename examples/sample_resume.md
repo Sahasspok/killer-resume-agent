@@ -1,34 +1,34 @@
-# Sahas Pokhrel
-Kathmandu, Nepal | sahas@example.com | linkedin.com/in/sahas-pokhrel | github.com/sahas-pm
+# Alex Mercer
+San Francisco, CA | alex.mercer@example.com | (415) 555-0192 | linkedin.com/in/alex-mercer-tpm | github.com/alex-mercer
 
 ## PROFESSIONAL SUMMARY
-Results-driven Technical Project Manager with 5+ years of experience leading cross-functional teams, orchestrating agile workflows, and delivering high-impact software products. Experienced in integrating agentic AI into modern backlog triage and release management.
+Results-driven Senior Technical Program Manager with 5+ years of experience leading cross-functional engineering teams, orchestrating agile workflows, and scaling high-throughput distributed systems. Experienced in integrating agentic AI workflows into sprint backlog triage, CI/CD observability, and release governance.
 
 ## EXPERIENCE
 
-### Lead Technical Project Manager | Offroad Gaming Studios
-*Jan 2023 - Present*
-- Managed a 15-initiative product roadmap for "Himalayan Offroad Truck Driver", coordinating across sales, support, and dev teams.
-- Responsible for managing sprint planning and writing user stories for the 6x6 physics engine.
-- Reduced customer-reported onboarding bugs by 31% using Claude Code to automate bug triage from crash logs.
-- Helped with agile sprint cadence and daily standup meetings.
-- Cut sprint planning overhead from 4 hours to 45 minutes by implementing open-source PM agent skills.
+### Senior Technical Program Manager | Datasync Cloud Systems
+*Jan 2023 - Present | San Francisco, CA*
+- Orchestrated a 15-initiative platform engineering roadmap across 4 distributed engineering squads, delivering tier-1 cloud infrastructure milestones on schedule.
+- Directed sprint planning, milestone tracking, and cross-functional dependency management for high-availability distributed microservices.
+- Reduced customer-reported onboarding bugs by 31% using Claude Code to automate defect triage from Kubernetes crash logs.
+- Streamlined sprint planning overhead from 4 hours to 45 minutes weekly by implementing automated AI backlog prioritization workflows.
+- Facilitated daily standup cadences, pre-mortem risk audits, and executive milestone reviews across engineering, security, and product ops.
 
-### Associate Product Manager | CloudScale Technologies
-*Jun 2021 - Dec 2022*
-- Worked on customer support ticket workflows and improved team efficiency.
-- Accelerated release cycle turnaround from 14 days to 4 days across 12 microservices.
-- Spearheaded cross-functional alignment between engineering and executive stakeholders.
-- Automated API regression test monitoring, reducing critical bug escapes by 42%.
+### Technical Project Manager | Apex Software Labs
+*Jun 2021 - Dec 2022 | Seattle, WA*
+- Accelerated release cycle turnaround from 14 days to 4 days across 12 core microservices by instituting automated CI/CD gating.
+- Spearheaded cross-functional alignment between backend engineering, site reliability, and executive stakeholders.
+- Automated API regression test monitoring and incident escalation, reducing critical defect escapes into production by 42%.
+- Optimized Jira sprint workflows and ticketing handoffs, cutting backlog triage cycle time by 35%.
 
 ## KEY PROJECTS
-- **Agentic Jira Triager**: Built an open-source autonomous agent using Python and Gemini to tag, prioritize, and assign Jira backlog tickets. [github.com/sahas-pm/jira-triager]
-- **PM-Skills Automation Suite**: Local CLI orchestration chaining roadmap outcomes, pre-mortem risk audits, and sprint contracts.
+- **Agentic Jira Triager**: Engineered an open-source autonomous agent using Python and Gemini API to tag, prioritize, and assign Jira backlog tickets. [github.com/alex-mercer/jira-triager]
+- **Release-Ops Automation Suite**: Built local CLI tooling automating sprint contract audits, rollback risk pre-mortems, and release notes synthesis.
 
 ## SKILLS
-- **Methodologies**: Agile, Scrum, Kanban, Sprint Backlog Pruning, Pre-Mortem Risk Audits
-- **AI & Automation**: Claude Code, Gemini CLI, Python, LLM Chaining, Automated Jira Workflows
-- **Tools**: Jira, Confluence, Git, GitHub Actions, Linear, Notion
+- **Methodologies**: Agile, Scrum, Kanban, Sprint Planning, Pre-Mortem Risk Audits, Dependency Mapping
+- **AI & Automation**: Claude Code, Gemini API, Python, LLM Orchestration, Prompt Engineering, CI/CD Automation
+- **Tools**: Jira, Confluence, Linear, GitHub Actions, Kubernetes, Docker, Datadog, AWS, Notion
 
 ## EDUCATION
-- **B.S. in Computer Science & Engineering** | Tribhuvan University (2021)
+- **B.S. in Computer Science** | University of California, Berkeley (2021)

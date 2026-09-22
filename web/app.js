@@ -417,25 +417,25 @@ document.addEventListener("DOMContentLoaded", () => {
             await runPdfPreflight(currentPdfBase64, currentPdfFilename);
           }
           detectedRoles = [
-            { company: "Veel", title: "Technical Project Manager", label: "Veel (Technical Project Manager)" },
-            { company: "TechSaintIT", title: "Project Manager", label: "TechSaintIT (Project Manager)" }
+            { company: "Datasync Cloud Systems", title: "Senior Technical Program Manager", label: "Datasync Cloud Systems (Senior Technical Program Manager)" },
+            { company: "Apex Software Labs", title: "Technical Project Manager", label: "Apex Software Labs (Technical Project Manager)" }
           ];
           updateRoleSelectOptions();
           customAchievements = [
             {
-              text: "Led cross-functional team of 12 (engineers, QA, DevOps) delivering high-scale B2B SaaS platform across 8 sprints with 98% on-time milestone delivery.",
-              role: "Veel",
-              roleLabel: "Veel (Technical Project Manager)"
+              text: "Led cross-functional team of 14 (engineers, QA, DevOps) delivering high-scale cloud infrastructure platform across 8 sprints with 98% on-time milestone delivery.",
+              role: "Datasync Cloud Systems",
+              roleLabel: "Datasync Cloud Systems (Senior Technical Program Manager)"
             },
             {
-              text: "Accelerated sprint velocity by 25% and cut sprint planning cycle time by 4 hours weekly by introducing automated ClickUp/Jira workflows and AI backlog triage.",
-              role: "Veel",
-              roleLabel: "Veel (Technical Project Manager)"
+              text: "Accelerated sprint velocity by 25% and cut sprint planning cycle time by 4 hours weekly by introducing automated Jira workflows and AI backlog triage.",
+              role: "Datasync Cloud Systems",
+              roleLabel: "Datasync Cloud Systems (Senior Technical Program Manager)"
             },
             {
-              text: "Spearheaded migration of legacy services to microservices architecture, reducing deployment cycle times by 40%.",
-              role: "TechSaintIT",
-              roleLabel: "TechSaintIT (Project Manager)"
+              text: "Spearheaded migration of legacy services to microservices architecture, reducing deployment cycle times from 14 days to 4 days across 12 services.",
+              role: "Apex Software Labs",
+              roleLabel: "Apex Software Labs (Technical Project Manager)"
             }
           ];
           customAiTools = ["Claude Code", "ChatGPT", "Cursor", "GitHub Copilot"];
@@ -444,7 +444,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (cvRequiredAlert) cvRequiredAlert.classList.add("hidden");
           hideLoading();
-          showToast("Loaded Ex-Apple PM Sample CV! Review your file and click 'Run CV Health Check' when ready.", "success");
+          showToast("Loaded US Tech TPM Sample CV! Review your file and click 'Run CV Health Check' when ready.", "success");
         }
       } catch (err) {
         hideLoading();

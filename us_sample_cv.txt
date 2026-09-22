@@ -1,0 +1,57 @@
+ALEX MERCER
+Senior Technical Program Manager
+San Francisco, CA | alex.mercer@example.com | (415) 555-0192
+LinkedIn: linkedin.com/in/alex-mercer-tpm | GitHub: github.com/alex-mercer
+
+PROFESSIONAL SUMMARY
+Results-driven Senior Technical Program Manager with 5+ years of experience leading cross-functional engineering teams, orchestrating agile workflows, and delivering high-impact cloud infrastructure products. Experienced in integrating agentic AI into modern sprint backlog triage, CI/CD observability, and release governance.
+Strong technical foundation with hands-on exposure to distributed systems, Kubernetes, CI/CD pipelines, Python, REST APIs, and cloud services (AWS). Focused on using AI tools to streamline sprint planning, risk identification, and release operations.
+Proven track record working with Product Managers, Staff Engineers, QA, and executive stakeholders to drive complex initiatives from concept through production release.
+
+CORE SKILLS
+Program & Project Management
+- Agile / Scrum / Kanban
+- Roadmap & Milestone Planning
+- Sprint Planning & Backlog Grooming
+- Risk & Dependency Management (RAID)
+- Stakeholder Alignment & Executive Reporting
+- Release Governance & Incident Post-Mortems
+
+Technical & Platforms
+- Distributed Systems & Cloud Platforms (AWS)
+- Microservices & REST APIs
+- Kubernetes, Docker, Helm
+- CI/CD (GitHub Actions)
+- Python, SQL, Bash
+- Observability (Datadog, Grafana)
+
+Tools & AI
+- Jira, Confluence, Linear, Notion
+- Claude Code, Gemini API, ChatGPT, Cursor
+- Git, GitHub
+
+PROFESSIONAL EXPERIENCE
+
+Senior Technical Program Manager
+Datasync Cloud Systems — San Francisco, CA
+Jan 2023 – Present
+- Led a 15-initiative cloud platform engineering roadmap across 4 distributed squads, delivering 98% of tier-1 milestones on schedule.
+- Directed sprint planning, backlog grooming, and cross-functional dependency management for high-availability Kubernetes microservices.
+- Reduced customer-reported onboarding bugs by 31% by deploying Claude Code to automate defect triage from Kubernetes crash logs.
+- Cut sprint planning overhead from 4 hours to 45 minutes weekly by implementing automated AI backlog prioritization workflows.
+- Facilitated daily standup cadences, pre-mortem risk audits, and executive milestone reviews across engineering, security, and product ops.
+
+Technical Project Manager
+Apex Software Labs — Seattle, WA
+Jun 2021 – Dec 2022
+- Accelerated release cycle turnaround from 14 days to 4 days across 12 core microservices by instituting automated CI/CD gating.
+- Spearheaded cross-functional alignment between backend engineering, site reliability, and executive stakeholders.
+- Slashed critical defect escapes into production by 42% through automated API regression test monitoring and incident escalation.
+- Optimized Jira sprint workflows and ticketing handoffs, cutting backlog triage cycle time by 35%.
+
+KEY PROJECTS
+- Agentic Jira Triager: Engineered an open-source autonomous agent using Python and Gemini API to tag, prioritize, and assign Jira backlog tickets, saving 5+ engineering hours weekly. [github.com/alex-mercer/jira-triager]
+- Release-Ops Automation Suite: Built local CLI tooling automating sprint contract audits, rollback risk pre-mortems, and release notes synthesis.
+
+EDUCATION
+- Bachelor of Science in Computer Science | University of California, Berkeley (2021)

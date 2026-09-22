@@ -102,7 +102,7 @@ def check_title_identity_alignment(resume_text: str) -> dict:
         issues.append({
             "code": "TITLE_IDENTITY_MISMATCH",
             "message": f"Candidate claims '{target_role or 'Product Manager'}' as target role and summary identity, but every job title in work history says '{job_titles[0]}' or similar without product scope. This violates Rule 2 (Fit Obvious) by claiming an identity the work history doesn't substantiate.",
-            "fix": "Either: (1) Reframe job titles to reflect product scope (e.g. 'Project Manager (Product-Focused) | Veel'), or (2) Revert target role to 'Project Manager' / 'Technical Project Manager' and let the bullets demonstrate product deliverables."
+            "fix": "Either: (1) Reframe job titles to reflect product scope (e.g. 'Project Manager (Product-Focused) | Datasync Cloud Systems'), or (2) Revert target role to 'Project Manager' / 'Technical Project Manager' and let the bullets demonstrate product deliverables."
         })
     elif target_role and job_titles:
         strengths.append(f"Target role '{target_role}' aligns cleanly with career trajectory and job titles.")

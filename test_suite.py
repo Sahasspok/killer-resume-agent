@@ -348,19 +348,19 @@ As a High School Teacher at Lincoln High, I teach algebra and calculus to studen
     def test_rule_2_title_identity_mismatch(self):
         """Rule 2: Flag mismatch when target role is Product Manager but work history is Project Manager."""
         from rules.rule2_keyword_mapping import check_target_role_and_fit
-        resume_mismatch = """# Sahas Pokhrel
+        resume_mismatch = """# David Miller
 Target Role: Product Manager
-Kathmandu, Nepal | sahas@example.com
+Austin, TX | david.miller@example.com
 
 ## PROFESSIONAL SUMMARY
 Technical Product Manager with 5+ years of experience leading cross-functional teams.
 
 ## WORK EXPERIENCE
-### Project Manager | Veel
+### Project Manager | Apex Cloud Systems
 *2023 - Present*
 - Led sprint planning and delivery.
 
-### Associate Project Manager | Dogma Group
+### Associate Project Manager | Horizon Tech Labs
 *2021 - 2022*
 - Managed change requests.
 """
@@ -371,7 +371,7 @@ Technical Product Manager with 5+ years of experience leading cross-functional t
     def test_rule_3_contradictory_metric_ambiguity(self):
         """Rule 3: Detect contradictory DAU metrics (laying foundation vs actual DAU)."""
         from rules.rule3_human_gate import check_resume_ambiguities
-        resume_text = """### Project Manager | Veel
+        resume_text = """### Project Manager | Apex Cloud Systems
 - Drove development of key features, laying the foundation for a 10K DAU user base on key landing pages.
 - Leveraged GA4 to grow daily active users from 0 to 5K+, and tracking consistent engagement surges to 10K DAU.
 """
@@ -428,7 +428,7 @@ Working at an AI-powered healthcare startup designing patient interfaces.
         # Incomplete header: missing date and location
         bad_md = """# Candidate Name
 ## WORK EXPERIENCE
-### Associate Project Manager | TechSaintIT
+### Associate Project Manager | Horizon Tech Labs
 - Led cross-functional team deliveries.
 """
         bad_qa = validate_role_headers_metadata(bad_md)
@@ -438,8 +438,8 @@ Working at an AI-powered healthcare startup designing patient interfaces.
         # Complete header: title, company, date, location
         good_md = """# Candidate Name
 ## WORK EXPERIENCE
-### Associate Project Manager | TechSaintIT
-*May 2020 - September 2021 | Kathmandu, Bagmati, Nepal*
+### Associate Project Manager | Horizon Tech Labs
+*May 2020 - September 2021 | Austin, TX, USA*
 - Led cross-functional team deliveries.
 """
         good_qa = validate_role_headers_metadata(good_md)
