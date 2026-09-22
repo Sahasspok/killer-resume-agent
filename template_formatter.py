@@ -769,7 +769,7 @@ def format_experience_section(exp_lines: List[str], target_role: str = "", user_
         matched_user_bullets = None
         if user_metrics:
             for k, v in user_metrics.items():
-                if k.lower() in header.lower():
+                if k.lower() in header.lower() and isinstance(v, list):
                     matched_user_bullets = v
                     break
 
@@ -812,9 +812,40 @@ def format_experience_section(exp_lines: List[str], target_role: str = "", user_
             output.append(f"- {ai_bullet_found}")
         elif idx == 0:
             # Recent role: provide standard AI-augmented workflow bullet if none existed in candidate text
-            ai_bullet = "Leveraged Generative AI tools (ChatGPT, Claude) to automate sprint requirement synthesis and backlog triage, saving **4+ hours weekly** in administrative overhead."
+            tools_list = None
+            if user_metrics:
+                tools_list = user_metrics.get("ai_tools") or user_metrics.get("custom_ai_tools")
+            if tools_list:
+                if isinstance(tools_list, list):
+                    tools_str = ", ".join(tools_list)
+                else:
+                    tools_str = str(tools_list)
+                ai_bullet = f"Leveraged Generative AI tools ({tools_str}) to automate sprint requirement synthesis and backlog triage, saving **4+ hours weekly** in administrative overhead."
+            else:
+                ai_bullet = "Leveraged Generative AI tools (ChatGPT, Claude) to automate sprint requirement synthesis and backlog triage, saving **4+ hours weekly** in administrative overhead."
             output.append(f"- {ai_bullet}")
             transformed_bullets += 1
+
+        # If primary role (idx == 0) and user provided custom achievements in Step 3 / Workshop, insert them
+        if idx == 0 and user_metrics:
+            custom_achievements = []
+            if isinstance(user_metrics.get("achievements"), list):
+                custom_achievements.extend(user_metrics["achievements"])
+            elif user_metrics.get("custom_input_metrics"):
+                ci = user_metrics["custom_input_metrics"]
+                if isinstance(ci, str):
+                    for l in ci.splitlines():
+                        l_s = l.strip().lstrip("-*•> ")
+                        if l_s:
+                            custom_achievements.append(l_s)
+                elif isinstance(ci, list):
+                    custom_achievements.extend(ci)
+
+            for ca in reversed(custom_achievements):
+                fb, _ = format_bullet_xyz(ca)
+                if fb not in role_bullets_formatted:
+                    role_bullets_formatted.insert(0, fb)
+                    transformed_bullets += 1
 
         for b in role_bullets_formatted:
             output.append(f"- {b}")
@@ -923,7 +954,7 @@ def format_projects_section(proj_lines: List[str]) -> Tuple[List[str], bool]:
 
     return output, has_proven_ai
 
-def format_skills_section(skill_lines: List[str], sidebar_skills: List[str] = None) -> List[str]:
+def format_skills_section(skill_lines: List[str], sidebar_skills: List[str] = None, user_metrics: Optional[Dict[str, Any]] = None) -> List[str]:
     """
     Preserves 100% of user's genuine skills without injecting hardcoded dummy skills.
     Groups skills into clean, ATS-compliant bullet format with balanced bold tags.
@@ -933,14 +964,29 @@ def format_skills_section(skill_lines: List[str], sidebar_skills: List[str] = No
     if sidebar_skills:
         all_raw.extend(sidebar_skills)
 
-    if not all_raw:
-        return []
-
     AI_TOOLS_SET = {
         'claude', 'chatgpt', 'gemini', 'copilot', 'github copilot', 'cursor',
         'prompt engineering', 'notion ai', 'perplexity', 'midjourney', 'v0',
         'langchain', 'llamaindex', 'ollama', 'generative ai', 'llm apis', 'llm', 'ai tools', 'gemini api'
     }
+
+    # If candidate supplied custom AI tools via user_metrics, add them
+    if user_metrics:
+        custom_tools = user_metrics.get("ai_tools") or user_metrics.get("custom_ai_tools")
+        if custom_tools:
+            if isinstance(custom_tools, str):
+                for ct in custom_tools.split(","):
+                    ct_s = ct.strip()
+                    if ct_s and ct_s not in all_raw:
+                        all_raw.append(ct_s)
+            elif isinstance(custom_tools, list):
+                for ct in custom_tools:
+                    ct_s = str(ct).strip()
+                    if ct_s and ct_s not in all_raw:
+                        all_raw.append(ct_s)
+
+    if not all_raw:
+        return []
 
     SPOKEN_LANGUAGES = {
         'english', 'spanish', 'french', 'german', 'mandarin', 'chinese', 'cantonese',
@@ -1156,7 +1202,7 @@ def format_to_standard_template(raw_text: str, jd_text: str = "", user_metrics: 
     output_lines.append("")
 
     # 3. Core Competencies & Skills (Scannable fit block in top 1/3 of Page 1)
-    skills_output = format_skills_section(sections['skills'], sidebar_skills=sidebar_skills)
+    skills_output = format_skills_section(sections['skills'], sidebar_skills=sidebar_skills, user_metrics=user_metrics)
     if skills_output:
         output_lines.extend(skills_output)
 

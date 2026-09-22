@@ -285,16 +285,84 @@
           </p>
         </div>
 
-        <div class="form-group">
-          <label for="extra-metrics-input">Key Numbers or Achievements (Optional):</label>
-          <input type="text" id="extra-metrics-input" placeholder="e.g. Saved 4 hours a week on planning, led 8 engineers, cut defect reports by 30%...">
-          <span class="hint">Jeff Su Rule 4: Resumes with quantified impact get 75% more interviews.</span>
+        <!-- Section 1: Key Quantified Achievements (CRUD with ➕, ✏️, 🗑️) -->
+        <div class="crud-card" id="achievements-crud-card">
+          <div class="crud-header">
+            <div class="crud-title-group">
+              <span class="crud-icon">🎯</span>
+              <div>
+                <label class="crud-label">Key Achievements & Numbers (Placed in Work Experience)</label>
+                <div class="crud-subtitle">
+                  Jeff Su Rule 4: Quantified results get 75% more interviews. Add your achievements below using the icons to <strong>Add (➕)</strong>, <strong>Edit (✏️)</strong>, or <strong>Delete (🗑️)</strong>.
+                </div>
+              </div>
+            </div>
+            <span class="badge-mini-green">RULE 4: +75% INTERVIEW RATE</span>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="preset-pills-row">
+            <span class="preset-label">Quick Presets:</span>
+            <button type="button" class="preset-pill" data-preset="Saved 4+ hours weekly on sprint planning by automating Jira workflows and backlog triage">+ Saved 4 hrs/wk</button>
+            <button type="button" class="preset-pill" data-preset="Led cross-functional team of 8 engineers delivering enterprise releases with 99.9% uptime">+ Led 8 engineers</button>
+            <button type="button" class="preset-pill" data-preset="Reduced defect escape rate by 35% through automated CI/CD quality gates">+ Cut defects 35%</button>
+            <button type="button" class="preset-pill" data-preset="Accelerated release cycle from 14 days to 4 days across 3 product squads">+ 3.5x release velocity</button>
+            <button type="button" class="preset-pill" data-preset="Managed $150K annual infrastructure budget, cutting cloud compute costs by 18%">+ $150K budget / -18% cost</button>
+          </div>
+
+          <!-- Add Input Row -->
+          <div class="crud-input-row">
+            <input type="text" id="achievement-input" placeholder="Type an achievement (e.g. Saved 4 hours weekly by automating Jira reports, led 8 developers...)">
+            <button type="button" id="btn-add-achievement" class="btn btn-primary btn-sm">
+              <span class="btn-icon">➕</span> Add Achievement
+            </button>
+          </div>
+
+          <!-- Interactive Achievements List -->
+          <div id="achievements-list" class="achievements-list">
+            <!-- Rendered dynamically by JS -->
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="extra-ai-tools-input">AI Tools & Workflows You Use (Optional):</label>
-          <input type="text" id="extra-ai-tools-input" placeholder="e.g. Claude Code, ChatGPT for backlog triage, Cursor, GitHub portfolio link...">
-          <span class="hint">Jeff Su Rule 5: Oxford research proves demonstrating AI workflows provides up to a +15% interview lift.</span>
+        <!-- Section 2: AI Tools & Workflows (Interactive Tags) -->
+        <div class="crud-card" id="ai-tools-crud-card" style="margin-top: 16px;">
+          <div class="crud-header">
+            <div class="crud-title-group">
+              <span class="crud-icon">⚡</span>
+              <div>
+                <label class="crud-label">AI Tools & Workflows You Use (Placed in Skills & Primary Role)</label>
+                <div class="crud-subtitle">
+                  Jeff Su Rule 5: Oxford research proves demonstrating AI workflows provides up to a +15% interview lift.
+                </div>
+              </div>
+            </div>
+            <span class="badge-mini">RULE 5: +15% INTERVIEW LIFT</span>
+          </div>
+
+          <!-- Quick AI Presets -->
+          <div class="preset-pills-row">
+            <span class="preset-label">Click to Add:</span>
+            <button type="button" class="preset-pill-ai" data-tool="Claude Code">+ Claude Code</button>
+            <button type="button" class="preset-pill-ai" data-tool="ChatGPT">+ ChatGPT</button>
+            <button type="button" class="preset-pill-ai" data-tool="Cursor">+ Cursor</button>
+            <button type="button" class="preset-pill-ai" data-tool="GitHub Copilot">+ GitHub Copilot</button>
+            <button type="button" class="preset-pill-ai" data-tool="Perplexity">+ Perplexity</button>
+            <button type="button" class="preset-pill-ai" data-tool="Prompt Engineering">+ Prompt Engineering</button>
+            <button type="button" class="preset-pill-ai" data-tool="v0">+ v0</button>
+          </div>
+
+          <!-- Add AI Tool Row -->
+          <div class="crud-input-row">
+            <input type="text" id="ai-tool-input" placeholder="Type an AI tool or workflow (e.g. Claude Code, Cursor, ChatGPT for backlog triage...)">
+            <button type="button" id="btn-add-ai-tool" class="btn btn-secondary btn-sm">
+              <span class="btn-icon">➕</span> Add AI Tool
+            </button>
+          </div>
+
+          <!-- Interactive Tags Container -->
+          <div id="ai-tools-list" class="ai-tools-tags-container">
+            <!-- Rendered dynamically by JS -->
+          </div>
         </div>
 
         <!-- Interactive Google XYZ Transformer Workshop -->
@@ -304,26 +372,90 @@
             <h3>Quick Bullet Upgrade (Google XYZ Formula)</h3>
           </div>
           <p class="desc">
-            Test transforming a single weak responsibility into Google's formula: <em>Accomplished [X], as measured by [Y], by doing [Z]</em>.
+            Transform any weak, task-based responsibility into Google's executive formula: <em>Accomplished [X], as measured by [Y], by doing [Z]</em>.
           </p>
-          <div class="input-inline" style="margin-bottom: 8px;">
+
+          <!-- Placement & Multiplicity Showcase Card -->
+          <div class="workshop-placement-card">
+            <div class="placement-card-header">
+              <span class="placement-icon">📍</span>
+              <strong>Where is this shown on your CV?</strong>
+            </div>
+            <p class="placement-card-desc">
+              Transformed bullets are placed directly under <strong>## WORK EXPERIENCE</strong> under your most recent role as high-impact achievement bullets.
+              <em>(They are NOT placed at the top or summary of the CV, because ATS screeners and hiring managers evaluate quantified accomplishments within your employment history.)</em>
+            </p>
+            <div class="placement-card-multi">
+              <span class="multi-icon">💡</span>
+              <span><strong>Can you add one or many?</strong> You can transform and add <strong>as many bullets as you want!</strong> Each transformed bullet can be added with <strong>➕ Add to My CV Achievements</strong> and will appear in your achievements list above.</span>
+            </div>
+          </div>
+
+          <!-- Field 1: Weak bullet -->
+          <div class="form-group workshop-field">
+            <div class="label-row">
+              <label for="quick-bullet-input" class="workshop-label">
+                <span class="field-step-pill">1</span>
+                <span>Raw Responsibility or Bullet to Upgrade:</span>
+              </label>
+            </div>
             <input type="text" id="quick-bullet-input" placeholder="e.g. Responsible for managing sprint planning and writing user stories...">
+            <span class="hint">Paste any task-based bullet from your current CV.</span>
           </div>
-          <div class="xyz-controls-row">
-            <select id="xyz-dimension-select" class="select-dimension" title="Select Impact Dimension">
-              <option value="TIME_SAVED">Time Saved (e.g. 4 hrs to 45 mins)</option>
-              <option value="SPEED_VELOCITY">Speed / Velocity (e.g. 14 days to 4 days)</option>
-              <option value="SCALE_VOLUME">Scale / Volume (e.g. 15 initiatives / 1.8M users)</option>
-              <option value="QUALITY_ACCURACY">Quality / Accuracy (e.g. -35% defect escapes)</option>
-              <option value="COST_EFFICIENCY">Cost / Efficiency (e.g. $24k annual savings)</option>
-              <option value="ADOPTION_GROWTH">Adoption / Growth (e.g. +31% onboarding rate)</option>
-            </select>
-            <input type="text" id="quick-metric-input" placeholder="Your verified metric (e.g. saving 3+ hours weekly)" style="flex:1;">
-            <button type="button" id="btn-quick-xyz" class="btn btn-secondary btn-sm">Transform</button>
+
+          <!-- Field 2: Dimension with suggestions datalist or custom typing -->
+          <div class="form-group workshop-field">
+            <div class="label-row">
+              <label for="xyz-dimension-input" class="workshop-label">
+                <span class="field-step-pill">2</span>
+                <span>Impact Dimension (Select suggestion or type custom):</span>
+              </label>
+            </div>
+            <input type="text" id="xyz-dimension-input" list="dimension-options" placeholder="Select suggestion or type custom (e.g. Time Saved, Cost Efficiency, Latency)...">
+            <datalist id="dimension-options">
+              <option value="Time Saved (e.g. 4 hrs to 45 mins)">
+              <option value="Speed / Velocity (e.g. 14 days to 4 days)">
+              <option value="Scale / Volume (e.g. 15 initiatives / 1.8M users)">
+              <option value="Quality / Accuracy (e.g. -35% defect escapes)">
+              <option value="Cost / Efficiency (e.g. $24k annual savings)">
+              <option value="Adoption / Growth (e.g. +31% onboarding rate)">
+              <option value="Team / Leadership (e.g. coached 8 engineers)">
+              <option value="Customer Satisfaction (e.g. CSAT 4.2 to 4.8)">
+            </datalist>
+            <span class="hint">Pick a suggested dimension or freely type any custom measurement.</span>
           </div>
+
+          <!-- Field 3: Metric -->
+          <div class="form-group workshop-field">
+            <div class="label-row">
+              <label for="quick-metric-input" class="workshop-label">
+                <span class="field-step-pill">3</span>
+                <span>Your Verified Metric or Number:</span>
+              </label>
+            </div>
+            <input type="text" id="quick-metric-input" placeholder="e.g. saving 4 hours weekly, 35% faster releases, $45K saved...">
+            <span class="hint">Enter the number or percentage you achieved or estimated.</span>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <button type="button" id="btn-quick-xyz" class="btn btn-primary btn-sm">
+              <span class="btn-icon">✨</span> Transform to Google XYZ Formula
+            </button>
+          </div>
+
+          <!-- Result Box -->
           <div id="xyz-result-container" class="xyz-result-container hidden">
-            <div class="result-label">Recommended Google XYZ Formulation:</div>
+            <div class="result-header-row">
+              <div class="result-label">✨ Recommended Google XYZ Formulation:</div>
+              <span class="placement-badge">📍 Target: WORK EXPERIENCE (Most Recent Role)</span>
+            </div>
             <div id="xyz-result-text" class="result-box"></div>
+            <div class="result-actions-row">
+              <button type="button" id="btn-add-xyz-to-achievements" class="btn btn-accent btn-sm">
+                <span class="btn-icon">➕</span> Add to My CV Achievements (Step 3 List)
+              </button>
+              <span id="xyz-added-feedback" class="xyz-added-feedback hidden">✓ Added! You can transform another bullet below.</span>
+            </div>
           </div>
         </div>
 

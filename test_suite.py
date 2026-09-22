@@ -558,6 +558,45 @@ Product Manager with 6+ years of experience delivering cloud and fintech platfor
         self.assertGreaterEqual(qa["qa_score"], 85)
         self.assertEqual(len(qa["critical_failures"]), 0)
 
+    def test_custom_achievements_and_ai_tools_crud_injection(self):
+        """Verify custom achievements from Step 3 CRUD and Workshop are injected into Work Experience & Skills."""
+        from rules.rule4_google_xyz import transform_to_xyz
+
+        # Test Google XYZ transformation with metric
+        xyz = transform_to_xyz(
+            "Responsible for managing sprint planning and backlog triage",
+            metric_value="saving 4 hours weekly"
+        )
+        self.assertTrue(xyz["has_metrics"])
+        self.assertIn("Directed", xyz["suggested"])
+        self.assertIn("**4 hours** weekly", xyz["suggested"])
+
+        # Test injection into template
+        user_metrics = {
+            "achievements": [
+                xyz["suggested"],
+                "Led team of 8 engineers delivering payment gateway with 99.9% uptime."
+            ],
+            "ai_tools": ["Claude Code", "Cursor", "ChatGPT"]
+        }
+
+        standard_md, meta = format_to_standard_template(SAMPLE_RESUME, user_metrics=user_metrics)
+
+        # 1. Custom achievements must be in WORK EXPERIENCE under first role
+        self.assertIn("## WORK EXPERIENCE", standard_md)
+        self.assertIn("Directed sprint planning and backlog triage", standard_md)
+        self.assertIn("**4 hours** weekly", standard_md)
+        self.assertIn("**8 engineers**", standard_md)
+        self.assertIn("**99.9%** uptime", standard_md)
+
+        # 2. AI tools must be in first role's AI bullet
+        self.assertIn("Claude Code", standard_md)
+        self.assertIn("Cursor", standard_md)
+
+        # 3. AI tools must be in Skills section
+        self.assertIn("## CORE COMPETENCIES & TECHNICAL SKILLS", standard_md)
+        self.assertIn("Claude Code", standard_md)
+
 if __name__ == "__main__":
     unittest.main()
 

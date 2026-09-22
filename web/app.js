@@ -80,18 +80,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnStep2Back = document.getElementById("btn-step2-back");
   const btnStep2Next = document.getElementById("btn-step2-next");
 
-  // Step 3: Extra Context
-  const extraMetricsInput = document.getElementById("extra-metrics-input");
-  const extraAiToolsInput = document.getElementById("extra-ai-tools-input");
+  // Step 3: Extra Context (CRUD & Tags)
+  const achievementInput = document.getElementById("achievement-input");
+  const btnAddAchievement = document.getElementById("btn-add-achievement");
+  const achievementsListEl = document.getElementById("achievements-list");
+  const aiToolInput = document.getElementById("ai-tool-input");
+  const btnAddAiTool = document.getElementById("btn-add-ai-tool");
+  const aiToolsListEl = document.getElementById("ai-tools-list");
   const btnStep3Back = document.getElementById("btn-step3-back");
   const btnStep3Skip = document.getElementById("btn-step3-skip");
   const btnStep3Next = document.getElementById("btn-step3-next");
   const quickInput = document.getElementById("quick-bullet-input");
   const quickMetricInput = document.getElementById("quick-metric-input");
-  const dimensionSelect = document.getElementById("xyz-dimension-select");
+  const xyzDimensionInput = document.getElementById("xyz-dimension-input");
   const btnQuickXyz = document.getElementById("btn-quick-xyz");
   const xyzContainer = document.getElementById("xyz-result-container");
   const xyzResultText = document.getElementById("xyz-result-text");
+  const btnAddXyzToAchievements = document.getElementById("btn-add-xyz-to-achievements");
+  const xyzAddedFeedback = document.getElementById("xyz-added-feedback");
+
+  // Step 3 State
+  let customAchievements = [];
+  let customAiTools = ["Claude Code", "ChatGPT", "Cursor"];
+  let lastTransformedBullet = null;
 
   // Step 4: Health Check & Errors
   const auditScoreCircle = document.getElementById("audit-score-circle");
@@ -372,6 +383,15 @@ document.addEventListener("DOMContentLoaded", () => {
             showLoadedPdfPill(currentPdfFilename, "148 KB • 1 Page (Selectable Vector)");
             await runPdfPreflight(currentPdfBase64, currentPdfFilename);
           }
+          customAchievements = [
+            "Led cross-functional team of 12 (engineers, QA, DevOps) delivering high-scale B2B SaaS platform across 8 sprints with 98% on-time milestone delivery.",
+            "Accelerated sprint velocity by 25% and cut sprint planning cycle time by 4 hours weekly by introducing automated ClickUp/Jira workflows and AI backlog triage.",
+            "Spearheaded migration of legacy services to microservices architecture, reducing deployment cycle times by 40%."
+          ];
+          customAiTools = ["Claude Code", "ChatGPT", "Cursor", "GitHub Copilot"];
+          renderAchievements();
+          renderAiTools();
+
           if (cvRequiredAlert) cvRequiredAlert.classList.add("hidden");
           hideLoading();
           showToast("Loaded Ex-Apple PM Sample CV & Job Description", "success");
@@ -496,7 +516,195 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Step 3 Events (Extra Context - Skippable) ---
+  // --- Step 3 Events (Extra Context: Achievements CRUD, AI Tags, & Workshop) ---
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function renderAchievements() {
+    if (!achievementsListEl) return;
+    if (customAchievements.length === 0) {
+      achievementsListEl.innerHTML = `
+        <div class="achievements-empty-state">
+          🎯 No custom achievements added yet. Type an achievement above, click a preset, or transform a bullet in the workshop below!
+        </div>
+      `;
+      return;
+    }
+
+    achievementsListEl.innerHTML = "";
+    customAchievements.forEach((item, idx) => {
+      const row = document.createElement("div");
+      row.className = "achievement-item";
+      row.dataset.index = idx;
+      row.innerHTML = `
+        <span class="achievement-bullet-icon">🎯</span>
+        <div class="achievement-text-wrapper">
+          <span class="achievement-text">${escapeHtml(item)}</span>
+        </div>
+        <div class="achievement-actions">
+          <button type="button" class="btn-icon-action btn-edit-achievement" data-index="${idx}" title="Edit achievement">✏️</button>
+          <button type="button" class="btn-icon-action btn-delete-achievement" data-index="${idx}" title="Delete achievement">🗑️</button>
+        </div>
+      `;
+      achievementsListEl.appendChild(row);
+    });
+
+    // Attach edit and delete handlers
+    achievementsListEl.querySelectorAll(".btn-delete-achievement").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.getAttribute("data-index"), 10);
+        if (!isNaN(idx) && idx >= 0 && idx < customAchievements.length) {
+          customAchievements.splice(idx, 1);
+          renderAchievements();
+          showToast("Removed achievement", "warning");
+        }
+      });
+    });
+
+    achievementsListEl.querySelectorAll(".btn-edit-achievement").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.getAttribute("data-index"), 10);
+        if (isNaN(idx) || idx < 0 || idx >= customAchievements.length) return;
+        const row = achievementsListEl.querySelector(`.achievement-item[data-index="${idx}"]`);
+        if (!row) return;
+
+        const currentVal = customAchievements[idx];
+        row.className = "achievement-item editing";
+        row.innerHTML = `
+          <input type="text" class="achievement-edit-input" value="${escapeHtml(currentVal)}">
+          <div class="achievement-actions">
+            <button type="button" class="btn-icon-action btn-save-achievement" data-index="${idx}" title="Save">💾</button>
+            <button type="button" class="btn-icon-action btn-cancel-achievement" data-index="${idx}" title="Cancel">✕</button>
+          </div>
+        `;
+
+        const editInput = row.querySelector(".achievement-edit-input");
+        editInput.focus();
+        editInput.select();
+
+        const saveEdit = () => {
+          const newVal = editInput.value.trim();
+          if (newVal) {
+            customAchievements[idx] = newVal;
+            renderAchievements();
+            showToast("Updated achievement", "success");
+          } else {
+            customAchievements.splice(idx, 1);
+            renderAchievements();
+            showToast("Removed empty achievement", "warning");
+          }
+        };
+
+        row.querySelector(".btn-save-achievement").addEventListener("click", saveEdit);
+        row.querySelector(".btn-cancel-achievement").addEventListener("click", () => renderAchievements());
+        editInput.addEventListener("keydown", (evt) => {
+          if (evt.key === "Enter") {
+            evt.preventDefault();
+            saveEdit();
+          } else if (evt.key === "Escape") {
+            renderAchievements();
+          }
+        });
+      });
+    });
+  }
+
+  function addAchievement(text) {
+    const val = text.trim();
+    if (!val) return;
+    customAchievements.push(val);
+    renderAchievements();
+    if (achievementInput) achievementInput.value = "";
+    showToast("Added achievement to Work Experience!", "success");
+  }
+
+  if (btnAddAchievement && achievementInput) {
+    btnAddAchievement.addEventListener("click", () => addAchievement(achievementInput.value));
+    achievementInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addAchievement(achievementInput.value);
+      }
+    });
+  }
+
+  // Preset pills for achievements
+  document.querySelectorAll(".preset-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+      const preset = pill.getAttribute("data-preset");
+      if (preset) addAchievement(preset);
+    });
+  });
+
+  // AI Tools Tags
+  function renderAiTools() {
+    if (!aiToolsListEl) return;
+    if (customAiTools.length === 0) {
+      aiToolsListEl.innerHTML = `<span style="font-size: 11px; color: var(--text-muted);">No AI tools added yet. Click a preset above or type one to add.</span>`;
+      return;
+    }
+
+    aiToolsListEl.innerHTML = "";
+    customAiTools.forEach((tool, idx) => {
+      const tag = document.createElement("span");
+      tag.className = "ai-tool-tag";
+      tag.innerHTML = `
+        <span>${escapeHtml(tool)}</span>
+        <button type="button" class="btn-tag-remove" data-index="${idx}" title="Remove">✕</button>
+      `;
+      aiToolsListEl.appendChild(tag);
+    });
+
+    aiToolsListEl.querySelectorAll(".btn-tag-remove").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.getAttribute("data-index"), 10);
+        if (!isNaN(idx) && idx >= 0 && idx < customAiTools.length) {
+          customAiTools.splice(idx, 1);
+          renderAiTools();
+        }
+      });
+    });
+  }
+
+  function addAiTool(tool) {
+    const val = tool.trim();
+    if (!val) return;
+    if (!customAiTools.includes(val)) {
+      customAiTools.push(val);
+      renderAiTools();
+      if (aiToolInput) aiToolInput.value = "";
+      showToast(`Added ${val} to AI tools!`, "success");
+    } else {
+      showToast(`${val} is already added`, "warning");
+    }
+  }
+
+  if (btnAddAiTool && aiToolInput) {
+    btnAddAiTool.addEventListener("click", () => addAiTool(aiToolInput.value));
+    aiToolInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addAiTool(aiToolInput.value);
+      }
+    });
+  }
+
+  // Preset pills for AI tools
+  document.querySelectorAll(".preset-pill-ai").forEach(pill => {
+    pill.addEventListener("click", () => {
+      const tool = pill.getAttribute("data-tool");
+      if (tool) addAiTool(tool);
+    });
+  });
+
+  // Step 3 Navigation Buttons
   if (btnStep3Back) {
     btnStep3Back.addEventListener("click", () => goToStep(2));
   }
@@ -520,6 +728,7 @@ document.addEventListener("DOMContentLoaded", () => {
     btnQuickXyz.addEventListener("click", async () => {
       const bullet = quickInput ? quickInput.value.trim() : "";
       const metric = quickMetricInput ? quickMetricInput.value.trim() : "";
+      const dimension = xyzDimensionInput ? xyzDimensionInput.value.trim() : "";
       if (!bullet) {
         showToast("Please enter a bullet point first", "warning");
         return;
@@ -530,19 +739,43 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch("/api/xyz", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bullet, metric })
+          body: JSON.stringify({ bullet, metric, dimension })
         });
         const data = await res.json();
+        const formatted = data.suggested || data.xyz_formulation || data.formatted_bullet || bullet;
+        lastTransformedBullet = formatted;
+
         if (xyzContainer) xyzContainer.classList.remove("hidden");
         if (xyzResultText) {
-          xyzResultText.textContent = data.xyz_formulation || data.formatted_bullet;
+          xyzResultText.textContent = formatted;
+        }
+        if (xyzAddedFeedback) {
+          xyzAddedFeedback.classList.add("hidden");
         }
         showToast("Transformed into Google XYZ formula!", "success");
       } catch (e) {
         showToast("Failed to transform bullet", "error");
       } finally {
         btnQuickXyz.disabled = false;
-        btnQuickXyz.textContent = "Transform";
+        btnQuickXyz.innerHTML = `<span class="btn-icon">✨</span> Transform to Google XYZ Formula`;
+      }
+    });
+  }
+
+  // Add transformed bullet to Achievements list!
+  if (btnAddXyzToAchievements) {
+    btnAddXyzToAchievements.addEventListener("click", () => {
+      if (!lastTransformedBullet) {
+        showToast("Transform a bullet first", "warning");
+        return;
+      }
+      addAchievement(lastTransformedBullet);
+      if (xyzAddedFeedback) {
+        xyzAddedFeedback.classList.remove("hidden");
+      }
+      const crudCard = document.getElementById("achievements-crud-card");
+      if (crudCard) {
+        crudCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     });
   }
@@ -728,8 +961,10 @@ document.addEventListener("DOMContentLoaded", () => {
       clearPdfState();
       if (resumeInput) resumeInput.value = "";
       if (jdInput) jdInput.value = "";
-      if (extraMetricsInput) extraMetricsInput.value = "";
-      if (extraAiToolsInput) extraAiToolsInput.value = "";
+      customAchievements = [];
+      customAiTools = ["Claude Code", "ChatGPT", "Cursor"];
+      renderAchievements();
+      renderAiTools();
       lastAuditData = null;
       lastTransformData = null;
       goToStep(1);
@@ -817,14 +1052,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const resume = resumeInput ? resumeInput.value.trim() : "";
     const jd = jdInput ? jdInput.value.trim() : "";
-    const extraMetrics = extraMetricsInput ? extraMetricsInput.value.trim() : "";
-    const extraAi = extraAiToolsInput ? extraAiToolsInput.value.trim() : "";
 
     let customMetrics = null;
-    if (extraMetrics || extraAi) {
+    if (customAchievements.length > 0 || customAiTools.length > 0) {
       customMetrics = {
-        custom_input_metrics: extraMetrics,
-        custom_ai_tools: extraAi
+        achievements: customAchievements,
+        ai_tools: customAiTools,
+        custom_input_metrics: customAchievements.join("\n"),
+        custom_ai_tools: customAiTools.join(", ")
       };
     }
 
@@ -1070,8 +1305,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return sampleDataCache;
   }
 
-  // Initial setup: ensure loading overlay is hidden and step 1 is active
+  // Initial setup: ensure loading overlay is hidden, step 1 is active, and CRUD lists rendered
   hideLoading();
+  renderAchievements();
+  renderAiTools();
   goToStep(1);
 
   // Initial call to pre-load sample data quietly in background

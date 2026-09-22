@@ -82,9 +82,12 @@ def transform_to_xyz(raw_bullet: str, metric_value: str = None, dimension: str =
     if metric_value:
         # User explicitly supplied a metric (e.g. "by 35%" or "saving 4 hours weekly")
         mv = metric_value.strip()
-        if not mv.startswith(("by ", "saving ", "reducing ", "achieving ")):
+        if not mv.startswith(("by ", "saving ", "reducing ", "achieving ", "cutting ", "generating ", "accelerating ")):
             mv = f"by {mv}"
-        suggested_draft = f"{cleaned.rstrip('.,; ')}, {mv}."
+        from template_formatter import format_bullet_xyz
+        cleaned_draft = f"{cleaned.rstrip('.,; ')}, {mv}."
+        formatted_draft, _ = format_bullet_xyz(cleaned_draft)
+        suggested_draft = formatted_draft
         status = "QUANTIFIED_BY_USER"
         has_metrics = True
         found_metrics = [metric_value]
