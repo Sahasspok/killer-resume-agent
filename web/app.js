@@ -410,8 +410,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (cvRequiredAlert) cvRequiredAlert.classList.add("hidden");
           hideLoading();
-          showToast("Loaded Ex-Apple PM Sample! Running CV Health Check...", "success");
-          setTimeout(() => goToStep(3), 500);
+          showToast("Loaded Ex-Apple PM Sample CV! Review your file and click 'Run CV Health Check' when ready.", "success");
         }
       } catch (err) {
         hideLoading();
@@ -475,8 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
       showLoadedPdfPill(file.name, `${sizeMb} MB • Analyzing text layer...`);
       await runPdfPreflight(b64, file.name);
-      showToast("PDF verified! Running CV Health Check...", "success");
-      setTimeout(() => goToStep(3), 500);
+      showToast("PDF pre-flight passed! Review your file and click 'Run CV Health Check' when ready.", "success");
     };
     reader.readAsDataURL(file);
   }
@@ -487,6 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (dropzonePrompt) dropzonePrompt.classList.add("hidden");
     if (loadedPdfPill) loadedPdfPill.classList.remove("hidden");
     if (cvRequiredAlert) cvRequiredAlert.classList.add("hidden");
+    if (btnStep2Next) btnStep2Next.classList.add("btn-pulse");
   }
 
   function clearPdfState() {
@@ -497,6 +496,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (dropzonePrompt) dropzonePrompt.classList.remove("hidden");
     if (loadedPdfPill) loadedPdfPill.classList.add("hidden");
     if (pdfDiagCard) pdfDiagCard.classList.add("hidden");
+    if (btnStep2Next) btnStep2Next.classList.remove("btn-pulse");
   }
 
   async function runPdfPreflight(b64, filename) {
