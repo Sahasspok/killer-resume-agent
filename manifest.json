@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Killer Resume Agent",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Transform resumes into high-impact, ATS-optimized, candidate-verified killer resumes using Google X-Y-Z formula & 7-Pillar QA.",
   "action": {
     "default_title": "Killer Resume Agent - Open in New Tab",
