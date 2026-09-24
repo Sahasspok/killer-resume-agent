@@ -24,16 +24,15 @@ When you use Killer Resume Agent, the extension processes the following data sol
 ---
 
 ### 3. How We Use and Store Your Data
-- **Local Storage Only**: Your settings, preferences, and custom achievements are stored strictly on your local device using Chrome's `chrome.storage.local` API. They are never transmitted to our servers.
+- **Local Storage Only**: Your settings, preferences, and custom achievements are stored strictly on your local device using standard browser local storage (`localStorage`). They are never transmitted to our servers.
 - **No Developer Database or Tracking**: We do not maintain an external database of user resumes, identities, or analytics. Your resume data stays on your machine.
 - **Direct API Processing**: When you request resume optimization, your resume text and target job description are transmitted directly to your selected AI provider (such as Google Gemini, Groq, OpenRouter, or Mistral) or processed locally on your local backend server (`localhost:5050`). These requests are governed by the respective AI provider's privacy policies and enterprise terms.
 
 ---
 
 ### 4. Permissions Justification
-- **`storage`**: Used exclusively to store your chosen AI model, API keys, and custom achievements locally on your device.
-- **`activeTab`**: Used only when you explicitly invoke the extension to read job description text from the active job posting page (e.g., LinkedIn, Greenhouse, Lever, Indeed) to tailor your resume.
-- **Host Permissions**: Used solely to connect to your local backend server (`localhost:5050`) for vector PDF generation and to communicate with AI API endpoints (Google Gemini, Groq, OpenRouter, Mistral) using your credentials.
+- **Zero Privileged API Permissions**: This extension does not request or use privileged Chrome API permissions (such as `storage`, `tabs`, or `activeTab`), following Google's Principle of Least Privilege.
+- **Host Permissions**: Used solely to connect to your local backend server (`localhost:5050`) for vector PDF generation and to communicate directly with user-configured AI API endpoints (Google Gemini, Groq, OpenRouter, Mistral, OpenAI, Anthropic Claude) using your credentials.
 
 ---
 

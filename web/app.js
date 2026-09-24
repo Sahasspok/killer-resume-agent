@@ -143,6 +143,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const aiInterviewTime = document.getElementById("ai-interview-time");
   const aiInterviewPreviewText = document.getElementById("ai-interview-preview-text");
 
+  // Backend Server Connection (auto-routes chrome-extension:// to local server http://127.0.0.1:5050)
+  const API_SERVER_ORIGIN = "http://127.0.0.1:5050";
+  function getApiUrl(endpoint) {
+    const clean = endpoint.startsWith("/") ? endpoint : "/" + endpoint;
+    if (window.location.protocol === "chrome-extension:") {
+      return API_SERVER_ORIGIN + clean;
+    }
+    return clean;
+  }
+
+  function stripMarkdownFences(str) {
+    if (!str) return "";
+    let clean = str.trim();
+    if (clean.startsWith("```markdown")) clean = clean.slice(11);
+    else if (clean.startsWith("```md")) clean = clean.slice(5);
+    else if (clean.startsWith("```")) clean = clean.slice(3);
+    if (clean.endsWith("```")) clean = clean.slice(0, -3);
+    return clean.trim();
+  }
+
   // Extra Context State
   let currentProvider = localStorage.getItem("killer_resume_provider") || "gemini";
   let currentApiKey = localStorage.getItem("killer_resume_api_key_" + currentProvider) || "";
@@ -1111,7 +1131,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const prov = (currentProvider || "gemini").toLowerCase();
     if (prov === "gemini") {
-      const models = ["gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-2.5-flash"];
+      const models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
       let lastErr = null;
       for (const m of models) {
         try {
@@ -1127,7 +1147,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (res.ok) {
             const json = await res.json();
             const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) return text;
+            if (text) return stripMarkdownFences(text);
           } else {
             const errJson = await res.json().catch(() => ({}));
             lastErr = errJson.error?.message || `HTTP ${res.status}`;
@@ -1158,7 +1178,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(err.error?.message || `Groq HTTP ${res.status}`);
       }
       const json = await res.json();
-      return json.choices?.[0]?.message?.content || "";
+      return stripMarkdownFences(json.choices?.[0]?.message?.content || "");
     } else if (prov === "openrouter") {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -1179,7 +1199,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(err.error?.message || `OpenRouter HTTP ${res.status}`);
       }
       const json = await res.json();
-      return json.choices?.[0]?.message?.content || "";
+      return stripMarkdownFences(json.choices?.[0]?.message?.content || "");
     } else if (prov === "mistral") {
       const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
         method: "POST",
@@ -1200,7 +1220,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(err.error?.message || `Mistral HTTP ${res.status}`);
       }
       const json = await res.json();
-      return json.choices?.[0]?.message?.content || "";
+      return stripMarkdownFences(json.choices?.[0]?.message?.content || "");
     } else if (prov === "openai") {
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -1221,7 +1241,29 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(err.error?.message || `OpenAI HTTP ${res.status}`);
       }
       const json = await res.json();
-      return json.choices?.[0]?.message?.content || "";
+      return stripMarkdownFences(json.choices?.[0]?.message?.content || "");
+    } else if (prov === "anthropic") {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": currentApiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-3-5-sonnet-20241022",
+          max_tokens: 3000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Anthropic HTTP ${res.status}`);
+      }
+      const json = await res.json();
+      return stripMarkdownFences(json.content?.[0]?.text || "");
     }
     throw new Error(`Unsupported provider: ${prov}`);
   }
@@ -1710,7 +1752,7 @@ Return ONLY the complete, beautiful markdown resume.`;
   async function runPdfPreflight(b64, filename) {
     let extractedText = "";
     try {
-      const res = await fetch("/api/upload-pdf", {
+      const res = await fetch(getApiUrl("/api/upload-pdf"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pdf_base64: b64, filename: filename })
@@ -2014,7 +2056,7 @@ Return ONLY the complete, beautiful markdown resume.`;
   // --- AI Engine & Modal Configuration ---
   async function checkServerConfig() {
     try {
-      const res = await fetch("/api/config");
+      const res = await fetch(getApiUrl("/api/config"));
       if (res.ok) {
         const data = await res.json();
         detectedKeys = data.detected_keys || {};
@@ -2107,6 +2149,12 @@ Return ONLY the complete, beautiful markdown resume.`;
 
   if (btnConfigureApiKey && modalApiKey) {
     btnConfigureApiKey.addEventListener("click", () => {
+      if (currentProvider === "heuristic") {
+        currentProvider = "gemini";
+        if (selectAiEngine) selectAiEngine.value = "gemini";
+        localStorage.setItem("killer_resume_provider", "gemini");
+      }
+      currentApiKey = localStorage.getItem("killer_resume_api_key_" + currentProvider) || "";
       modalApiKey.classList.remove("hidden");
       modalApiKey.style.display = "flex";
       if (modalKeyLabel) {
@@ -2114,7 +2162,7 @@ Return ONLY the complete, beautiful markdown resume.`;
       }
       if (modalKeyHelp) {
         if (currentProvider === "gemini") {
-          modalKeyHelp.innerHTML = `Get a free Google Gemini key at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a> (1,500 req/day free, gemini-2.0-flash)`;
+          modalKeyHelp.innerHTML = `Get a free Google Gemini key at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a> (1,500 req/day free, gemini-1.5-flash & gemini-2.0-flash)`;
         } else if (currentProvider === "groq") {
           modalKeyHelp.innerHTML = `Get a 100% free Groq key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> (No credit card, 14,400 req/day, blazing fast Llama 3.3)`;
         } else if (currentProvider === "openrouter") {
@@ -2139,6 +2187,8 @@ Return ONLY the complete, beautiful markdown resume.`;
           inputApiKey.placeholder = "Enter Mistral API key (from console.mistral.ai)";
         } else if (currentProvider === "gemini") {
           inputApiKey.placeholder = "AIzaSy... (from aistudio.google.com)";
+        } else if (currentProvider === "anthropic") {
+          inputApiKey.placeholder = "sk-ant-... (from console.anthropic.com)";
         } else {
           inputApiKey.placeholder = `Paste your ${currentProvider.toUpperCase()} API key here...`;
         }
@@ -2157,12 +2207,26 @@ Return ONLY the complete, beautiful markdown resume.`;
   if (btnSaveApiKey && modalApiKey) {
     btnSaveApiKey.addEventListener("click", () => {
       if (inputApiKey) {
-        currentApiKey = inputApiKey.value.trim();
-        if (currentApiKey) {
+        let val = inputApiKey.value.trim();
+        if (val) {
+          // Auto-detect provider if user pasted a key format or was on heuristic
+          let targetProvider = currentProvider;
+          if (val.startsWith("gsk_")) targetProvider = "groq";
+          else if (val.startsWith("AIzaSy")) targetProvider = "gemini";
+          else if (val.startsWith("sk-ant-")) targetProvider = "anthropic";
+          else if (val.startsWith("sk-or-v1-")) targetProvider = "openrouter";
+          else if (val.startsWith("sk-") && targetProvider === "heuristic") targetProvider = "openai";
+          else if (targetProvider === "heuristic") targetProvider = "gemini";
+
+          currentProvider = targetProvider;
+          currentApiKey = val;
+          localStorage.setItem("killer_resume_provider", currentProvider);
           localStorage.setItem("killer_resume_api_key_" + currentProvider, currentApiKey);
-          showToast(`${currentProvider.toUpperCase()} API key saved for this browser!`, "success");
+          if (selectAiEngine) selectAiEngine.value = currentProvider;
+          showToast(`Connected ${currentProvider.toUpperCase()} AI Engine successfully!`, "success");
         } else {
           localStorage.removeItem("killer_resume_api_key_" + currentProvider);
+          currentApiKey = "";
           showToast("API Key cleared", "info");
         }
         updateApiKeyBadge();
@@ -2351,7 +2415,7 @@ Return ONLY the complete, beautiful markdown resume.`;
           const jd = jdInput ? sanitizeInputText(jdInput.value).trim() : "";
           let data;
           try {
-            const res = await fetch("/api/xyz", {
+            const res = await fetch(getApiUrl("/api/xyz"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -2825,7 +2889,7 @@ Return ONLY the complete, beautiful markdown resume.`;
 
       let audit;
       try {
-        const res = await fetch("/api/audit", {
+        const res = await fetch(getApiUrl("/api/audit"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -3110,7 +3174,7 @@ Return ONLY the complete, beautiful markdown resume.`;
     showToast("Generating your ATS Vector PDF right now...", "info");
 
     try {
-      const res = await fetch("/api/generate-pdf", {
+      const res = await fetch(getApiUrl("/api/generate-pdf"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -3171,7 +3235,7 @@ Return ONLY the complete, beautiful markdown resume.`;
     try {
       let data;
       try {
-        const res = await fetch("/api/transform", {
+        const res = await fetch(getApiUrl("/api/transform"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -3405,7 +3469,7 @@ Return ONLY the complete, beautiful markdown resume.`;
       if (data.pdf_base64) {
         latestGeneratedPdfBase64 = data.pdf_base64;
       } else if (finalMd) {
-        fetch("/api/generate-pdf", {
+        fetch(getApiUrl("/api/generate-pdf"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ markdown: finalMd, style_meta: currentStyleMeta })
@@ -4100,7 +4164,7 @@ Return ONLY the complete, beautiful markdown resume.`;
   async function fetchSampleData() {
     if (sampleDataCache) return sampleDataCache;
     try {
-      const res = await fetch("/api/sample");
+      const res = await fetch(getApiUrl("/api/sample"));
       if (res.ok) {
         sampleDataCache = await res.json();
         return sampleDataCache;
