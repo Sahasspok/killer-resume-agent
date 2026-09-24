@@ -306,6 +306,97 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // --- Input Sanitization & Script Injection Protection ---
+  /**
+   * Sanitizes and cleans user input fields (JD, CV text mode, custom achievements, tools).
+   * Strips malicious script injections, dangerous HTML tags, and unwanted special characters
+   * (null bytes, corrupted Unicode, zero-width spaces, Trojan overrides, rogue LaTeX math wrappers)
+   * before further processing.
+   *
+   * @param {string} text - Raw input text from textarea or input element.
+   * @returns {string} Clean, filtered text safe for parsing, auditing, and rendering.
+   */
+  function sanitizeInputText(text) {
+    if (!text || typeof text !== "string") return "";
+    let clean = text;
+
+    // 1. Remove Null bytes & binary control characters (preserve standard whitespace: \t, \n, \r)
+    clean = clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+
+    // 2. Remove invisible zero-width chars and corrupted replacement marks:
+    // \u200B (ZWSP), \u200C (ZWNJ), \u200D (ZWJ), \uFEFF (BOM), \u00AD (soft hyphen), \uFFFD (replacement mark)
+    clean = clean.replace(/[\u200B\u200C\u200D\uFEFF\u00AD\uFFFD]/g, "");
+
+    // 3. Remove bidirectional text override characters (prevent Trojan Source spoofing)
+    clean = clean.replace(/[\u202A-\u202E\u2066-\u2069]/g, "");
+
+    // 4. Normalize non-breaking spaces (\u00A0) to standard spaces
+    clean = clean.replace(/\u00A0/g, " ");
+
+    // 5. Script & Code Injection Sanitization
+    // 5a. Strip full <script>...</script> blocks
+    clean = clean.replace(/<\s*script\b[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "");
+
+    // 5b. Strip full <style>...</style> blocks
+    clean = clean.replace(/<\s*style\b[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi, "");
+
+    // 5c. Strip dangerous executable & media HTML tags
+    clean = clean.replace(/<\s*\/?\s*(?:iframe|object|embed|applet|meta|link|base|form|svg|canvas|audio|video|input|button|select|textarea|img)\b[^>]*>/gi, "");
+
+    // 5d. Strip dangerous href protocols (javascript:, vbscript:, data:)
+    clean = clean.replace(/href\s*=\s*["']\s*(?:javascript|vbscript|data):[^"']*["']/gi, "");
+
+    // 5e. Remove raw javascript: and data:text/html pseudo-protocols
+    clean = clean.replace(/(?:javascript|vbscript)\s*:[^\s"'>)]*/gi, "");
+    clean = clean.replace(/data\s*:\s*text\/html[^\s"'>)]*/gi, "");
+
+    // 5f. Remove inline DOM event handlers (e.g. onload=, onerror=, onclick=)
+    clean = clean.replace(/\son\w+\s*=\s*(?:["'][^"']*["']|[^\s>]+)/gi, "");
+
+    // 6. Clean rogue LaTeX math wrappers: \( ... \) or \[ ... \]
+    clean = clean.replace(/\\([()[\]])/g, "$1");
+
+    // 7. Normalize excessive empty lines
+    clean = clean.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    clean = clean.replace(/\n{4,}/g, "\n\n\n");
+
+    return clean;
+  }
+
+  /**
+   * Attaches real-time paste and blur input sanitization to an input or textarea element.
+   * Automatically cleans unwanted special characters and script injections.
+   *
+   * @param {HTMLElement} element - Input or textarea element.
+   * @param {string} fieldName - Descriptive name for user feedback.
+   */
+  function attachInputSanitizer(element, fieldName = "Input") {
+    if (!element) return;
+
+    // Paste event: sanitize immediately on paste
+    element.addEventListener("paste", () => {
+      setTimeout(() => {
+        const raw = element.value;
+        const clean = sanitizeInputText(raw);
+        if (clean !== raw) {
+          element.value = clean;
+          showToast(`Filtered unwanted special characters & scripts in ${fieldName}`, "info");
+        }
+      }, 0);
+    });
+
+    // Blur & change event: sanitize before focus leaves
+    const cleanOnEvent = () => {
+      const raw = element.value;
+      const clean = sanitizeInputText(raw);
+      if (clean !== raw) {
+        element.value = clean;
+      }
+    };
+    element.addEventListener("blur", cleanOnEvent);
+    element.addEventListener("change", cleanOnEvent);
+  }
+
   // --- Step Navigation Engine ---
   /**
    * Transitions the active step wizard view to the specified target step index.
@@ -412,9 +503,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnStep1Next) {
     btnStep1Next.addEventListener("click", () => {
+      if (jdInput && jdInput.value) {
+        jdInput.value = sanitizeInputText(jdInput.value);
+      }
       goToStep(2);
     });
   }
+
+  // Attach real-time and paste sanitization to Target Job input
+  attachInputSanitizer(jdInput, "Job Description");
 
   if (btnLoadSampleJd) {
     btnLoadSampleJd.addEventListener("click", async () => {
@@ -459,6 +556,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnStep2Next) {
     btnStep2Next.addEventListener("click", () => {
+      if (resumeInput && resumeInput.value) {
+        resumeInput.value = sanitizeInputText(resumeInput.value);
+      }
       const hasText = resumeInput && resumeInput.value.trim().length > 20;
       const hasPdf = Boolean(currentPdfBase64);
       if (!hasText && !hasPdf) {
@@ -470,6 +570,9 @@ document.addEventListener("DOMContentLoaded", () => {
       goToStep(3);
     });
   }
+
+  // Attach real-time and paste sanitization to CV text input
+  attachInputSanitizer(resumeInput, "CV Text");
 
   if (btnLoadSampleCv) {
     btnLoadSampleCv.addEventListener("click", async () => {
@@ -565,7 +668,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Fallback for .txt or .md
       const reader = new FileReader();
       reader.onload = (e) => {
-        if (resumeInput) resumeInput.value = e.target.result;
+        if (resumeInput) resumeInput.value = sanitizeInputText(e.target.result);
         tabModeText.click();
         showToast(`Loaded ${file.name} as text`, "success");
       };
@@ -1734,7 +1837,7 @@ Return ONLY the complete, beautiful markdown resume.`;
    * @returns {Promise<Array<Object>>}
    */
   async function runAgenticRoleExtraction(text, b64, serverDetectedRoles) {
-    const rawText = text || (resumeInput ? resumeInput.value : "") || extractedPdfText || "";
+    const rawText = sanitizeInputText(text || (resumeInput ? resumeInput.value : "") || extractedPdfText || "");
     let rolesFound = [];
 
     // Stage 1: Run High-Precision Client-Side Extractor
@@ -2086,9 +2189,9 @@ Return ONLY the complete, beautiful markdown resume.`;
   // --- Rule 5 AI Skills Interview Logic ---
   function updateAiPreview() {
     if (!aiInterviewPreviewText) return;
-    const tools = aiInterviewTools ? aiInterviewTools.value.trim() : "Claude, ChatGPT";
-    const task = aiInterviewTask ? aiInterviewTask.value.trim() : "automate sprint requirement synthesis and backlog triage";
-    const time = aiInterviewTime ? aiInterviewTime.value.trim() : "4+ hours weekly";
+    const tools = aiInterviewTools ? sanitizeInputText(aiInterviewTools.value).trim() : "Claude, ChatGPT";
+    const task = aiInterviewTask ? sanitizeInputText(aiInterviewTask.value).trim() : "automate sprint requirement synthesis and backlog triage";
+    const time = aiInterviewTime ? sanitizeInputText(aiInterviewTime.value).trim() : "4+ hours weekly";
 
     aiInterviewPreviewText.innerHTML = `Leveraged Generative AI tools (${escapeHtml(tools)}) to ${escapeHtml(task)}, saving <strong>${escapeHtml(time)}</strong> in administrative overhead.`;
 
@@ -2120,7 +2223,10 @@ Return ONLY the complete, beautiful markdown resume.`;
   }
 
   [aiInterviewTools, aiInterviewTask, aiInterviewTime].forEach(input => {
-    if (input) input.addEventListener("input", updateAiPreview);
+    if (input) {
+      attachInputSanitizer(input, "AI Workflow");
+      input.addEventListener("input", updateAiPreview);
+    }
   });
 
   // --- Active Agent Interview (Unquantified Bullets from Candidate's CV) ---
@@ -2199,11 +2305,16 @@ Return ONLY the complete, beautiful markdown resume.`;
       const btnAccept = card.querySelector(".btn-accept-xyz");
       const btnSkip = card.querySelector(".btn-skip-xyz");
 
+      if (notesInput) {
+        attachInputSanitizer(notesInput, "Interview Metric Notes");
+      }
+
       btnReframe.addEventListener("click", async () => {
-        const notes = notesInput.value.trim();
+        const notes = sanitizeInputText(notesInput ? notesInput.value : "").trim();
+        if (notesInput) notesInput.value = notes;
         if (!notes) {
           showToast("Please enter your rough outcome or numbers first!", "warning");
-          notesInput.focus();
+          if (notesInput) notesInput.focus();
           return;
         }
 
@@ -2237,7 +2348,7 @@ Return ONLY the complete, beautiful markdown resume.`;
         showToast(`🤖 [AGENT] Calling ${currentProvider.toUpperCase()} to reframe bullet...`, "info");
 
         try {
-          const jd = jdInput ? jdInput.value.trim() : "";
+          const jd = jdInput ? sanitizeInputText(jdInput.value).trim() : "";
           let data;
           try {
             const res = await fetch("/api/xyz", {
@@ -2418,7 +2529,7 @@ Return ONLY the complete, beautiful markdown resume.`;
         editInput.select();
 
         const saveEdit = () => {
-          const newText = editInput.value.trim();
+          const newText = sanitizeInputText(editInput.value).trim();
           if (newText) {
             let newRole = editRoleSelect.value;
             let newRoleLabel = editRoleSelect.options[editRoleSelect.selectedIndex].textContent;
@@ -2451,7 +2562,7 @@ Return ONLY the complete, beautiful markdown resume.`;
   }
 
   function addAchievement(text, roleVal, roleLabelVal) {
-    const val = text.trim();
+    const val = sanitizeInputText(text).trim();
     if (!val) return;
 
     let role = roleVal;
@@ -2459,7 +2570,7 @@ Return ONLY the complete, beautiful markdown resume.`;
 
     if (!role) {
       if (achievementRoleSelect && achievementRoleSelect.value === "__custom__") {
-        role = achievementRoleCustom ? achievementRoleCustom.value.trim() : "Custom Job";
+        role = achievementRoleCustom ? sanitizeInputText(achievementRoleCustom.value).trim() : "Custom Job";
         roleLabel = `"${role}"`;
       } else if (achievementRoleSelect && achievementRoleSelect.value !== "primary") {
         role = achievementRoleSelect.value;
@@ -2482,6 +2593,13 @@ Return ONLY the complete, beautiful markdown resume.`;
     renderAchievements();
     if (achievementInput) achievementInput.value = "";
     showToast(`Added achievement to ${roleLabel}!`, "success");
+  }
+
+  if (achievementInput) {
+    attachInputSanitizer(achievementInput, "Achievement");
+  }
+  if (achievementRoleCustom) {
+    attachInputSanitizer(achievementRoleCustom, "Custom Role");
   }
 
   if (btnAddAchievement && achievementInput) {
@@ -2533,7 +2651,7 @@ Return ONLY the complete, beautiful markdown resume.`;
   }
 
   function addAiTool(tool) {
-    const val = tool.trim();
+    const val = sanitizeInputText(tool).trim();
     if (!val) return;
     if (!customAiTools.includes(val)) {
       customAiTools.push(val);
@@ -2543,6 +2661,10 @@ Return ONLY the complete, beautiful markdown resume.`;
     } else {
       showToast(`${val} is already added`, "warning");
     }
+  }
+
+  if (aiToolInput) {
+    attachInputSanitizer(aiToolInput, "AI Tool");
   }
 
   if (btnAddAiTool && aiToolInput) {
@@ -2688,8 +2810,10 @@ Return ONLY the complete, beautiful markdown resume.`;
       "Evaluating 2 million application benchmarks & ATS parser limits"
     );
 
-    const resume = resumeInput ? resumeInput.value.trim() : "";
-    const jd = jdInput ? jdInput.value.trim() : "";
+    const resume = sanitizeInputText(resumeInput ? resumeInput.value.trim() : "");
+    const jd = sanitizeInputText(jdInput ? jdInput.value.trim() : "");
+    if (resumeInput && resumeInput.value !== resume) resumeInput.value = resume;
+    if (jdInput && jdInput.value !== jd) jdInput.value = jd;
 
     try {
       const payload = {
@@ -3029,8 +3153,10 @@ Return ONLY the complete, beautiful markdown resume.`;
       );
     }
 
-    const resume = resumeInput ? resumeInput.value.trim() : "";
-    const jd = jdInput ? jdInput.value.trim() : "";
+    const resume = sanitizeInputText(resumeInput ? resumeInput.value.trim() : (extractedPdfText || ""));
+    const jd = sanitizeInputText(jdInput ? jdInput.value.trim() : "");
+    if (resumeInput && resumeInput.value !== resume) resumeInput.value = resume;
+    if (jdInput && jdInput.value !== jd) jdInput.value = jd;
 
     let customMetrics = {
       achievements: customAchievements,
